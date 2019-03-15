@@ -11,6 +11,7 @@ install:
 script:
 - hexo clean
 - hexo g
+- hexo d
 after_script:
 - git clone https://${GH_REF} .deploy_git
 - cd .deploy_git
