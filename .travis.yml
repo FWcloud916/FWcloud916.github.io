@@ -23,7 +23,7 @@ after_script:
 - git config user.email "ree0916tw@gmail.com"
 - git add .
 - git commit -m "Travis CI Auto Builder at `date +"%Y-%m-%d %H:%M"`"
-- git push --force --quiet "https://${HEXO_TOKEN}@${GH_REF}" master:master
+- git push --force --quiet "https://${my_page_token}@${GH_REF}" master:master
 branches:
   only:
   - develop
