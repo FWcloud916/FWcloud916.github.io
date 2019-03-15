@@ -1,4 +1,6 @@
-# NVM - Node Version Manager 安裝
+---
+title: NVM - Node Version Manager 安裝
+---
 由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題
 
 ## MAC 
