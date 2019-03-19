@@ -17,7 +17,7 @@ title: NVM - Node Version Manager 安裝
      -  有可能會在 ~/.zshrc, ~/.profile, or ~/.bashrc 之中
  
 
-![](https://i.imgur.com/6HG8tFc.png)
+![](https://drive.google.com/file/d/1MQ0KylrvqlfRtLu4JRJP2mNCLNdGlnyp/preview)
 
 在最後安裝完成時可以輸入
 ```bash=
@@ -26,10 +26,10 @@ export NVM_DIR="HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 ```
 來直接載入 nvm 的指令，或是重新啟動 terminal 來載入
-![](https://i.imgur.com/vO4inkJ.png)
+![](https://drive.google.com/file/d/1rXTzdv5-_7-aJFnsL3FGfaOShmD_B5gS/preview)
 
 成功!!
-![](https://i.imgur.com/n05uOiu.png)
+![](https://drive.google.com/file/d/1MyUvM1x19F7uKIaDXGM1vjCXcCI-QRBB/preview)
 
 #### 常用指令
 - nvm run node [version] --- 切換不同版本
@@ -46,38 +46,38 @@ rm -rf $NVM_DIR ~/.npm  ~/.bower
 然後將命令資訊也刪掉
 - 有可能會在  ~/.zshrc, ~/.profile, or ~/.bashrc 之中
 
-![](https://i.imgur.com/hrFLbEj.png)
+![](https://drive.google.com/file/d/1PnEyj1SGrDvb_gWwMJCDcArgYZNJuF6r/preview)
 就可以將nvm完全刪除囉!
 
 ## Windows
 雖然 NVM 並沒有提供 Windows 版本，不過還是有大神 [Corey Butler](https://github.com/coreybutler) 提供了 [nvm-windows](https://github.com/coreybutler/nvm-windows) 為 Windows 提供一樣好用的 Node 版本管理器，而且安裝的方式相當簡單，可以在這個專案的 [release](https://github.com/coreybutler/nvm-windows/releases) 中下載安裝檔(.exe)
 
-![](https://i.imgur.com/3JraWCm.png)
+![](https://drive.google.com/file/d/1nbCoL-Z5yhxrmyJe3L9E-78DwqID7bL4/preview)
 #### 安裝方式
 下載 nvm-setup.zip 解壓縮就可以 GET 安裝檔(.exe)
 點兩下開始安裝!!!
 
-![](https://i.imgur.com/BqZhdeW.png)
+![](https://drive.google.com/file/d/1Bfdl-4_LguOD8bwjVsOPwbg1RYdEibac/preview)
 
 基本上只要一直下一步就可以了!!!
 
-![](https://i.imgur.com/6erVZFP.png)
+![](https://drive.google.com/file/d/1eitJIoBaeMk83SjR-Y0coUPVubs9CXMh/preview)
 
 選擇安裝路徑
-![](https://i.imgur.com/XA59WJz.png)
+![](https://drive.google.com/file/d/12s70RWSvv1C5CxZ0EUsgBMB1b4_-CK2r/preview)
 
 選擇一個存放進入點(捷徑)的路徑並且會自動加入環境變數
-![](https://i.imgur.com/PsptZ6F.png)
+![](https://drive.google.com/file/d/1VC2OFs9_XZkSvZcYvdIkKd8iDVnR98Ji/preview)
 
 就可順利安裝啦!!!
 
-![](https://i.imgur.com/OVqZoLP.png)
+![](https://drive.google.com/file/d/1gFFva2MV-66UgI6cZC7-0xkX6dmd19l1/preview)
 
 打開 cmder 測試一下( 命令提示字元 cmd 、 powershell 都可以使用)
 
 輸入 : ```nvm -h```
 
-![](https://i.imgur.com/N9HGtif.png)
+![](https://drive.google.com/file/d/1uuux3DbT2i335i1tNDWoyQrQ0-wfeEt1/preview)
 
 有跑出版本資訊與使用說明就是安裝成功啦!
 
