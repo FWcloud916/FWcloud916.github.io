@@ -4,7 +4,7 @@
 
 
 
-<html lang="zh-TW">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
@@ -47,9 +47,9 @@
     path: '',
     motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
     translation: {
-      copy_button: 'Kopieren',
-      copy_success: 'Kopiert',
-      copy_failure: 'Kopieren fehlgeschlagen'
+      copy_button: 'Copy',
+      copy_success: 'Copied',
+      copy_failure: 'Copy failed'
     },
     sidebarPadding: 40
   };
@@ -61,23 +61,23 @@
 <meta property="og:url" content="https://fwcloud916.github.io/2019/03/19/NVM - Node Version Manager 安裝/index.html">
 <meta property="og:site_name" content="胖仔">
 <meta property="og:description" content="由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題 MACNVM 是由大神 Tim Caswell 所開發的一個專案，提供 linus/mac 使用的 Node 版本管理器，是目前最受歡迎的管理器 安裝方式1.開啟 terminal 或是 iterm2 ，使用 curl 來下載並安裝 (不建議使用">
-<meta property="og:locale" content="zh-TW">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/1.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/2.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/3.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/4.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/5.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/6.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/7.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/8.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/9.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/10.png">
-<meta property="og:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/11.png">
-<meta property="og:updated_time" content="2019-10-04T16:59:34.644Z">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://fwcloud916.github.io/1.png">
+<meta property="og:image" content="https://fwcloud916.github.io/2.png">
+<meta property="og:image" content="https://fwcloud916.github.io/3.png">
+<meta property="og:image" content="https://fwcloud916.github.io/4.png">
+<meta property="og:image" content="https://fwcloud916.github.io/5.png">
+<meta property="og:image" content="https://fwcloud916.github.io/6.png">
+<meta property="og:image" content="https://fwcloud916.github.io/7.png">
+<meta property="og:image" content="https://fwcloud916.github.io/8.png">
+<meta property="og:image" content="https://fwcloud916.github.io/9.png">
+<meta property="og:image" content="https://fwcloud916.github.io/10.png">
+<meta property="og:image" content="https://fwcloud916.github.io/11.png">
+<meta property="og:updated_time" content="2019-10-04T17:16:10.892Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="NVM - Node Version Manager 安裝">
 <meta name="twitter:description" content="由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題 MACNVM 是由大神 Tim Caswell 所開發的一個專案，提供 linus/mac 使用的 Node 版本管理器，是目前最受歡迎的管理器 安裝方式1.開啟 terminal 或是 iterm2 ，使用 curl 來下載並安裝 (不建議使用">
-<meta name="twitter:image" content="https://fwcloud916.github.io/2019/03/19/NVM%20-%20Node%20Version%20Manager%20安裝/1.png">
+<meta name="twitter:image" content="https://fwcloud916.github.io/1.png">
   <link rel="canonical" href="https://fwcloud916.github.io/2019/03/19/NVM - Node Version Manager 安裝/">
 
 
@@ -148,7 +148,7 @@
   </div>
 
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Navigationsleiste an/ausschalten">
+    <div class="toggle" aria-label="Toggle navigation bar">
       <span class="toggle-line toggle-line-first"></span>
       <span class="toggle-line toggle-line-middle"></span>
       <span class="toggle-line toggle-line-last"></span>
@@ -168,7 +168,7 @@
       
     
 
-    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Startseite</a>
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
 
   </li>
       
@@ -179,7 +179,7 @@
       
     
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archiv</a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
 
   </li>
   </ul>
@@ -207,7 +207,7 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-TW">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="en">
     <link itemprop="mainEntityOfPage" href="https://fwcloud916.github.io/2019/03/19/NVM - Node Version Manager 安裝/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -230,13 +230,13 @@
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              <span class="post-meta-item-text">Veröffentlicht am</span>
+              <span class="post-meta-item-text">Posted on</span>
 
               
                 
               
 
-              <time title="Erstellt: 2019-03-19 00:00:00" itemprop="dateCreated datePublished" datetime="2019-03-19T00:00:00+08:00">2019-03-19</time>
+              <time title="Created: 2019-03-19 00:00:00" itemprop="dateCreated datePublished" datetime="2019-03-19T00:00:00+08:00">2019-03-19</time>
             </span>
           
             
@@ -246,8 +246,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
-                <span class="post-meta-item-text">Bearbeitet am</span>
-                <time title="Geändert am: 2019-10-05 00:59:34" itemprop="dateModified" datetime="2019-10-05T00:59:34+08:00">2019-10-05</time>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2019-10-05 01:16:10" itemprop="dateModified" datetime="2019-10-05T01:16:10+08:00">2019-10-05</time>
               </span>
             
           
@@ -274,10 +274,10 @@
 </ul>
 </li>
 </ul>
-<p><img src="1.png" alt></p>
+<p><img src="/1.png" alt></p>
 <p>在最後安裝完成時可以輸入<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> NVM_DIR=<span class="string">"HOME/.nvm"</span></span><br><span class="line">[ -s <span class="string">"<span class="variable">$NVM_DIR</span>/nvm.sh"</span> ] &amp;&amp; \. <span class="string">"<span class="variable">$NVM_DIR</span>/nvm.sh"</span></span><br><span class="line">[ -s <span class="string">"<span class="variable">$NVM_DIR</span>/bash_completion"</span> ] &amp;&amp; \. <span class="string">"<span class="variable">$NVM_DIR</span>/bash_completion"</span></span><br></pre></td></tr></table></figure></p>
-<p>來直接載入 nvm 的指令，或是重新啟動 terminal 來載入<br><img src="2.png" alt></p>
-<p>成功!!<br><img src="3.png" alt></p>
+<p>來直接載入 nvm 的指令，或是重新啟動 terminal 來載入<br><img src="/2.png" alt></p>
+<p>成功!!<br><img src="/3.png" alt></p>
 <h4 id="常用指令"><a href="#常用指令" class="headerlink" title="常用指令"></a>常用指令</h4><ul>
 <li>nvm run node [version] — 切換不同版本</li>
 <li>nvm install [version]  — 安裝不同版本</li>
@@ -289,20 +289,20 @@
 <ul>
 <li>有可能會在  ~/.zshrc, ~/.profile, or ~/.bashrc 之中</li>
 </ul>
-<p><img src="4.png" alt><br>就可以將nvm完全刪除囉!</p>
+<p><img src="/4.png" alt><br>就可以將nvm完全刪除囉!</p>
 <h2 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h2><p>雖然 NVM 並沒有提供 Windows 版本，不過還是有大神 <a href="https://github.com/coreybutler" target="_blank" rel="noopener">Corey Butler</a> 提供了 <a href="https://github.com/coreybutler/nvm-windows" target="_blank" rel="noopener">nvm-windows</a> 為 Windows 提供一樣好用的 Node 版本管理器，而且安裝的方式相當簡單，可以在這個專案的 <a href="https://github.com/coreybutler/nvm-windows/releases" target="_blank" rel="noopener">release</a> 中下載安裝檔(.exe)</p>
-<p><img src="5.png" alt></p>
+<p><img src="/5.png" alt></p>
 <h4 id="安裝方式-1"><a href="#安裝方式-1" class="headerlink" title="安裝方式"></a>安裝方式</h4><p>下載 nvm-setup.zip 解壓縮就可以 GET 安裝檔(.exe)<br>點兩下開始安裝!!!</p>
-<p><img src="6.png" alt></p>
+<p><img src="/6.png" alt></p>
 <p>基本上只要一直下一步就可以了!!!</p>
-<p><img src="7.png" alt></p>
-<p>選擇安裝路徑<br><img src="8.png" alt></p>
-<p>選擇一個存放進入點(捷徑)的路徑並且會自動加入環境變數<br><img src="9.png" alt></p>
+<p><img src="/7.png" alt></p>
+<p>選擇安裝路徑<br><img src="/8.png" alt></p>
+<p>選擇一個存放進入點(捷徑)的路徑並且會自動加入環境變數<br><img src="/9.png" alt></p>
 <p>就可順利安裝啦!!!</p>
-<p><img src="10.png" alt></p>
+<p><img src="/10.png" alt></p>
 <p>打開 cmder 測試一下( 命令提示字元 cmd 、 powershell 都可以使用)</p>
 <p>輸入 : <code>nvm -h</code></p>
-<p><img src="11.png" alt></p>
+<p><img src="/11.png" alt></p>
 <p>有跑出版本資訊與使用說明就是安裝成功啦!</p>
 <p>一樣可以使用</p>
 <ul>
@@ -360,10 +360,10 @@
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
-          Inhaltsverzeichnis
+          Table of Contents
         </li>
         <li class="sidebar-nav-overview">
-          Übersicht
+          Overview
         </li>
       </ul>
 
@@ -386,7 +386,7 @@
           <a href="/archives/">
         
           <span class="site-state-item-count">1</span>
-          <span class="site-state-item-name">Artikel</span>
+          <span class="site-state-item-name">posts</span>
         </a>
       </div>
     
@@ -413,9 +413,9 @@
   </span>
   <span class="author" itemprop="copyrightHolder">WEI FANG</span>
 </div>
-  <div class="powered-by">Erstellt mit  <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
   <span class="post-meta-divider">|</span>
-  <div class="theme-info">Design – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.1</div>
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.1</div>
 
         
 
