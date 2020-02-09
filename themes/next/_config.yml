@@ -745,7 +745,7 @@ growingio_analytics: # <project_id>
 
 # Google Analytics
 google_analytics:
-  tracking_id: # <app_id>
+  tracking_id: UA-76185597-2 # <app_id>
   localhost_ignored: true
 
 # CNZZ count
