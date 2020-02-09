@@ -55,28 +55,37 @@
   };
 </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="胖仔">
-<meta property="og:url" content="https://fwcloud916.github.io/index.html">
+  <meta name="description" content="利用 firebase 建立自己的 CORS Anywhere前言有時候在串接外部 API 或是公司內部的 API，都可能會遇到跨域存取 ( CORS ) 的問題 外部 API 因為安全性的問題所以會限制網域，需要透過後端取得資料來繞過這個驗證，但是開發時負責後端的人又都不肯幫忙先處理!? 串接內部 API 的時候，討人厭的後端 API 又不給我 localhost 使用，不然是要怎麼測試! 當遇">
+<meta name="keywords" content="CORS Anywhere, Cors, firebase, w3HexSchool">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用 firebase 建立自己的 CorsAnyWhere">
+<meta property="og:url" content="https://fwcloud916.github.io/2020/02/09/CorsAnyWhere-by-firebase/index.html">
 <meta property="og:site_name" content="胖仔">
+<meta property="og:description" content="利用 firebase 建立自己的 CORS Anywhere前言有時候在串接外部 API 或是公司內部的 API，都可能會遇到跨域存取 ( CORS ) 的問題 外部 API 因為安全性的問題所以會限制網域，需要透過後端取得資料來繞過這個驗證，但是開發時負責後端的人又都不肯幫忙先處理!? 串接內部 API 的時候，討人厭的後端 API 又不給我 localhost 使用，不然是要怎麼測試! 當遇">
 <meta property="og:locale" content="tw">
+<meta property="og:image" content="https://fwcloud916.github.io/2020/02/09/CorsAnyWhere-by-firebase/price.png">
+<meta property="og:image" content="https://fwcloud916.github.io/2020/02/09/CorsAnyWhere-by-firebase/price_chart.png">
+<meta property="og:image" content="https://fwcloud916.github.io/2020/02/09/CorsAnyWhere-by-firebase/cloudfunctions.png">
+<meta property="og:updated_time" content="2020-02-09T05:29:11.415Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="胖仔">
-  <link rel="canonical" href="https://fwcloud916.github.io/">
+<meta name="twitter:title" content="利用 firebase 建立自己的 CorsAnyWhere">
+<meta name="twitter:description" content="利用 firebase 建立自己的 CORS Anywhere前言有時候在串接外部 API 或是公司內部的 API，都可能會遇到跨域存取 ( CORS ) 的問題 外部 API 因為安全性的問題所以會限制網域，需要透過後端取得資料來繞過這個驗證，但是開發時負責後端的人又都不肯幫忙先處理!? 串接內部 API 的時候，討人厭的後端 API 又不給我 localhost 使用，不然是要怎麼測試! 當遇">
+<meta name="twitter:image" content="https://fwcloud916.github.io/2020/02/09/CorsAnyWhere-by-firebase/price.png">
+  <link rel="canonical" href="https://fwcloud916.github.io/2020/02/09/CorsAnyWhere-by-firebase/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome: true,
-    isPost: false,
+    isHome: false,
+    isPost: true,
     isPage: false,
     isArchive: false
   };
 </script>
 
-  <title>胖仔</title>
+  <title>利用 firebase 建立自己的 CorsAnyWhere | 胖仔</title>
   
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-76185597-2"></script>
   <script>
@@ -198,10 +207,10 @@
             
 
   <div class="posts-expand">
-        
+      
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="tw">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="tw">
     <link itemprop="mainEntityOfPage" href="https://fwcloud916.github.io/2020/02/09/CorsAnyWhere-by-firebase/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -214,9 +223,8 @@
       <meta itemprop="name" content="胖仔">
     </span>
       <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-            
-            <a href="/2020/02/09/CorsAnyWhere-by-firebase/" class="post-title-link" itemprop="url">利用 firebase 建立自己的 CorsAnyWhere</a>
+        <h1 class="post-title" itemprop="name headline">利用 firebase 建立自己的 CorsAnyWhere
+
           
         </h1>
 
@@ -250,7 +258,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="利用-firebase-建立自己的-CORS-Anywhere"><a href="#利用-firebase-建立自己的-CORS-Anywhere" class="headerlink" title="利用 firebase 建立自己的 CORS Anywhere"></a>利用 firebase 建立自己的 CORS Anywhere</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>有時候在串接外部 API 或是公司內部的 API，都可能會遇到跨域存取 ( CORS ) 的問題</p>
+        <h1 id="利用-firebase-建立自己的-CORS-Anywhere"><a href="#利用-firebase-建立自己的-CORS-Anywhere" class="headerlink" title="利用 firebase 建立自己的 CORS Anywhere"></a>利用 firebase 建立自己的 CORS Anywhere</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>有時候在串接外部 API 或是公司內部的 API，都可能會遇到跨域存取 ( CORS ) 的問題</p>
 <p>外部 API 因為安全性的問題所以會限制網域，需要透過後端取得資料來繞過這個驗證，但是開發時負責後端的人又都不肯幫忙先處理!?</p>
 <p>串接內部 API 的時候，討人厭的後端 API 又不給我 localhost 使用，不然是要怎麼測試!</p>
 <p>當遇到討厭的後端，不肯幫忙的後端，除了請其他願意幫忙的後端協助<del>揍他</del>以外，有時候也會透過一些服務來幫處理 CORS 的問題，例如: CORS Anywhere</p>
@@ -279,157 +287,51 @@
 <h3 id="佈署-functions"><a href="#佈署-functions" class="headerlink" title="佈署 functions"></a>佈署 functions</h3><p>輸入指令後就可以了!!<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">firebase deploy --only functions</span><br></pre></td></tr></table></figure></p>
 <p><img src="cloudfunctions.png" alt><br>之後就可以在 Firebase &gt; Functions 中找到自己的 API url 來使用哩!</p>
 
-        
-      
     </div>
 
     
     
     
+        
+      
+
       <footer class="post-footer">
-          <div class="post-eof"></div>
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/CORS-Anywhere-Cors-firebase-w3HexSchool/" rel="tag"># CORS Anywhere, Cors, firebase, w3HexSchool</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2019/03/19/NVM-inatall/" rel="next" title="NVM - Node Version Manager 安裝">
+                  <i class="fa fa-chevron-left"></i> NVM - Node Version Manager 安裝
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
         
       </footer>
+    
   </article>
   
   
   
 
-    
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="tw">
-    <link itemprop="mainEntityOfPage" href="https://fwcloud916.github.io/2019/03/19/NVM-inatall/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="WEI FANG">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="胖仔">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-            
-            <a href="/2019/03/19/NVM-inatall/" class="post-title-link" itemprop="url">NVM - Node Version Manager 安裝</a>
-          
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">發表於</span>
-
-              
-                
-              
-
-              <time title="創建時間：2019-03-19 00:00:00" itemprop="dateCreated datePublished" datetime="2019-03-19T00:00:00+08:00">2019-03-19</time>
-            </span>
-          
-            
-
-            
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-02-09 13:29:11" itemprop="dateModified" datetime="2020-02-09T13:29:11+08:00">2020-02-09</time>
-              </span>
-            
-          
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題</p>
-<h2 id="MAC"><a href="#MAC" class="headerlink" title="MAC"></a>MAC</h2><p><a href="https://github.com/creationix/nvm" target="_blank" rel="noopener">NVM</a> 是由大神 <a href="https://github.com/creationix" target="_blank" rel="noopener">Tim Caswell</a> 所開發的一個專案，提供 linus/mac 使用的 Node 版本管理器，是目前最受歡迎的管理器</p>
-<h4 id="安裝方式"><a href="#安裝方式" class="headerlink" title="安裝方式"></a>安裝方式</h4><p>1.開啟 terminal 或是 iterm2 ，使用 curl 來下載並安裝 (不建議使用 homebrew )<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash</span><br></pre></td></tr></table></figure></p>
-<p> 安裝完之後，會有安裝資訊</p>
-<ul>
-<li>第一個紅框代表安裝的路徑( /Users/XXX/.nvm )</li>
-<li>第二個紅框代表命令引入的資訊在.bashrc之中<ul>
-<li>有可能會在 ~/.zshrc, ~/.profile, or ~/.bashrc 之中</li>
-</ul>
-</li>
-</ul>
-<p><img src="1.png" alt></p>
-<p>在最後安裝完成時可以輸入<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> NVM_DIR=<span class="string">"HOME/.nvm"</span></span><br><span class="line">[ -s <span class="string">"<span class="variable">$NVM_DIR</span>/nvm.sh"</span> ] &amp;&amp; \. <span class="string">"<span class="variable">$NVM_DIR</span>/nvm.sh"</span></span><br><span class="line">[ -s <span class="string">"<span class="variable">$NVM_DIR</span>/bash_completion"</span> ] &amp;&amp; \. <span class="string">"<span class="variable">$NVM_DIR</span>/bash_completion"</span></span><br></pre></td></tr></table></figure></p>
-<p>來直接載入 nvm 的指令，或是重新啟動 terminal 來載入<br><img src="2.png" alt></p>
-<p>成功!!<br><img src="3.png" alt></p>
-<h4 id="常用指令"><a href="#常用指令" class="headerlink" title="常用指令"></a>常用指令</h4><ul>
-<li>nvm run node [version] — 切換不同版本</li>
-<li>nvm install [version]  — 安裝不同版本</li>
-<li>nvm ls                 — 查看已安裝的版本</li>
-<li>nvm ls-remote          — 查看可以安裝的版本</li>
-</ul>
-<h4 id="解除安裝方式"><a href="#解除安裝方式" class="headerlink" title="解除安裝方式"></a>解除安裝方式</h4><p>輸入指令<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rm -rf <span class="variable">$NVM_DIR</span> ~/.npm  ~/.bower</span><br></pre></td></tr></table></figure></p>
-<p>然後將命令資訊也刪掉</p>
-<ul>
-<li>有可能會在  ~/.zshrc, ~/.profile, or ~/.bashrc 之中</li>
-</ul>
-<p><img src="4.png" alt><br>就可以將nvm完全刪除囉!</p>
-<h2 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h2><p>雖然 NVM 並沒有提供 Windows 版本，不過還是有大神 <a href="https://github.com/coreybutler" target="_blank" rel="noopener">Corey Butler</a> 提供了 <a href="https://github.com/coreybutler/nvm-windows" target="_blank" rel="noopener">nvm-windows</a> 為 Windows 提供一樣好用的 Node 版本管理器，而且安裝的方式相當簡單，可以在這個專案的 <a href="https://github.com/coreybutler/nvm-windows/releases" target="_blank" rel="noopener">release</a> 中下載安裝檔(.exe)</p>
-<p><img src="5.png" alt></p>
-<h4 id="安裝方式-1"><a href="#安裝方式-1" class="headerlink" title="安裝方式"></a>安裝方式</h4><p>下載 nvm-setup.zip 解壓縮就可以 GET 安裝檔(.exe)<br>點兩下開始安裝!!!</p>
-<p><img src="6.png" alt></p>
-<p>基本上只要一直下一步就可以了!!!</p>
-<p><img src="7.png" alt></p>
-<p>選擇安裝路徑<br><img src="8.png" alt></p>
-<p>選擇一個存放進入點(捷徑)的路徑並且會自動加入環境變數<br><img src="9.png" alt></p>
-<p>就可順利安裝啦!!!</p>
-<p><img src="10.png" alt></p>
-<p>打開 cmder 測試一下( 命令提示字元 cmd 、 powershell 都可以使用)</p>
-<p>輸入 : <code>nvm -h</code></p>
-<p><img src="11.png" alt></p>
-<p>有跑出版本資訊與使用說明就是安裝成功啦!</p>
-<p>一樣可以使用</p>
-<ul>
-<li>nvm use [version]     — 切換不同版本</li>
-<li>nvm install [version] — 安裝不同版本</li>
-<li>nvm list              — 查看已安裝的版本</li>
-<li>nvm list available    — 查看可以安裝的版本</li>
-</ul>
-<h4 id="解除安裝方式-1"><a href="#解除安裝方式-1" class="headerlink" title="解除安裝方式"></a>解除安裝方式</h4><p>利用 windows 的新增或移除程式刪除即可!!</p>
-<h4 id="註記"><a href="#註記" class="headerlink" title="註記"></a>註記</h4><ul>
-<li>nvm 與 nvm-windows 是不同的套件</li>
-</ul>
-
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-          <div class="post-eof"></div>
-        
-      </footer>
-  </article>
-  
-  
-  
-
-    
   </div>
-
-  
-
 
 
           </div>
@@ -446,6 +348,11 @@
 
   <aside class="sidebar">
     <div class="sidebar-inner">
+        
+        
+        
+        
+      
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
@@ -458,6 +365,8 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#利用-firebase-建立自己的-CORS-Anywhere"><span class="nav-number">1.</span> <span class="nav-text">利用 firebase 建立自己的 CORS Anywhere</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#簡易說明"><span class="nav-number">1.2.</span> <span class="nav-text">簡易說明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#設定-firebase"><span class="nav-number">1.3.</span> <span class="nav-text">設定 firebase</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#撰寫-functions"><span class="nav-number">1.4.</span> <span class="nav-text">撰寫 functions</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#快速建立-firebase-開發環境-可參考-docs"><span class="nav-number">1.4.1.</span> <span class="nav-text">快速建立 firebase 開發環境 (可參考 docs)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#編輯-index-js"><span class="nav-number">1.4.2.</span> <span class="nav-text">編輯 index.js</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#佈署-functions"><span class="nav-number">1.4.3.</span> <span class="nav-text">佈署 functions</span></a></li></ol></li></ol></li></ol></div>
+        
       </div>
       <!--/noindex-->
 
