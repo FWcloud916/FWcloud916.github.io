@@ -63,7 +63,7 @@
 <meta property="og:site_name" content="胖仔">
 <meta property="og:description" content="Docker - 基本概念簡述 Docker 架構、優勢、好處並與 VM 作比較 建立環境建立一個 Web Service 的環境可能需要 Linux + Apache + MySQL + PHP (LAMP)又或者再加上 Nginx 組成 LNAMP 使用 VM一個環境就是一個完整的系統在獨立開發的時候，或許這個情況並不會造成困擾但是在團隊開發的時候，如果每個人都需要一個可以開發的環境  整個團">
 <meta property="og:locale" content="tw">
-<meta property="og:updated_time" content="2020-03-01T12:55:24.225Z">
+<meta property="og:updated_time" content="2020-03-06T12:50:57.611Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker - 基本概念">
 <meta name="twitter:description" content="Docker - 基本概念簡述 Docker 架構、優勢、好處並與 VM 作比較 建立環境建立一個 Web Service 的環境可能需要 Linux + Apache + MySQL + PHP (LAMP)又或者再加上 Nginx 組成 LNAMP 使用 VM一個環境就是一個完整的系統在獨立開發的時候，或許這個情況並不會造成困擾但是在團隊開發的時候，如果每個人都需要一個可以開發的環境  整個團">
@@ -246,12 +246,26 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-01 20:55:24" itemprop="dateModified" datetime="2020-03-01T20:55:24+08:00">2020-03-01</time>
+                <time title="修改時間：2020-03-06 20:50:57" itemprop="dateModified" datetime="2020-03-06T20:50:57+08:00">2020-03-06</time>
               </span>
             
           
 
           
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2020/02/16/docker-basic-concept/#comments" itemprop="discussionUrl"><span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/02/16/docker-basic-concept/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
 
         </div>
       </header>
@@ -339,6 +353,15 @@
 
           </div>
           
+    
+    
+  <div class="comments" id="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+  
 
         </div>
           
@@ -481,6 +504,38 @@
   
 
   
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://fwcloud.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  function disqus_config() {
+    this.page.url = "https://fwcloud916.github.io/2020/02/16/docker-basic-concept/";
+    this.page.identifier = "2020/02/16/docker-basic-concept/";
+    this.page.title = 'Docker - 基本概念';};
+  function loadComments() {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://fwcloud.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  }
+    window.addEventListener('load', loadComments, false);
+  
+</script>
 
 </body>
 </html>
