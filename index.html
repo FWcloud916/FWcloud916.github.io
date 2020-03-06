@@ -242,7 +242,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:18:17" itemprop="dateModified" datetime="2020-03-06T21:18:17+08:00">2020-03-06</time>
               </span>
             
           
@@ -272,7 +272,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="Docker-Container-基本概念"><a href="#Docker-Container-基本概念" class="headerlink" title="Docker Container - 基本概念"></a>Docker Container - 基本概念</h1><p>簡述 Docker Container 使用方式、基本常用指令<br>
+          <h1 id="Docker-Container-基本概念"><a href="#Docker-Container-基本概念" class="headerlink" title="Docker Container - 基本概念"></a>Docker Container - 基本概念</h1><p>簡述 Docker Container 使用方式、基本常用指令</p>
+<h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的</p>
+<p>image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的<br>
           <!--noindex-->
           
             <div class="post-button">
@@ -343,7 +345,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:18:17" itemprop="dateModified" datetime="2020-03-06T21:18:17+08:00">2020-03-06</time>
               </span>
             
           
@@ -373,31 +375,19 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="Docker-基本概念"><a href="#Docker-基本概念" class="headerlink" title="Docker - 基本概念"></a>Docker - 基本概念</h1><p>簡述 Docker 架構、優勢、好處並與 VM 作比較</p>
-<h2 id="建立環境"><a href="#建立環境" class="headerlink" title="建立環境"></a>建立環境</h2><p>建立一個 Web Service 的環境<br>可能需要 Linux + Apache + MySQL + PHP (LAMP)<br>又或者再加上 Nginx 組成 LNAMP</p>
-<h3 id="使用-VM"><a href="#使用-VM" class="headerlink" title="使用 VM"></a>使用 VM</h3><p>一個環境就是一個<strong>完整</strong>的系統<br>在獨立開發的時候，或許這個情況並不會造成困擾<br>但是在團隊開發的時候，如果每個人都需要一個可以開發的環境</p>
-<ul>
-<li>整個團隊共用一個環境 =&gt; 每個開發者互相影響</li>
-<li>每個人有獨立的開發環境 =&gt; 很難確保每個人都有相同的環境</li>
-</ul>
-<h3 id="使用-Docker"><a href="#使用-Docker" class="headerlink" title="使用 Docker"></a>使用 Docker</h3><p>Docker 不需要自己的系統，Docker 的架構是建立在原有的系統上，使用原有系統的運算資源，只安裝需要的東西，相比基於硬體上的系統建立，Docker 建立的系統只是一個程式而已</p>
-<p>所以 Docker 具有快速建立、轉移、複製的特性</p>
-<p>不過即便透過 namespace 隔離，但因為與原系統共用 kernel，所以 Docker 也不像 VM 是完全隔離的系統</p>
-<h2 id="資源分配及建立限制"><a href="#資源分配及建立限制" class="headerlink" title="資源分配及建立限制"></a>資源分配及建立限制</h2><h3 id="VM"><a href="#VM" class="headerlink" title="VM"></a>VM</h3><ul>
-<li>虛擬化硬體資源，執行自己的作業系統</li>
-<li>可以建立任何環境， Linux 、 MAC OS 或是 Windows</li>
-</ul>
-<h3 id="Docker"><a href="#Docker" class="headerlink" title="Docker"></a>Docker</h3><ul>
-<li>Docker 使用原系統的 kernel 作為運算，不需要執行自己的作業系統</li>
-<li>只能建立相同 kernel 的環境使用</li>
-</ul>
-<h2 id="Docker-帶來的優勢"><a href="#Docker-帶來的優勢" class="headerlink" title="Docker 帶來的優勢"></a>Docker 帶來的優勢</h2><h3 id="快速建立相同環境"><a href="#快速建立相同環境" class="headerlink" title="快速建立相同環境"></a>快速建立相同環境</h3><p>  當環境建立好之後（ image 、 Dockerfile ）可以在不同的機器直接部署、安裝</p>
-<h3 id="快速調整環境"><a href="#快速調整環境" class="headerlink" title="快速調整環境"></a>快速調整環境</h3><p>  只需要調整 image 或 Dockerfile 就可完成環境的變更</p>
-<h3 id="節省資源提升效能"><a href="#節省資源提升效能" class="headerlink" title="節省資源提升效能"></a>節省資源提升效能</h3><p>  不需要運行額外的作業系統，直接使用原本 kernel ，將資源更有效率的運用</p>
-
+          <h1 id="Docker-基本概念"><a href="#Docker-基本概念" class="headerlink" title="Docker - 基本概念"></a>Docker - 基本概念</h1><p>簡述 Docker 架構、優勢、好處並與 VM 作比較<br>
+          <!--noindex-->
+          
+            <div class="post-button">
+              <a class="btn" href="/2020/02/16/docker-basic-concept/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
         
       
-    </div>
+    </p></div>
 
     
     
@@ -456,7 +446,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:18:17" itemprop="dateModified" datetime="2020-03-06T21:18:17+08:00">2020-03-06</time>
               </span>
             
           
@@ -488,37 +478,19 @@
       
           <h1 id="利用-firebase-建立自己的-CORS-Anywhere"><a href="#利用-firebase-建立自己的-CORS-Anywhere" class="headerlink" title="利用 firebase 建立自己的 CORS Anywhere"></a>利用 firebase 建立自己的 CORS Anywhere</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>有時候在串接外部 API 或是公司內部的 API，都可能會遇到跨域存取 ( CORS ) 的問題</p>
 <p>外部 API 因為安全性的問題所以會限制網域，需要透過後端取得資料來繞過這個驗證，但是開發時負責後端的人又都不肯幫忙先處理!?</p>
-<p>串接內部 API 的時候，討人厭的後端 API 又不給我 localhost 使用，不然是要怎麼測試!</p>
-<p>當遇到討厭的後端，不肯幫忙的後端，除了請其他願意幫忙的後端協助<del>揍他</del>以外，有時候也會透過一些服務來幫處理 CORS 的問題，例如: CORS Anywhere</p>
-<p>除了利用別人提供的服務，要自己建立一個簡易 CORS Anywhere 也並非難事哩</p>
-<h2 id="簡易說明"><a href="#簡易說明" class="headerlink" title="簡易說明"></a>簡易說明</h2><ul>
-<li>借用 google 的力量，省去自架 server 的力氣</li>
-<li>建立 firebase 專案</li>
-<li>利用 Cloud functions 建立自己的 API</li>
-<li>這支 API 的工作就是去取回外部 API 的資料並回傳</li>
-<li>這就是你自己的 CORS Anywhere</li>
-</ul>
-<h2 id="設定-firebase"><a href="#設定-firebase" class="headerlink" title="設定 firebase"></a>設定 firebase</h2><p>要利用 Cloud functions 從外部 API 取回資料，需先更改收費方式<br><img src="price.png" alt><br><img src="price_chart.png" alt><br>費用不高，基本上不會超過免費額度</p>
-<h2 id="撰寫-functions"><a href="#撰寫-functions" class="headerlink" title="撰寫 functions"></a>撰寫 functions</h2><h3 id="快速建立-firebase-開發環境-可參考-docs"><a href="#快速建立-firebase-開發環境-可參考-docs" class="headerlink" title="快速建立 firebase 開發環境 (可參考 docs)"></a>快速建立 firebase 開發環境 (<a href="https://firebase.google.com/docs/functions/get-started?authuser=0" target="_blank" rel="noopener">可參考 docs</a>)</h3><ol>
-<li>建立一個資料夾</li>
-<li>開啟 command line</li>
-<li><p>依序執行以下指令</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm install -g firebase-tools</span><br><span class="line">firebase login</span><br><span class="line">firebase init</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>依照指示就可以把專案建起來了!</p>
-</li>
-</ol>
-<h3 id="編輯-index-js"><a href="#編輯-index-js" class="headerlink" title="編輯 index.js"></a>編輯 index.js</h3><p>Cloud Functions 的基本架構是利用 Node.js 及 Express.js 建立的環境， index.js 就是 Cloud Functions 預設的路由</p>
-<p>安裝使用到的套件 axios<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 進入 functions 目錄底下安裝</span><br><span class="line">cd functions</span><br><span class="line"></span><br><span class="line"># 存到 package.json 佈署時才會正確安裝</span><br><span class="line">npm install axios --save</span><br></pre></td></tr></table></figure></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> functions = <span class="built_in">require</span>(<span class="string">'firebase-functions'</span>);</span><br><span class="line"><span class="keyword">const</span> axios = <span class="built_in">require</span>(<span class="string">'axios'</span>);</span><br><span class="line"></span><br><span class="line">exports.corsAnyWhere = functions.https.onRequest(<span class="keyword">async</span> (req, res) =&gt; &#123;</span><br><span class="line">  res.set(<span class="string">'Access-Control-Allow-Origin'</span>, <span class="string">'*'</span>); <span class="comment">// 設定可以存取的網域 '*' 為不限制</span></span><br><span class="line">  res.set(<span class="string">'Access-Control-Allow-Methods'</span>, <span class="string">'GET'</span>); <span class="comment">// 設定可以接受的 request</span></span><br><span class="line">  res.set(<span class="string">'Access-Control-Allow-Headers'</span>, <span class="string">'Content-Type'</span>)</span><br><span class="line">  <span class="keyword">const</span> getData = <span class="keyword">await</span> axios(&#123;</span><br><span class="line">    method: <span class="string">'get'</span>,</span><br><span class="line">    url: req.query.url <span class="comment">//設定接受 query 參數 url ，接受要取的 api 網址，可依照需求增加</span></span><br><span class="line">  &#125;).then(<span class="keyword">async</span> (response) =&gt; &#123;</span><br><span class="line">    <span class="keyword">return</span> res.send(response.data);</span><br><span class="line">  &#125;).catch(<span class="function"><span class="params">err</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> res.send(<span class="string">'error: '</span> + err);</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<p>關於存取限制可以參考 MDN <a href="https://developer.mozilla.org/zh-TW/docs/Web/HTTP/Server-Side_Access_Control" target="_blank" rel="noopener">伺服器端存取控制（CORS）</a> 來做設定</p>
-<h3 id="佈署-functions"><a href="#佈署-functions" class="headerlink" title="佈署 functions"></a>佈署 functions</h3><p>輸入指令後就可以了!!<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">firebase deploy --only functions</span><br></pre></td></tr></table></figure></p>
-<p><img src="cloudfunctions.png" alt><br>之後就可以在 Firebase &gt; Functions 中找到自己的 API url 來使用哩!</p>
-<p>這裡也提供本文的<a href="https://github.com/FWcloud916/corsbyfirebase" target="_blank" rel="noopener">範例程式碼</a></p>
-
+<p>串接內部 API 的時候，討人厭的後端 API 又不給我 localhost 使用，不然是要怎麼測試!<br>
+          <!--noindex-->
+          
+            <div class="post-button">
+              <a class="btn" href="/2020/02/09/CorsAnyWhere-by-firebase/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
         
       
-    </div>
+    </p></div>
 
     
     
@@ -577,7 +549,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:18:17" itemprop="dateModified" datetime="2020-03-06T21:18:17+08:00">2020-03-06</time>
               </span>
             
           
@@ -607,62 +579,19 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題</p>
-<h2 id="MAC"><a href="#MAC" class="headerlink" title="MAC"></a>MAC</h2><p><a href="https://github.com/creationix/nvm" target="_blank" rel="noopener">NVM</a> 是由大神 <a href="https://github.com/creationix" target="_blank" rel="noopener">Tim Caswell</a> 所開發的一個專案，提供 linus/mac 使用的 Node 版本管理器，是目前最受歡迎的管理器</p>
-<h4 id="安裝方式"><a href="#安裝方式" class="headerlink" title="安裝方式"></a>安裝方式</h4><p>1.開啟 terminal 或是 iterm2 ，使用 curl 來下載並安裝 (不建議使用 homebrew )<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash</span><br></pre></td></tr></table></figure></p>
-<p> 安裝完之後，會有安裝資訊</p>
-<ul>
-<li>第一個紅框代表安裝的路徑( /Users/XXX/.nvm )</li>
-<li>第二個紅框代表命令引入的資訊在.bashrc之中<ul>
-<li>有可能會在 ~/.zshrc, ~/.profile, or ~/.bashrc 之中</li>
-</ul>
-</li>
-</ul>
-<p><img src="1.png" alt></p>
-<p>在最後安裝完成時可以輸入<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> NVM_DIR=<span class="string">"HOME/.nvm"</span></span><br><span class="line">[ -s <span class="string">"<span class="variable">$NVM_DIR</span>/nvm.sh"</span> ] &amp;&amp; \. <span class="string">"<span class="variable">$NVM_DIR</span>/nvm.sh"</span></span><br><span class="line">[ -s <span class="string">"<span class="variable">$NVM_DIR</span>/bash_completion"</span> ] &amp;&amp; \. <span class="string">"<span class="variable">$NVM_DIR</span>/bash_completion"</span></span><br></pre></td></tr></table></figure></p>
-<p>來直接載入 nvm 的指令，或是重新啟動 terminal 來載入<br><img src="2.png" alt></p>
-<p>成功!!<br><img src="3.png" alt></p>
-<h4 id="常用指令"><a href="#常用指令" class="headerlink" title="常用指令"></a>常用指令</h4><ul>
-<li>nvm run node [version] — 切換不同版本</li>
-<li>nvm install [version]  — 安裝不同版本</li>
-<li>nvm ls                 — 查看已安裝的版本</li>
-<li>nvm ls-remote          — 查看可以安裝的版本</li>
-</ul>
-<h4 id="解除安裝方式"><a href="#解除安裝方式" class="headerlink" title="解除安裝方式"></a>解除安裝方式</h4><p>輸入指令<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rm -rf <span class="variable">$NVM_DIR</span> ~/.npm  ~/.bower</span><br></pre></td></tr></table></figure></p>
-<p>然後將命令資訊也刪掉</p>
-<ul>
-<li>有可能會在  ~/.zshrc, ~/.profile, or ~/.bashrc 之中</li>
-</ul>
-<p><img src="4.png" alt><br>就可以將nvm完全刪除囉!</p>
-<h2 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h2><p>雖然 NVM 並沒有提供 Windows 版本，不過還是有大神 <a href="https://github.com/coreybutler" target="_blank" rel="noopener">Corey Butler</a> 提供了 <a href="https://github.com/coreybutler/nvm-windows" target="_blank" rel="noopener">nvm-windows</a> 為 Windows 提供一樣好用的 Node 版本管理器，而且安裝的方式相當簡單，可以在這個專案的 <a href="https://github.com/coreybutler/nvm-windows/releases" target="_blank" rel="noopener">release</a> 中下載安裝檔(.exe)</p>
-<p><img src="5.png" alt></p>
-<h4 id="安裝方式-1"><a href="#安裝方式-1" class="headerlink" title="安裝方式"></a>安裝方式</h4><p>下載 nvm-setup.zip 解壓縮就可以 GET 安裝檔(.exe)<br>點兩下開始安裝!!!</p>
-<p><img src="6.png" alt></p>
-<p>基本上只要一直下一步就可以了!!!</p>
-<p><img src="7.png" alt></p>
-<p>選擇安裝路徑<br><img src="8.png" alt></p>
-<p>選擇一個存放進入點(捷徑)的路徑並且會自動加入環境變數<br><img src="9.png" alt></p>
-<p>就可順利安裝啦!!!</p>
-<p><img src="10.png" alt></p>
-<p>打開 cmder 測試一下( 命令提示字元 cmd 、 powershell 都可以使用)</p>
-<p>輸入 : <code>nvm -h</code></p>
-<p><img src="11.png" alt></p>
-<p>有跑出版本資訊與使用說明就是安裝成功啦!</p>
-<p>一樣可以使用</p>
-<ul>
-<li>nvm use [version]     — 切換不同版本</li>
-<li>nvm install [version] — 安裝不同版本</li>
-<li>nvm list              — 查看已安裝的版本</li>
-<li>nvm list available    — 查看可以安裝的版本</li>
-</ul>
-<h4 id="解除安裝方式-1"><a href="#解除安裝方式-1" class="headerlink" title="解除安裝方式"></a>解除安裝方式</h4><p>利用 windows 的新增或移除程式刪除即可!!</p>
-<h4 id="註記"><a href="#註記" class="headerlink" title="註記"></a>註記</h4><ul>
-<li>nvm 與 nvm-windows 是不同的套件</li>
-</ul>
-
+          <p>由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題<br>
+          <!--noindex-->
+          
+            <div class="post-button">
+              <a class="btn" href="/2019/03/19/NVM-inatall/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
         
       
-    </div>
+    </p></div>
 
     
     
