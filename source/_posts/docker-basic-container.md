@@ -10,7 +10,7 @@ tag:
 # Docker Container - 基本概念
 
 簡述 Docker Container 使用方式、基本常用指令
-
+<!--more-->
 ## 概念
 container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的
 
