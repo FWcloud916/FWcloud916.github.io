@@ -8,7 +8,7 @@ tag:
 # Docker - 基本概念
 
 簡述 Docker 架構、優勢、好處並與 VM 作比較
-
+<!--more-->
 ## 建立環境
 
 建立一個 Web Service 的環境

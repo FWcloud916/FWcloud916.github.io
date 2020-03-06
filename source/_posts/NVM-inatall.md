@@ -3,7 +3,7 @@ title: NVM - Node Version Manager 安裝
 date: 2019/03/19
 ---
 由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題
-
+<!--more-->
 ## MAC 
 [NVM](https://github.com/creationix/nvm) 是由大神 [Tim Caswell](https://github.com/creationix) 所開發的一個專案，提供 linus/mac 使用的 Node 版本管理器，是目前最受歡迎的管理器
 #### 安裝方式
