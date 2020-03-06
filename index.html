@@ -242,7 +242,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 20:50:57" itemprop="dateModified" datetime="2020-03-06T20:50:57+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
               </span>
             
           
@@ -272,37 +272,19 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="Docker-Container-基本概念"><a href="#Docker-Container-基本概念" class="headerlink" title="Docker Container - 基本概念"></a>Docker Container - 基本概念</h1><p>簡述 Docker Container 使用方式、基本常用指令</p>
-<h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的</p>
-<p>image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的</p>
-<h2 id="常用指令"><a href="#常用指令" class="headerlink" title="常用指令"></a>常用指令</h2><figure class="highlight docker"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container <span class="keyword">run</span><span class="bash"> [OPTIONS] IMAGE [COMMAND] [ARG...]</span></span><br></pre></td></tr></table></figure>
-<p>運行一個 <a href="https://hub.docker.com/_/nginx?tab=description" target="_blank" rel="noopener">nginx</a><br><figure class="highlight docker"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container <span class="keyword">run</span><span class="bash"> -p 8080:80 nginx</span></span><br></pre></td></tr></table></figure></p>
-<p><img src="nginx1.png" alt><br>如果電腦上沒有 nginx 的 image 會從 docker 的儲存庫下載，預設通常是官方的 <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a></p>
-<p>上面這行指令中 <code>-p</code> 是 <code>--port</code> 的縮寫，傳入兩個參數，一個是主機的 port (8080) ，一個是 container 的（80），代表的意思是將 container 的 80 埠對應到主機的 8080 埠<br>所以在主機的電腦上可以開啟瀏覽器輸入 localhost:8080 就會看到 container 開啟的 nginx 伺服器<br><img src="nginx2.png" alt></p>
-<p>如果要知道開啟的 port 是多少，基本上有三種方法</p>
-<ul>
-<li><p>從 Docker Hub 上的<a href="https://hub.docker.com/_/nginx?tab=description" target="_blank" rel="noopener">說明</a>中查詢<img src="dhub1.png" alt></p>
-</li>
-<li><p>從 Docker Hub 上的 <a href="https://hub.docker.com/layers/nginx/library/nginx/latest/images/sha256-d7ffce801c3c92dac436bc5dc65235384dcc1b6bbb8210ccb65f466f975f8f88?context=explore" target="_blank" rel="noopener">tag</a> 中查詢<img src="dhub2.png" alt></p>
-</li>
-<li><p>從 <a href="https://github.com/nginxinc/docker-nginx/blob/5971de30c487356d5d2a2e1a79e02b2612f9a72f/mainline/buster/Dockerfile" target="_blank" rel="noopener">dockerfile</a> 裡面查詢<img src="dhub3.png" alt></p>
-</li>
-</ul>
-<p>EXPOSE 是 dockerfile 中的指令，代表服務對外開啟的 port</p>
-<p>這邊可以開始感受到</p>
-<blockquote>
-<p>dockerfile 是 image 的藍圖<br>image 是 container 的樣板</p>
-</blockquote>
-<p>所以在使用 image 的時候最好可以看到 dockerfile 才可以確保開啟的 container 有做什麼事情</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container run -v ~/Documents/demo:/usr/share/nginx/html -p 8080:80 nginx</span><br></pre></td></tr></table></figure>
-<p>這次加上 <code>-v</code> 是 <code>--volume</code> 的縮寫，代表綁定檔案目錄，藉由設置這個參數可以修改 container 中要執行的檔案，這邊綁定了 nginx 的預設目錄，就可以修改預設顯示的頁面了<br><img src="nginx3.png" alt></p>
-<p>其他還有<a href="https://docs.docker.com/engine/reference/commandline/container_run/" target="_blank" rel="noopener">許多參數</a>可以設定</p>
-<p><code>-d</code> <code>--detach</code> 代表背景執行，執行後只會回傳 container ID</p>
-<p><code>-i</code> <code>--interactive</code> 開啟互動模式，可以直接操作 container</p>
-
+          <h1 id="Docker-Container-基本概念"><a href="#Docker-Container-基本概念" class="headerlink" title="Docker Container - 基本概念"></a>Docker Container - 基本概念</h1><p>簡述 Docker Container 使用方式、基本常用指令<br>
+          <!--noindex-->
+          
+            <div class="post-button">
+              <a class="btn" href="/2020/02/22/docker-basic-container/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
         
       
-    </div>
+    </p></div>
 
     
     
@@ -361,7 +343,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 20:50:57" itemprop="dateModified" datetime="2020-03-06T20:50:57+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
               </span>
             
           
@@ -474,7 +456,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 20:50:57" itemprop="dateModified" datetime="2020-03-06T20:50:57+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
               </span>
             
           
@@ -595,7 +577,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 20:50:57" itemprop="dateModified" datetime="2020-03-06T20:50:57+08:00">2020-03-06</time>
+                <time title="修改時間：2020-03-06 21:07:15" itemprop="dateModified" datetime="2020-03-06T21:07:15+08:00">2020-03-06</time>
               </span>
             
           
