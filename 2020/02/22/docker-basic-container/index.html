@@ -1,302 +1,224 @@
 <!DOCTYPE html>
-
-
-
-
-
-<html lang="tw">
+<html>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 3.8.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.1">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.1">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.1">
-  <link rel="mask-icon" href="/images/logo.svg?v=7.4.1" color="#222">
-
-<link rel="stylesheet" href="/css/main.css?v=7.4.1">
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
-
-
-<script id="hexo-configurations">
-  var NexT = window.NexT || {};
-  var CONFIG = {
-    root: '/',
-    scheme: 'Gemini',
-    version: '7.4.1',
-    exturl: false,
-    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
-    copycode: {"enable":false,"show_result":false,"style":null},
-    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
-    bookmark: {"enable":false,"color":"#222","save":"auto"},
-    fancybox: false,
-    mediumzoom: false,
-    lazyload: false,
-    pangu: false,
-    algolia: {
-      appID: '',
-      apiKey: '',
-      indexName: '',
-      hits: {"per_page":10},
-      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    },
-    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
-    path: '',
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
-    translation: {
-      copy_button: '複製',
-      copy_success: '複製成功',
-      copy_failure: '複製失敗'
-    },
-    sidebarPadding: 40
-  };
-</script>
-
+  <meta charset="utf-8">
+  
+  <title>Docker Container - 基本概念 | 胖仔</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="w3HexSchoolDockerDocker ContainerContainer" />
+  
+  
+  
+  
   <meta name="description" content="Docker Container - 基本概念簡述 Docker Container 使用方式、基本常用指令 概念container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的 image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 c">
-<meta name="keywords" content="w3HexSchool,docker,Docker Container,Container">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker Container - 基本概念">
 <meta property="og:url" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/index.html">
 <meta property="og:site_name" content="胖仔">
 <meta property="og:description" content="Docker Container - 基本概念簡述 Docker Container 使用方式、基本常用指令 概念container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的 image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 c">
-<meta property="og:locale" content="tw">
+<meta property="og:locale" content="zh_TW">
 <meta property="og:image" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/nginx1.png">
 <meta property="og:image" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/nginx2.png">
 <meta property="og:image" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/dhub1.png">
 <meta property="og:image" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/dhub2.png">
 <meta property="og:image" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/dhub3.png">
 <meta property="og:image" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/nginx3.png">
-<meta property="og:updated_time" content="2020-03-06T13:18:17.391Z">
+<meta property="article:published_time" content="2020-02-21T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-03-08T11:08:05.533Z">
+<meta property="article:author" content="WEI FANG">
+<meta property="article:tag" content="w3HexSchool">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="Docker Container">
+<meta property="article:tag" content="Container">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Docker Container - 基本概念">
-<meta name="twitter:description" content="Docker Container - 基本概念簡述 Docker Container 使用方式、基本常用指令 概念container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的 image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 c">
 <meta name="twitter:image" content="https://fwcloud916.github.io/2020/02/22/docker-basic-container/nginx1.png">
-  <link rel="canonical" href="https://fwcloud916.github.io/2020/02/22/docker-basic-container/">
+  
+    <link rel="alternate" href="/atom.xml" title="胖仔" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  
+<link rel="stylesheet" href="/css/style.css">
 
 
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome: false,
-    isPost: true,
-    isPage: false,
-    isArchive: false
-  };
+  
+<script src="/js/jquery-3.1.1.min.js"></script>
+
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css" >
+  <link rel="stylesheet" href="/css/fashion.css" >
+  <link rel="stylesheet" href="/css/glyphs.css" >
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+    <div class="site-branding">
+      <div class="row">
+        <div class="col-md-8 col-xs-12">
+          <a href="/" rel="home" class="pull-left">
+            <img style="margin-bottom: 10px;" width="124px"
+              height="124px" alt="Hike News"
+              src=" /css/images/fw.jpg">
+          </a>
+          <div class="pull-left" style="padding-left:10px">
+            <h1 class="site-title" style="margin-top:1em">
+              <a href="/" title="胖仔" rel="home"> 胖仔 </a>
+            </h1>
+            
+              <div class="site-description" style="margin-bottom:0px">吃蛋塔</div>
+            
+          </div>
+          <div class="clearfix"></div>
+        </div>
+        
+        <div class="col-md-4 col-xs-12">
+          <ul class="clearfix widget-social-icons pull-right">
+            
+            <li style="margin:5px 0px 5px 10px;"><a href="https://github.com/FWcloud916" target="_blank" rel="noopener" title="Github"><i class="fa fa-github"
+                  aria-hidden="true"></i></a></li>
+            
+            <li style="margin:5px 0px 5px 10px;"><a href="https://www.facebook.com/ree0916tw" target="_blank" rel="noopener" title="Facebook"><i class="fa fa-facebook"
+                  aria-hidden="true"></i></a></li>
+            
+          </ul>
+          <div class="clearfix"></div>
+          <div style="margin-top:21px">
+            <div id="search-form-wrap">
+    
+    <form class="search-form">
+        <label style="width: 75%;" class="pull-left">
+            <span class="screen-reader-text">Search for:</span>
+            <input type="search" class="search-field" style="height: 36px; width: 100%;"
+                placeholder=" 搜尋…" value="" name="s" title="Search for:">
+        </label>
+        <input type="submit" class="search-form-submit pull-right" value="搜尋">
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="請輸入關鍵詞..."/>
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '頁面',
+            CATEGORIES: '分類',
+            TAGS: '標籤',
+            UNTITLED: '(無標題)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
 </script>
 
-  <title>Docker Container - 基本概念 | 胖仔</title>
-  
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-76185597-2"></script>
-  <script>
-    var host = window.location.hostname;
-    if (host !== "localhost" || !true) {
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'UA-76185597-2');
-    }
-  </script>
+<script src="/js/insight.js"></script>
 
-
-
-
-
-
-
-
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .logo,
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-meta">
-
-    <div>
-      <a href="/" class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">胖仔</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-        <p class="site-subtitle">吃蛋塔</p>
-      
-  </div>
-
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="切換導航欄">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
-    </div>
-  </div>
+    
 </div>
-
-
-<nav class="site-nav">
-  
-  <ul id="menu" class="menu">
-      
-      
-      
-        
-        <li class="menu-item menu-item-home">
-      
-    
-
-    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首頁</a>
-
-  </li>
-      
-      
-      
-        
-        <li class="menu-item menu-item-archives">
-      
-    
-
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>歸檔</a>
-
-  </li>
-  </ul>
-
-</nav>
-</div>
-    </header>
-
-    
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
-
-
-    <main id="main" class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-            
-
-          <div id="content" class="content">
-            
-
-  <div class="posts-expand">
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="tw">
-    <link itemprop="mainEntityOfPage" href="https://fwcloud916.github.io/2020/02/22/docker-basic-container/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="WEI FANG">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="胖仔">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">Docker Container - 基本概念
-
-          
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">發表於</span>
-
-              
-                
-              
-
-              <time title="創建時間：2020-02-22 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-22T00:00:00+08:00">2020-02-22</time>
-            </span>
-          
-            
-
-            
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2020-03-06 21:18:17" itemprop="dateModified" datetime="2020-03-06T21:18:17+08:00">2020-03-06</time>
-              </span>
-            
-          
-
-          
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="fa fa-comment-o"></i>
-      </span>
-        
-      
-      <span class="post-meta-item-text">Disqus：</span>
-    
-    <a title="disqus" href="/2020/02/22/docker-basic-container/#comments" itemprop="discussionUrl"><span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/02/22/docker-basic-container/" itemprop="commentCount"></span></a>
-  </span>
-  
-  
-
+          </div>
         </div>
-      </header>
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
+        <div class="clearfix"></div>
+      </div>
+      <nav id="main-navigation" class="main-navigation" role="navigation">
+        <a class="nav-open">Menu</a>
+        <a class="nav-close">Close</a>
 
+        <div class="clearfix sf-menu">
+          <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首頁</a> </li>
+                
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">彙整</a> </li>
+                
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分類</a> </li>
+                
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">標籤</a> </li>
+                
+          </ul>
+        </div>
+      </nav>
+
+  </div>
+  </div>
+</header>
+
+
+  <div id="container" class="container">
+    <div id="wrap">
+      <div id="content" class="outer" style="padding:0px">
+        
+          <section id="main" style="float:none;"><article id="post-docker-basic-container" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+    <div class="article-meta">
+      
+	<a href="/2020/02/22/docker-basic-container/" class="article-date">
+	  <time datetime="2020-02-21T16:00:00.000Z" itemprop="datePublished">二月 22, 2020</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Docker/">Docker</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
       
         <h1 id="Docker-Container-基本概念"><a href="#Docker-Container-基本概念" class="headerlink" title="Docker Container - 基本概念"></a>Docker Container - 基本概念</h1><p>簡述 Docker Container 使用方式、基本常用指令</p>
 <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的</p>
-<p>image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的<br><a id="more"></a></p>
+<p>image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的</p>
+<a id="more"></a>
 <h2 id="常用指令"><a href="#常用指令" class="headerlink" title="常用指令"></a>常用指令</h2><figure class="highlight docker"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container <span class="keyword">run</span><span class="bash"> [OPTIONS] IMAGE [COMMAND] [ARG...]</span></span><br></pre></td></tr></table></figure>
-<p>運行一個 <a href="https://hub.docker.com/_/nginx?tab=description" target="_blank" rel="noopener">nginx</a><br><figure class="highlight docker"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container <span class="keyword">run</span><span class="bash"> -p 8080:80 nginx</span></span><br></pre></td></tr></table></figure></p>
-<p><img src="nginx1.png" alt><br>如果電腦上沒有 nginx 的 image 會從 docker 的儲存庫下載，預設通常是官方的 <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a></p>
-<p>上面這行指令中 <code>-p</code> 是 <code>--port</code> 的縮寫，傳入兩個參數，一個是主機的 port (8080) ，一個是 container 的（80），代表的意思是將 container 的 80 埠對應到主機的 8080 埠<br>所以在主機的電腦上可以開啟瀏覽器輸入 localhost:8080 就會看到 container 開啟的 nginx 伺服器<br><img src="nginx2.png" alt></p>
+<p>運行一個 <a href="https://hub.docker.com/_/nginx?tab=description" target="_blank" rel="noopener">nginx</a></p>
+<figure class="highlight docker"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container <span class="keyword">run</span><span class="bash"> -p 8080:80 nginx</span></span><br></pre></td></tr></table></figure>
+<p><img src="nginx1.png" alt=""><br>如果電腦上沒有 nginx 的 image 會從 docker 的儲存庫下載，預設通常是官方的 <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a></p>
+<p>上面這行指令中 <code>-p</code> 是 <code>--port</code> 的縮寫，傳入兩個參數，一個是主機的 port (8080) ，一個是 container 的（80），代表的意思是將 container 的 80 埠對應到主機的 8080 埠<br>所以在主機的電腦上可以開啟瀏覽器輸入 localhost:8080 就會看到 container 開啟的 nginx 伺服器<br><img src="nginx2.png" alt=""></p>
 <p>如果要知道開啟的 port 是多少，基本上有三種方法</p>
 <ul>
-<li><p>從 Docker Hub 上的<a href="https://hub.docker.com/_/nginx?tab=description" target="_blank" rel="noopener">說明</a>中查詢<img src="dhub1.png" alt></p>
+<li><p>從 Docker Hub 上的<a href="https://hub.docker.com/_/nginx?tab=description" target="_blank" rel="noopener">說明</a>中查詢<img src="dhub1.png" alt=""></p>
 </li>
-<li><p>從 Docker Hub 上的 <a href="https://hub.docker.com/layers/nginx/library/nginx/latest/images/sha256-d7ffce801c3c92dac436bc5dc65235384dcc1b6bbb8210ccb65f466f975f8f88?context=explore" target="_blank" rel="noopener">tag</a> 中查詢<img src="dhub2.png" alt></p>
+<li><p>從 Docker Hub 上的 <a href="https://hub.docker.com/layers/nginx/library/nginx/latest/images/sha256-d7ffce801c3c92dac436bc5dc65235384dcc1b6bbb8210ccb65f466f975f8f88?context=explore" target="_blank" rel="noopener">tag</a> 中查詢<img src="dhub2.png" alt=""></p>
 </li>
-<li><p>從 <a href="https://github.com/nginxinc/docker-nginx/blob/5971de30c487356d5d2a2e1a79e02b2612f9a72f/mainline/buster/Dockerfile" target="_blank" rel="noopener">dockerfile</a> 裡面查詢<img src="dhub3.png" alt></p>
+<li><p>從 <a href="https://github.com/nginxinc/docker-nginx/blob/5971de30c487356d5d2a2e1a79e02b2612f9a72f/mainline/buster/Dockerfile" target="_blank" rel="noopener">dockerfile</a> 裡面查詢<img src="dhub3.png" alt=""></p>
 </li>
 </ul>
 <p>EXPOSE 是 dockerfile 中的指令，代表服務對外開啟的 port</p>
@@ -305,163 +227,192 @@
 <p>dockerfile 是 image 的藍圖<br>image 是 container 的樣板</p>
 </blockquote>
 <p>所以在使用 image 的時候最好可以看到 dockerfile 才可以確保開啟的 container 有做什麼事情</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container run -v ~/Documents/demo:/usr/share/nginx/html -p 8080:80 nginx</span><br></pre></td></tr></table></figure>
-<p>這次加上 <code>-v</code> 是 <code>--volume</code> 的縮寫，代表綁定檔案目錄，藉由設置這個參數可以修改 container 中要執行的檔案，這邊綁定了 nginx 的預設目錄，就可以修改預設顯示的頁面了<br><img src="nginx3.png" alt></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container run -v ~&#x2F;Documents&#x2F;demo:&#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html -p 8080:80 nginx</span><br></pre></td></tr></table></figure>
+<p>這次加上 <code>-v</code> 是 <code>--volume</code> 的縮寫，代表綁定檔案目錄，藉由設置這個參數可以修改 container 中要執行的檔案，這邊綁定了 nginx 的預設目錄，就可以修改預設顯示的頁面了<br><img src="nginx3.png" alt=""></p>
 <p>其他還有<a href="https://docs.docker.com/engine/reference/commandline/container_run/" target="_blank" rel="noopener">許多參數</a>可以設定</p>
 <p><code>-d</code> <code>--detach</code> 代表背景執行，執行後只會回傳 container ID</p>
 <p><code>-i</code> <code>--interactive</code> 開啟互動模式，可以直接操作 container</p>
 
+      
     </div>
-
-    
-    
-    
-        
+    <footer class="entry-meta entry-footer">
       
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Docker/">Docker</a>
 
-      <footer class="post-footer">
-          
-            
-          
-          <div class="post-tags">
-            
-              <a href="/tags/w3HexSchool/" rel="tag"># w3HexSchool</a>
-            
-              <a href="/tags/docker/" rel="tag"># docker</a>
-            
-              <a href="/tags/Docker-Container/" rel="tag"># Docker Container</a>
-            
-              <a href="/tags/Container/" rel="tag"># Container</a>
-            
-          </div>
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Container/" rel="tag">Container</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker-Container/" rel="tag">Docker Container</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/w3HexSchool/" rel="tag">w3HexSchool</a></li></ul>
+
+      
         
+	<section id="comments" class="comment">
+	  <div id="disqus_thread">
+	  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+	  </div>
+	</section>
 
-        
-
-          <div class="post-nav">
-            <div class="post-nav-next post-nav-item">
-              
-                <a href="/2020/02/16/docker-basic-concept/" rel="next" title="Docker - 基本概念">
-                  <i class="fa fa-chevron-left"></i> Docker - 基本概念
-                </a>
-              
-            </div>
-
-            <span class="post-nav-divider"></span>
-
-            <div class="post-nav-prev post-nav-item">
-              
-            </div>
-          </div>
-        
-      </footer>
-    
-  </article>
-  
-  
-  
-
-  </div>
+	<script type="text/javascript">
+	var disqus_shortname = 'fwcloud';
+	(function(){
+	  var dsq = document.createElement('script');
+	  dsq.type = 'text/javascript';
+	  dsq.async = true;
+	  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+	  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	}());
+	(function(){
+	  var dsq = document.createElement('script');
+	  dsq.type = 'text/javascript';
+	  dsq.async = true;
+	  dsq.src = '//' + disqus_shortname + '.disqus.com/count.js';
+	  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	}());
+	</script>
 
 
-          </div>
-          
-    
-    
-  <div class="comments" id="comments">
-    <div id="disqus_thread">
-      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
-    </div>
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
   </div>
   
-  
-
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-        
-        
-        
-        
-      
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          文章目錄
-        </li>
-        <li class="sidebar-nav-overview">
-          本站概要
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker-Container-基本概念"><span class="nav-number">1.</span> <span class="nav-text">Docker Container - 基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概念"><span class="nav-number">1.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常用指令"><span class="nav-number">1.2.</span> <span class="nav-text">常用指令</span></a></li></ol></li></ol></div>
-        
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">WEI FANG</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-        
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">4</span>
-          <span class="site-state-item-name">文章</span>
-        </a>
-      </div>
     
-      
-      
-      <div class="site-state-item site-state-tags">
-        
-        <span class="site-state-item-count">7</span>
-        <span class="site-state-item-name">標籤</span>
-        
-      </div>
+<nav id="article-nav">
+  
+  
+    <a href="/2020/02/16/docker-basic-concept/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Docker - 基本概念</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目錄</strong>
     
-  </nav>
-</div>
-
-
-
-      </div>
-
+      <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker-Container-基本概念"><span class="nav-number">1.</span> <span class="nav-text">Docker Container - 基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概念"><span class="nav-number">1.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常用指令"><span class="nav-number">1.2.</span> <span class="nav-text">常用指令</span></a></li></ol></li></ol>
+    
     </div>
   </aside>
-  <div id="sidebar-dimmer"></div>
-
-
+</section>
+        
       </div>
-    </main>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
 
-    <footer id="footer" class="footer">
-      <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
-  <span class="with-love" id="animate">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">WEI FANG</span>
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2020 胖仔 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 強力驅動 v3.8.0</div>
-  <span class="post-meta-divider">|</span>
-  <div class="theme-info">主題 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.1</div>
 
-        
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+<script src="/js/bootstrap.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-76185597-2', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
 
 
 
@@ -474,81 +425,9 @@
 
 
 
-        
-      </div>
-    </footer>
   </div>
 
-  
-  <script src="/lib/anime.min.js?v=3.1.0"></script>
-  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
-  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-<script src="/js/utils.js?v=7.4.1"></script><script src="/js/motion.js?v=7.4.1"></script>
-<script src="/js/schemes/pisces.js?v=7.4.1"></script>
-
-<script src="/js/next-boot.js?v=7.4.1"></script>
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-  
-
-  
-
-<script>
-  function loadCount() {
-    var d = document, s = d.createElement('script');
-    s.src = 'https://fwcloud.disqus.com/count.js';
-    s.id = 'dsq-count-scr';
-    (d.head || d.body).appendChild(s);
-  }
-  // defer loading until the whole page loading is completed
-  window.addEventListener('load', loadCount, false);
-</script>
-<script>
-  function disqus_config() {
-    this.page.url = "https://fwcloud916.github.io/2020/02/22/docker-basic-container/";
-    this.page.identifier = "2020/02/22/docker-basic-container/";
-    this.page.title = 'Docker Container - 基本概念';};
-  function loadComments() {
-    if (window.DISQUS) {
-      DISQUS.reset({
-        reload: true,
-        config: disqus_config
-      });
-    } else {
-      var d = document, s = d.createElement('script');
-      s.src = 'https://fwcloud.disqus.com/embed.js';
-      s.setAttribute('data-timestamp', '' + +new Date());
-      (d.head || d.body).appendChild(s);
-    }
-  }
-    window.addEventListener('load', loadComments, false);
-  
-</script>
-
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
 </body>
 </html>
