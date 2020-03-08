@@ -1,6 +1,8 @@
 ---
 title: 利用 firebase 建立自己的 CORS Anywhere
 date: 2020/02/09
+categories:
+  - firebase
 tag: 
  - CORS Anywhere
  - CORS

@@ -1,6 +1,8 @@
 ---
 title: Docker - 基本概念
 date: 2020/02/16
+categories:
+  - Docker
 tag: 
  - docker
  - w3HexSchool

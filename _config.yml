@@ -4,11 +4,11 @@
 
 # Site
 title: 胖仔
-subtitle: 吃蛋塔
-description:
+subtitle: 
+description: 吃蛋塔
 keywords:
 author: WEI FANG
-language: tw
+language: zh-TW
 timezone: Asia/Taipei
 
 # URL
@@ -73,7 +73,7 @@ pagination_dir: page
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: next
+theme: hipaper
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html

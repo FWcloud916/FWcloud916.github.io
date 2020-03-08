@@ -1,0 +1,12 @@
+<% if (theme.social){ %>
+  <div class="widget-wrap">
+    <div class="widget widget_athemes_social_icons">
+      <ul class="clearfix widget-social-icons">   
+        <% Object.keys(theme.social).forEach(function(key) { %>
+          <li><a href="<%= theme.social[key] %>" title="<%=key.trim()%>"><i class="fa fa-<%= key.toLowerCase() %>" aria-hidden="true"></i></a></li> 
+        <% }) %>
+      </ul>
+		</div>
+		<div class="clearfix"></div>
+  </div>
+<% } %>
