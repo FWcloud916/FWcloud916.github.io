@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if title %}{{ title }} - {% endif %}{{ site.title }}</title>
+  <meta name="description" content="{{ description or site.description }}">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="{{ site.title }}" href="/feed.xml">
+
+  <!-- Google Analytics -->
+  {% if site.googleAnalyticsId %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.googleAnalyticsId }}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '{{ site.googleAnalyticsId }}');
+  </script>
+  {% endif %}
+</head>
+<body class="bg-gray-50 text-gray-900">
+  {% include "components/nav.njk" %}
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    {{ content | safe }}
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <p class="text-center text-gray-600 text-sm">
+      &copy; {{ site.currentYear }} {{ site.author }}. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

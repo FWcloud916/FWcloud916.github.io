@@ -1,0 +1,23 @@
+---
+layout: layouts/base.njk
+pagination:
+  data: collections.tagList
+  size: 1
+  alias: tag
+permalink: /tags/{{ tag | slug }}/
+eleventyComputed:
+  title: "標籤: {{ tag }}"
+---
+
+<h1 class="text-3xl font-bold mb-8">標籤: {{ tag }}</h1>
+
+<div class="space-y-6">
+{% set tagPosts = collections.posts | filterByTag(tag) %}
+{% for post in tagPosts %}
+  {% include "components/post-card.njk" %}
+{% endfor %}
+</div>
+
+{% if tagPosts.length == 0 %}
+<p class="text-gray-600">此標籤目前沒有文章。</p>
+{% endif %}

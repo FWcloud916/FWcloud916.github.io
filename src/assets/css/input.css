@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* 覆寫 prose 樣式以避免與 Prism.js 衝突 */
+  .prose pre {
+    @apply p-0 my-4;
+    background-color: transparent !important;
+  }
+
+  /* 行內程式碼使用淺色背景 */
+  .prose code {
+    @apply bg-gray-100 px-1 py-0.5 rounded text-sm;
+  }
+
+  /* 程式碼區塊內的 code 讓 Prism 接管樣式 */
+  .prose pre code {
+    @apply bg-transparent p-0;
+    color: inherit !important;
+    font-size: inherit !important;
+  }
+
+  .prose code::before,
+  .prose code::after {
+    content: "";
+  }
+
+  /* 程式碼區塊使用 Prism One Dark 的深色背景 */
+  .prose pre[class*="language-"] {
+    @apply rounded-lg shadow-md;
+    background-color: #282c34 !important;
+    padding: 1rem !important;
+  }
+
+  .prose pre[class*="language-"] code {
+    background-color: transparent !important;
+  }
+}

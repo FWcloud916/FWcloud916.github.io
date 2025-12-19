@@ -1,0 +1,30 @@
+<article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="{{ post.url }}" class="text-gray-900 hover:text-blue-600 transition">
+      {{ post.data.title }}
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="{{ post.date | dateIso }}">{{ post.date | dateDisplay }}</time>
+    <span>{{ post.templateContent | readingTime }} 分鐘閱讀</span>
+  </div>
+
+  {% if post.data.description %}
+  <p class="text-gray-700 mb-4">{{ post.data.description }}</p>
+  {% else %}
+  <p class="text-gray-700 mb-4">{{ post.templateContent | striptags | truncate(150) }}</p>
+  {% endif %}
+
+  {% if post.data.tags %}
+  <div class="flex flex-wrap gap-2">
+    {% for tag in post.data.tags %}
+      {% if tag != "posts" %}
+      <a href="/tags/{{ tag | slug }}/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #{{ tag }}
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</article>

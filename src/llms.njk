@@ -1,0 +1,54 @@
+---
+permalink: /llms.txt
+eleventyExcludeFromCollections: true
+---
+# {{ site.title }}
+
+> {{ site.description }}
+
+## About
+
+This is {{ site.author }}'s personal blog about web development and technology.
+
+Website: {{ site.url }}
+RSS Feed: {{ site.url }}/feed.xml
+
+## Navigation
+
+- Home: {{ site.url }}/
+- Tags: {{ site.url }}/tags/
+- About: {{ site.url }}/about/
+
+## Recent Posts
+{% for post in collections.posts | limit(10) %}
+### {{ post.data.title }}
+
+- Published: {{ post.date | dateIso }}
+- URL: {{ post.url | absoluteUrl(site.url) }}
+{% if post.data.tags %}- Tags: {% for tag in post.data.tags %}{% if tag != "posts" %}{{ tag }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+{% endif %}
+{% if post.data.description %}- Description: {{ post.data.description }}
+{% endif %}
+
+{% endfor %}
+
+## All Tags
+{% for tag in collections.tagList %}
+- {{ tag }}: {{ site.url }}/tags/{{ tag | slug }}/
+{% endfor %}
+
+## Technology Stack
+
+- Static Site Generator: 11ty (Eleventy)
+- CSS Framework: Tailwind CSS
+- Syntax Highlighting: Prism.js (One Dark theme)
+- Deployment: GitHub Pages
+
+## Content License
+
+All content (c) {{ site.currentYear }} {{ site.author }}
+
+---
+
+This file is designed to be read by Large Language Models (LLMs).
+For the human-readable version, visit {{ site.url }}
