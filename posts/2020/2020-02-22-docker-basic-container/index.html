@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Container - 基本概念 - FW Blog</title>
+  <meta name="description" content="A personal blog about web development and technology">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="/feed.xml">
+
+  <!-- Google Analytics -->
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-6">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/tags/" class="text-gray-600 hover:text-gray-900 transition">標籤</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">Docker Container - 基本概念</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <time datetime="2020-02-22T00:00:00.000Z">2020年02月22日</time>
+      <span>1 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/docker/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Docker
+        </a>
+        
+      
+        
+        <a href="/tags/docker-container/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Docker Container
+        </a>
+        
+      
+        
+        <a href="/tags/container/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Container
+        </a>
+        
+      
+        
+        <a href="/tags/w3hexschool/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #w3HexSchool
+        </a>
+        
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <h1>Docker Container - 基本概念</h1>
+<p>簡述 Docker Container 使用方式、基本常用指令</p>
+<h2>概念</h2>
+<p>container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的</p>
+<p>image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的</p>
+<h2>常用指令</h2>
+<pre class="language-docker"><code class="language-docker">docker container run [OPTIONS] IMAGE [COMMAND] [ARG...]</code></pre>
+<p>運行一個 <a href="https://hub.docker.com/_/nginx?tab=description">nginx</a></p>
+<pre class="language-docker"><code class="language-docker">docker container run -p 8080:80 nginx</code></pre>
+<p>如果電腦上沒有 nginx 的 image 會從 docker 的儲存庫下載，預設通常是官方的 <a href="https://hub.docker.com/">Docker Hub</a></p>
+<p>上面這行指令中 <code>-p</code> 是 <code>--port</code> 的縮寫，傳入兩個參數，一個是主機的 port (8080) ，一個是 container 的（80），代表的意思是將 container 的 80 埠對應到主機的 8080 埠
+所以在主機的電腦上可以開啟瀏覽器輸入 localhost:8080 就會看到 container 開啟的 nginx 伺服器</p>
+<p>如果要知道開啟的 port 是多少，基本上有三種方法</p>
+<ul>
+<li>從 Docker Hub 上的<a href="https://hub.docker.com/_/nginx?tab=description">說明</a>中查詢</li>
+<li>從 Docker Hub 上的 <a href="https://hub.docker.com/layers/nginx/library/nginx/latest/images/sha256-d7ffce801c3c92dac436bc5dc65235384dcc1b6bbb8210ccb65f466f975f8f88?context=explore">tag</a> 中查詢</li>
+<li>從 <a href="https://github.com/nginxinc/docker-nginx/blob/5971de30c487356d5d2a2e1a79e02b2612f9a72f/mainline/buster/Dockerfile">dockerfile</a> 裡面查詢</li>
+</ul>
+<p>EXPOSE 是 dockerfile 中的指令，代表服務對外開啟的 port</p>
+<p>這邊可以開始感受到
+dockerfile 是 image 的藍圖
+image 是 container 的樣板</p>
+<p>所以在使用 image 的時候最好可以看到 dockerfile 才可以確保開啟的 container 有做什麼事情</p>
+<pre><code>docker container run -v ~/Documents/demo:/usr/share/nginx/html -p 8080:80 nginx
+</code></pre>
+<p>這次加上 <code>-v</code> 是 <code>--volume</code> 的縮寫，代表綁定檔案目錄，藉由設置這個參數可以修改 container 中要執行的檔案，這邊綁定了 nginx 的預設目錄，就可以修改預設顯示的頁面了</p>
+<p>其他還有<a href="https://docs.docker.com/engine/reference/commandline/container_run/">許多參數</a>可以設定</p>
+<p><code>-d</code> <code>--detach</code> 代表背景執行，執行後只會回傳 container ID</p>
+<p><code>-i</code> <code>--interactive</code> 開啟互動模式，可以直接操作 container</p>
+
+  </div>
+</article>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2025 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>
