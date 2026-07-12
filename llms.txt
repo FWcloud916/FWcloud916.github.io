@@ -1,0 +1,38 @@
+# FW Blog
+
+> A personal blog about web development and technology
+
+## About
+
+This is FW's personal blog about web development and technology.
+
+Website: https://imfw.io
+RSS Feed: https://imfw.io/feed.xml
+
+## Navigation
+
+- Home: https://imfw.io/
+- Tags: https://imfw.io/tags/
+- About: https://imfw.io/about/
+
+## Recent Posts
+
+
+## All Tags
+
+
+## Technology Stack
+
+- Static Site Generator: 11ty (Eleventy)
+- CSS Framework: Tailwind CSS
+- Syntax Highlighting: Prism.js (One Dark theme)
+- Deployment: GitHub Pages
+
+## Content License
+
+All content (c) 2025 FW
+
+---
+
+This file is designed to be read by Large Language Models (LLMs).
+For the human-readable version, visit https://imfw.io
