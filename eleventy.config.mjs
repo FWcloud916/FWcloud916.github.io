@@ -2,6 +2,17 @@ import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import pluginRss from "@11ty/eleventy-plugin-rss";
 import Image from "@11ty/eleventy-img";
 import { DateTime } from "luxon";
+import { pinyin } from "pinyin-pro";
+
+// 內建的 slug filter 不會轉寫中文（會直接被濾掉變成空字串），
+// 這裡先把中文轉成拼音再 slugify，避免中文標籤產生空白／重複的網址。
+function toSlug(str) {
+  const converted = pinyin(String(str), { toneType: "none", type: "string", nonZh: "consecutive" });
+  return converted
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export default function(eleventyConfig) {
   // 外掛
@@ -20,7 +31,7 @@ export default function(eleventyConfig) {
 
   // Collections
   eleventyConfig.addCollection("posts", function(collectionApi) {
-    return collectionApi.getFilteredByGlob("src/posts/*.md")
+    return collectionApi.getFilteredByGlob("src/posts/**/*.md")
       .sort((a, b) => b.date - a.date);
   });
 
@@ -61,6 +72,9 @@ export default function(eleventyConfig) {
   eleventyConfig.addFilter("limit", (array, limit) => {
     return array.slice(0, limit);
   });
+
+  // 覆寫內建的 slug filter，讓中文標籤（例如「工具」）也能轉出有效網址
+  eleventyConfig.addFilter("slug", toSlug);
 
   // 圖片 Shortcode
   eleventyConfig.addShortcode("image", async function(src, alt, sizes = "100vw") {
