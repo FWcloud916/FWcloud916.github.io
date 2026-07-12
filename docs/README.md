@@ -1,10 +1,16 @@
-# Documentation
+# FW Blog — Documentation
+
+> **Type:** How-to guides
+> **Audience:** Developers and AI assistants working on the blog
+> **Last updated:** 2026-07-13
 
 Complete documentation for the FW Blog.
 
 ## Table of Contents
 
 - [Quick Start Guide](../QUICKSTART.md)
+- [Project Overview](project-overview.md) — architecture, content model, deployment
+- [Design System](../DESIGN.md) — design tokens and visual conventions
 - [Configuration](#configuration)
 - [Content Management](#content-management)
 - [Customization](#customization)
@@ -31,7 +37,7 @@ These values are accessible in all templates via `{{ site.property }}`.
 
 ### 11ty Configuration
 
-The `.eleventy.js` file contains all 11ty-specific configuration:
+The `eleventy.config.mjs` file (ESM) contains all 11ty-specific configuration:
 
 #### Collections
 
@@ -45,6 +51,7 @@ The `.eleventy.js` file contains all 11ty-specific configuration:
 - **readingTime**: Calculates estimated reading time
 - **filterByTag**: Filters posts by specific tag
 - **limit**: Limits array to specified number of items
+- **slug**: Overrides the built-in slugifier — transliterates Chinese to pinyin (via pinyin-pro) so CJK tags get valid URLs (e.g. 工具 → `gong-ju`)
 
 #### Shortcodes
 
@@ -52,42 +59,26 @@ The `.eleventy.js` file contains all 11ty-specific configuration:
 
 ### Tailwind Configuration
 
-Edit `tailwind.config.js` to customize:
+This project uses **Tailwind CSS v4**, which is configured in CSS — there is no `tailwind.config.js` or `postcss.config.js`. Everything lives in `src/assets/css/input.css`:
 
-```javascript
-module.exports = {
-  content: [
-    "./src/**/*.{html,njk,md,js}"
-  ],
-  theme: {
-    extend: {
-      // Add custom colors
-      colors: {
-        'brand': '#your-color',
-      },
-      // Customize typography
-      typography: {
-        DEFAULT: {
-          css: {
-            // Custom prose styles
-          },
-        },
-      },
-    },
-  },
-  plugins: [
-    require('@tailwindcss/typography'),
-  ],
+```css
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Custom theme values */
+@theme {
+  --color-brand: #your-color;
+}
+
+/* Custom component styles */
+@layer components {
+  .my-class {
+    @apply px-4 py-2;
+  }
 }
 ```
 
-### PostCSS Configuration
-
-The `postcss.config.js` handles CSS processing:
-
-- **tailwindcss**: Processes Tailwind directives
-- **autoprefixer**: Adds vendor prefixes
-- **cssnano**: Minifies CSS in production
+The CSS is compiled by the standalone Tailwind CLI (`@tailwindcss/cli`), invoked by the `build:css` / `watch:css` scripts in `package.json`. Minification is always on via the `--minify` flag. Content scanning is automatic in v4 — no `content` array needed.
 
 ## Content Management
 
@@ -95,24 +86,27 @@ The `postcss.config.js` handles CSS processing:
 
 #### File Structure
 
-Posts are stored in `src/posts/` with the naming convention:
+Posts are stored in year subdirectories `src/posts/<year>/` with the naming convention:
 ```
 YYYY-MM-DD-post-slug.md
 ```
+
+The post URL mirrors the file path: `/posts/<year>/YYYY-MM-DD-post-slug/`.
 
 #### Front Matter
 
 ```yaml
 ---
-layout: layouts/post.njk        # Required: Layout template
 title: Your Post Title          # Required: Post title
 date: 2025-12-19               # Required: Publication date
-tags:                           # Optional: Post tags
+tags:                           # Optional: Post tags (Chinese OK — slugified via pinyin)
   - javascript
   - tutorial
 description: Brief description  # Optional: Post excerpt
 ---
 ```
+
+The `layout` (`layouts/post.njk`) and the `posts` tag are supplied automatically by `src/posts/posts.json` — do not set them per post.
 
 #### Content
 
@@ -234,7 +228,7 @@ Parameters:
 
 #### Configuration
 
-Modify image settings in `.eleventy.js`:
+Modify image settings in `eleventy.config.mjs`:
 
 ```javascript
 eleventyConfig.addShortcode("image", async function(src, alt, sizes) {
@@ -278,7 +272,7 @@ The repository includes GitHub Actions workflow for automatic deployment.
 #### Process
 
 1. Checkout code
-2. Setup Node.js 20
+2. Setup Node.js 22
 3. Install dependencies (`npm ci`)
 4. Build site (`npm run build`)
 5. Deploy to `gh-pages` branch
@@ -306,32 +300,24 @@ Upload the `_site/` folder to:
 
 ### Environment Variables
 
-For production builds, set:
-
-```bash
-NODE_ENV=production npm run build
-```
-
-This enables:
-- CSS minification with cssnano
-- Production optimizations
+CI sets `NODE_ENV=production` for the build (see `.github/workflows/deploy.yml`), but the output is the same either way: CSS minification is always on via the Tailwind CLI `--minify` flag in the `build:css` script.
 
 ## Advanced Topics
 
 ### Custom Collections
 
-Add custom collections in `.eleventy.js`:
+Add custom collections in `eleventy.config.mjs`:
 
 ```javascript
 eleventyConfig.addCollection("featured", function(collection) {
-  return collection.getFilteredByGlob("src/posts/*.md")
+  return collection.getFilteredByGlob("src/posts/**/*.md")
     .filter(post => post.data.featured === true);
 });
 ```
 
 ### Custom Filters
 
-Add custom filters in `.eleventy.js`:
+Add custom filters in `eleventy.config.mjs`:
 
 ```javascript
 eleventyConfig.addFilter("uppercase", function(value) {
@@ -378,7 +364,7 @@ Use in content:
 
 #### Caching
 
-Configure in `.eleventy.js`:
+Configure in `eleventy.config.mjs` (the image cache lives in `.cache/`, gitignored):
 
 ```javascript
 cacheOptions: {
@@ -408,10 +394,10 @@ Install sitemap plugin:
 npm install @quasibit/eleventy-plugin-sitemap
 ```
 
-Configure in `.eleventy.js`:
+Configure in `eleventy.config.mjs` (ESM):
 
 ```javascript
-const sitemap = require("@quasibit/eleventy-plugin-sitemap");
+import sitemap from "@quasibit/eleventy-plugin-sitemap";
 
 eleventyConfig.addPlugin(sitemap, {
   sitemap: {
@@ -449,7 +435,7 @@ npm run build
 
 - Restart development server
 - Clear browser cache
-- Check Tailwind content configuration
+- Make sure the class appears in a template Tailwind can see (v4 scans sources automatically)
 
 #### Images Not Generating
 
@@ -483,7 +469,7 @@ Contributions are welcome! Please:
 
 ## License
 
-MIT License - See LICENSE file for details.
+MIT License (declared in `package.json`).
 
 ---
 

@@ -26,6 +26,9 @@ npm install
 # Start development server
 npm start
 
+# Run tests (filter units + content checks + build smoke)
+npm test
+
 # Build for production
 npm run build
 ```
@@ -34,40 +37,45 @@ npm run build
 
 ```
 .
-├── .eleventy.js              # 11ty configuration
+├── eleventy.config.mjs       # 11ty configuration (collections, filters, shortcodes)
+├── lib/                      # testable filter logic (pinyin slug, reading time, slug guard)
+├── tests/                    # vitest suites (npm test)
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml        # GitHub Actions workflow
+├── docs/                     # Project documentation
 ├── src/
 │   ├── _data/
 │   │   └── site.json        # Site metadata
 │   ├── _includes/
-│   │   ├── layouts/         # Page layouts
-│   │   └── components/      # Reusable components
+│   │   ├── layouts/         # Page layouts (base.njk, post.njk)
+│   │   └── components/      # Reusable components (nav.njk, post-card.njk)
 │   ├── assets/
 │   │   ├── css/
-│   │   │   └── input.css    # Tailwind CSS input
+│   │   │   └── input.css    # Tailwind CSS v4 entry (config lives here too)
 │   │   └── images/          # Static images
-│   ├── posts/               # Blog posts (Markdown)
+│   ├── posts/               # Blog posts (Markdown, grouped by year)
+│   │   └── posts.json       # Directory data: default layout + "posts" tag
 │   ├── index.njk            # Homepage
 │   ├── about.md             # About page
-│   ├── tags.njk             # Tag pages (auto-generated)
-│   └── feed.njk             # RSS feed
+│   ├── 404.md               # Not-found page
+│   ├── tags.njk             # Per-tag pages (auto-generated)
+│   ├── tags-list.njk        # All-tags index at /tags/
+│   ├── feed.njk             # Atom feed at /feed.xml
+│   └── llms.njk             # llms.txt for LLM crawlers
 ├── _site/                   # Build output (generated)
-├── package.json
-├── tailwind.config.js       # Tailwind configuration
-└── postcss.config.js        # PostCSS configuration
+├── CNAME                    # Custom domain (imfw.io)
+└── package.json
 ```
 
 ## 📝 Writing Posts
 
-Create a new Markdown file in `src/posts/`:
+Create a new Markdown file under `src/posts/<year>/` (e.g. `src/posts/2026/2026-07-13-my-post.md`). The layout and the `posts` tag are applied automatically by `src/posts/posts.json`:
 
 ```markdown
 ---
-layout: layouts/post.njk
 title: Your Post Title
-date: 2025-12-19
+date: 2026-07-13
 tags:
   - javascript
   - tutorial
@@ -76,6 +84,8 @@ description: A brief description of your post
 
 Your content here...
 ```
+
+Chinese tags work too — the custom `slug` filter (in `eleventy.config.mjs`) transliterates them to pinyin for valid tag URLs.
 
 ## 🎨 Customization
 
@@ -88,14 +98,17 @@ Edit `src/_data/site.json`:
   "title": "Your Blog Name",
   "url": "https://yourdomain.com",
   "description": "Your blog description",
-  "author": "Your Name"
+  "author": "Your Name",
+  "currentYear": "2026",
+  "googleAnalyticsId": ""
 }
 ```
 
 ### Styling
 
 - Edit `src/assets/css/input.css` for custom CSS
-- Modify `tailwind.config.js` for Tailwind customization
+- Tailwind CSS v4 is configured in CSS: `@import "tailwindcss"` and `@plugin "@tailwindcss/typography"` live in `input.css` — there is no `tailwind.config.js`
+- Visual conventions and design tokens are documented in [DESIGN.md](DESIGN.md)
 
 ### Navigation
 
@@ -128,6 +141,16 @@ npm run build
 - [@11ty/eleventy-plugin-rss](https://www.11ty.dev/docs/plugins/rss/) - RSS feed generation
 - [Luxon](https://moment.github.io/luxon/) - Date formatting
 - [GitHub Actions](https://github.com/features/actions) - CI/CD
+
+## 📚 Documentation
+
+| Doc | What it covers |
+|---|---|
+| [docs/project-overview.md](docs/project-overview.md) | Architecture, directory map, content model, build pipeline, deployment |
+| [docs/README.md](docs/README.md) | Configuration, content management, customization how-tos |
+| [QUICKSTART.md](QUICKSTART.md) | Step-by-step setup and first post |
+| [DESIGN.md](DESIGN.md) | Design tokens and visual conventions |
+| [AGENTS.md](AGENTS.md) | Entry point for AI coding agents |
 
 ## 📄 License
 

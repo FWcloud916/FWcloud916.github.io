@@ -4,7 +4,7 @@ Get your 11ty blog up and running in minutes!
 
 ## Prerequisites
 
-- Node.js 18 or higher
+- Node.js 18 or higher (CI builds with Node 22)
 - npm or yarn
 - Git
 - A GitHub account (for deployment)
@@ -63,6 +63,7 @@ Your blog should now be running at `http://localhost:8080`!
 | Command | Description |
 |---------|-------------|
 | `npm start` | Start development server with hot reload |
+| `npm test` | Run tests (filter units, post frontmatter checks, build smoke) |
 | `npm run build` | Build for production |
 | `npm run build:11ty` | Build 11ty only |
 | `npm run build:css` | Build Tailwind CSS only |
@@ -72,19 +73,18 @@ Your blog should now be running at `http://localhost:8080`!
 
 ### 1. Create a New Markdown File
 
-Create a file in `src/posts/` with the format `YYYY-MM-DD-post-title.md`:
+Create a file in the year subdirectory `src/posts/<year>/` with the format `YYYY-MM-DD-post-title.md`:
 
 ```bash
-touch src/posts/2025-12-19-my-first-post.md
+touch src/posts/2026/2026-07-13-my-first-post.md
 ```
 
 ### 2. Add Front Matter
 
 ```markdown
 ---
-layout: layouts/post.njk
 title: My First Blog Post
-date: 2025-12-19
+date: 2026-07-13
 tags:
   - getting-started
   - tutorial
@@ -93,6 +93,8 @@ description: This is my first post on my new blog!
 
 Your content goes here...
 ```
+
+You don't need to set `layout` or a `posts` tag — `src/posts/posts.json` applies both to every file under `src/posts/` automatically.
 
 ### 3. Write Content
 
@@ -124,8 +126,8 @@ Check out [11ty documentation](https://www.11ty.dev/).
 
 ### 4. View Your Post
 
-The post will automatically appear on your homepage and be accessible at:
-- `http://localhost:8080/posts/my-first-post/`
+The post will automatically appear on your homepage and be accessible at a URL mirroring its file path (date prefix included):
+- `http://localhost:8080/posts/2026/2026-07-13-my-first-post/`
 
 ## Adding Images
 
@@ -156,9 +158,8 @@ This automatically:
 Edit `src/assets/css/input.css`:
 
 ```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @layer components {
   .my-custom-class {
@@ -169,19 +170,15 @@ Edit `src/assets/css/input.css`:
 
 ### Tailwind Configuration
 
-Edit `tailwind.config.js`:
+This project uses Tailwind CSS v4 — there is no `tailwind.config.js`. Configuration lives in CSS. To add custom theme values, use `@theme` in `src/assets/css/input.css`:
 
-```javascript
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        'brand': '#your-color',
-      },
-    },
-  },
+```css
+@theme {
+  --color-brand: #your-color;
 }
 ```
+
+See [DESIGN.md](DESIGN.md) for the site's design tokens and visual conventions before changing styles.
 
 ## Adding Pages
 
