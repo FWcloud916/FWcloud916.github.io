@@ -2,17 +2,7 @@ import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import pluginRss from "@11ty/eleventy-plugin-rss";
 import Image from "@11ty/eleventy-img";
 import { DateTime } from "luxon";
-import { pinyin } from "pinyin-pro";
-
-// 內建的 slug filter 不會轉寫中文（會直接被濾掉變成空字串），
-// 這裡先把中文轉成拼音再 slugify，避免中文標籤產生空白／重複的網址。
-function toSlug(str) {
-  const converted = pinyin(String(str), { toneType: "none", type: "string", nonZh: "consecutive" });
-  return converted
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+import { toSlug, readingTime, assertNoSlugCollisions } from "./lib/filters.mjs";
 
 export default function(eleventyConfig) {
   // 外掛
@@ -44,7 +34,10 @@ export default function(eleventyConfig) {
         }
       });
     });
-    return [...tagSet].sort();
+    const tags = [...tagSet].sort();
+    // 不同 tag 轉出同一個 slug 會讓兩個 tag 頁搶同一個網址，直接讓 build 失敗
+    assertNoSlugCollisions(tags);
+    return tags;
   });
 
   // Filters
@@ -56,12 +49,7 @@ export default function(eleventyConfig) {
     return DateTime.fromJSDate(dateObj, { zone: 'utc' }).toISO();
   });
 
-  eleventyConfig.addFilter("readingTime", (content) => {
-    const wordsPerMinute = 200;
-    const wordCount = content.split(/\s+/).length;
-    const readingTime = Math.ceil(wordCount / wordsPerMinute);
-    return readingTime;
-  });
+  eleventyConfig.addFilter("readingTime", readingTime);
 
   eleventyConfig.addFilter("filterByTag", (posts, tag) => {
     return posts.filter(post => {

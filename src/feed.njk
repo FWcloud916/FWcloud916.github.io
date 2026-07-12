@@ -13,7 +13,8 @@ eleventyExcludeFromCollections: true
   <author>
     <name>{{ site.author }}</name>
   </author>
-  {% for post in collections.posts | reverse | limit(10) %}
+  {# posts 已是新到舊排序，直接取最新 10 篇；先 reverse 再 limit 會取到最舊的 10 篇 #}
+  {% for post in collections.posts | limit(10) %}
   <entry>
     <title>{{ post.data.title }}</title>
     <link href="{{ post.url | absoluteUrl(site.url) }}"/>
