@@ -1,9 +1,9 @@
-const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
-const pluginRss = require("@11ty/eleventy-plugin-rss");
-const Image = require("@11ty/eleventy-img");
-const { DateTime } = require("luxon");
+import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
+import pluginRss from "@11ty/eleventy-plugin-rss";
+import Image from "@11ty/eleventy-img";
+import { DateTime } from "luxon";
 
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
   // 外掛
   eleventyConfig.addPlugin(syntaxHighlight);
   eleventyConfig.addPlugin(pluginRss);
