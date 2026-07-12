@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @layer components {
   /* 覆寫 prose 樣式以避免與 Prism.js 衝突 */
