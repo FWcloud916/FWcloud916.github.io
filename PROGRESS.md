@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-13 · commit `401450b` · tests: passing (39/39)
+> **Last session:** 2026-07-13 · commit `8dd0cb5` · tests: passing (39/39)
 
 ## Now (WIP = 1)
 
