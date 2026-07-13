@@ -17,6 +17,16 @@ RSS Feed: https://imfw.io/feed.xml
 
 ## Recent Posts
 
+### 2026 年社群平台 API 現況：單人開發者的生存指南
+
+- Published: 2026-07-13T00:00:00.000Z
+- URL: https://imfw.io/posts/2026/2026-07-13-social-platform-apis-2026/
+- Tags: api, social-media, automation
+
+- Description: 為了做自動發文工具，把 X、Facebook、Instagram、Threads 四個平台的 API 研究了一輪 — 申請門檻、費用、token 管理與免審核範圍的第一手整理。
+
+
+
 ### Dockerfile - 基本概念
 
 - Published: 2020-03-15T00:00:00.000Z
@@ -77,9 +87,15 @@ RSS Feed: https://imfw.io/feed.xml
 
 - Image: https://imfw.io/tags/image/
 
+- api: https://imfw.io/tags/api/
+
+- automation: https://imfw.io/tags/automation/
+
 - node: https://imfw.io/tags/node/
 
 - nvm: https://imfw.io/tags/nvm/
+
+- social-media: https://imfw.io/tags/social-media/
 
 - w3HexSchool: https://imfw.io/tags/w3hexschool/
 
