@@ -13,7 +13,7 @@ A modern, fast, and elegant blog built with 11ty, Tailwind CSS, and Prism.js One
 - 🖼️ **Image Optimization** - Automatic responsive images with WebP support
 - 📱 **Responsive Design** - Mobile-first design that works on all devices
 - ⚡ **GitHub Actions** - Automatic deployment to GitHub Pages
-- 🔍 **SEO Ready** - Meta tags and semantic HTML
+- 🔍 **Technical SEO** - Canonical URLs, social cards, JSON-LD, sitemap, robots rules, and per-page index controls
 
 ## 🚀 Quick Start
 
@@ -62,7 +62,9 @@ npm run build
 │   ├── tags.njk             # Per-tag pages (auto-generated)
 │   ├── tags-list.njk        # All-tags index at /tags/
 │   ├── feed.njk             # Atom feed at /feed.xml
-│   └── llms.njk             # llms.txt for LLM crawlers
+│   ├── llms.njk             # llms.txt for LLM crawlers
+│   ├── sitemap.njk          # Search-engine sitemap at /sitemap.xml
+│   └── robots.njk           # Crawler rules at /robots.txt
 ├── _site/                   # Build output (generated)
 ├── CNAME                    # Custom domain (imfw.io)
 └── package.json
@@ -80,6 +82,7 @@ tags:
   - javascript
   - tutorial
 description: A brief description of your post
+socialImage: /assets/images/post-card.png # Optional 1200×630 social image
 ---
 
 Your content here...
@@ -100,9 +103,13 @@ Edit `src/_data/site.json`:
   "description": "Your blog description",
   "author": "Your Name",
   "currentYear": "2026",
+  "socialImage": "/assets/images/og-default.png",
+  "googleSiteVerification": "",
   "googleAnalyticsId": ""
 }
 ```
+
+Leave `googleSiteVerification` and `googleAnalyticsId` empty to keep their conditional snippets disabled. Posts without `description` or `socialImage` use an automatic content excerpt and the site-wide social image.
 
 ### Styling
 

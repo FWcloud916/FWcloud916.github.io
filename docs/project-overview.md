@@ -21,10 +21,12 @@
 - **GitHub Pages** serves the built site from the `gh-pages` branch; the custom domain `imfw.io` is bound via the `CNAME` file.
 - **GitHub Actions** ([.github/workflows/deploy.yml](../.github/workflows/deploy.yml)) builds and deploys on every push to `main`.
 - **Google Analytics** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) but **not enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is empty.
+- **Google Search Console verification** is wired in the same layout but **not enabled** — `googleSiteVerification` is empty.
 
 ### 1.3 Deprecated / Retired or Not-Yet-Enabled Features
 
 - **Not yet enabled:** Google Analytics (empty `googleAnalyticsId`, see §1.2).
+- **Not yet enabled:** Google Search Console verification (empty `googleSiteVerification`, see §1.2).
 - **Retired:** `tailwind.config.js` / `postcss.config.js` — removed in the Tailwind v4 migration; configuration now lives in CSS (`src/assets/css/input.css`). Do not recreate them.
 
 ## 2. Tech Stack
@@ -58,7 +60,7 @@ Classic static-site pipeline — no server-side code at runtime:
 src/**（Markdown + Nunjucks + JSON data）
    │  npm run build:11ty （Eleventy: collections, filters, shortcodes）
    ▼
-_site/**（HTML, feed.xml, llms.txt, optimized images）
+_site/**（HTML, feed.xml, sitemap.xml, robots.txt, llms.txt, optimized images）
    │  npm run build:css （Tailwind CLI: input.css → styles.css, minified）
    ▼
 _site/assets/css/styles.css
@@ -72,6 +74,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 - **Build-time everything**: images, syntax highlighting, feeds are generated at build; the deployed site is pure static files with no client-side JS (except the optional GA snippet).
 - **Data flows from `src/_data/site.json`**: templates MUST read site metadata as `{{ site.* }}`, never hardcode it.
 - **Directory data over frontmatter**: [src/posts/posts.json](../src/posts/posts.json) supplies `layout: layouts/post.njk` and the `posts` tag to every post — individual posts do not repeat them.
+- **One SEO source of truth**: [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) builds canonical URLs, robots directives, Open Graph/X cards, and JSON-LD from page data plus `site.json`. Article descriptions prefer frontmatter, then a normalized 160-character content excerpt, then the site description; social images prefer per-post `socialImage`, then `site.socialImage`.
 - **Chinese-safe URLs**: the built-in `slug` filter is overridden (via [lib/filters.mjs](../lib/filters.mjs) `toSlug`) to transliterate Chinese via pinyin-pro; without it, CJK tags slugify to empty strings and collide. Tags whose slugs collide anyway (case variants, homophones) or come out empty **fail the build** (`assertNoSlugCollisions`, called from the `tagList` collection).
 - **CSS builds after Eleventy**: `npm run build` runs `build:11ty` then `build:css` because Tailwind writes directly into `_site/assets/css/`.
 
@@ -80,7 +83,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 ```
 .
 ├── eleventy.config.mjs        # Eleventy config: plugins, passthroughs, collections, filters, image shortcode
-├── lib/filters.mjs            # testable filter logic: toSlug (pinyin), readingTime (CJK-aware), slug-collision guard
+├── lib/filters.mjs            # testable slug, reading-time, SEO-summary/tag, and safe-JSON logic
 ├── tests/                     # vitest: filters.test (units), content.test (frontmatter rules), build.test (_site smoke)
 ├── package.json               # scripts (build/start/test/clean); all deps are devDependencies
 ├── CNAME                      # "imfw.io" — passthrough-copied into _site/
@@ -98,14 +101,14 @@ gh-pages branch → GitHub Pages → https://imfw.io
 ├── src/
 │   ├── _data/site.json        # global site metadata ({{ site.* }} in templates)
 │   ├── _includes/
-│   │   ├── layouts/base.njk   # HTML shell: <head>, nav, footer, GA hook
+│   │   ├── layouts/base.njk   # HTML shell: SEO/social metadata, JSON-LD, nav, footer, optional integrations
 │   │   ├── layouts/post.njk   # article layout: title, date, reading time, tag chips
 │   │   └── components/        # nav.njk (top bar), post-card.njk (list-item card)
 │   ├── assets/
 │   │   ├── css/input.css      # Tailwind v4 entry + prose/Prism overrides (THE Tailwind config)
 │   │   └── images/            # static images (passthrough-copied)
 │   ├── posts/
-│   │   ├── posts.json         # directory data: default layout + "posts" tag
+│   │   ├── posts.json         # directory data: default layout, "posts" tag, article marker
 │   │   └── <year>/*.md        # posts, filenames YYYY-MM-DD-slug.md
 │   ├── index.njk              # homepage: 10 newest posts
 │   ├── about.md               # /about/
@@ -152,13 +155,15 @@ No database — the "domain model" is the content model: Markdown files + frontm
 | `title` | yes | shown in `<title>`, post header, cards, feed |
 | `date` | yes | `YYYY-MM-DD`; sorts collections; rendered via `dateDisplay` (`yyyy年MM月dd日`, UTC) |
 | `tags` | no | list; Chinese tags allowed (slugified via pinyin); `posts` is added by directory data — never manually |
-| `description` | no | card excerpt + meta description; missing → card falls back to truncated content (150 chars) |
+| `description` | no | card excerpt + meta description; missing → card uses rendered content (150 chars), SEO uses normalized source content (160 chars) |
 | `socialImage` | no | site-relative or absolute social image URL; missing → `site.socialImage` |
 | `layout` | no — **do not set** | supplied by `src/posts/posts.json` |
 
 **Tag** — not a file; derived by the `tagList` collection from all post frontmatter (excluding `posts`). URL: `/tags/{{ tag | slug }}/`.
 
 **Site metadata** — [src/_data/site.json](../src/_data/site.json): `title`, `url`, `description`, `author`, `currentYear`, `socialImage`, `googleSiteVerification`, `googleAnalyticsId`. Empty verification/analytics values keep their snippets disabled.
+
+**Index control** — layout-backed pages MAY set `noindex: true`; the base layout emits `noindex, nofollow`, and the sitemap excludes the page. The 404 page uses this setting.
 
 ## 6. API / Interface Structure
 
@@ -193,6 +198,7 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 |---|---|---|
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
+| Google Search Console verification | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleSiteVerification` | **not enabled** (empty token) |
 | Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | **not enabled** (empty ID) |
 
 No other outbound integrations; the built site makes no API calls.
