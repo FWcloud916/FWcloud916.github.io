@@ -219,7 +219,7 @@ No staging environment; no env files or secrets beyond the implicit `GITHUB_TOKE
 
 ### Deployment Pipeline
 
-Push to `main` (or manual `workflow_dispatch`) → GitHub Actions: checkout → Node 22 setup (npm cache) → `npm ci` → `npm test` → `npm run build` (`NODE_ENV=production`) → `peaceiris/actions-gh-pages@v3` publishes `_site/` to the `gh-pages` branch with `cname: imfw.io`.
+Push to `main` (or manual `workflow_dispatch`) → GitHub Actions: checkout → Node 22 setup (npm cache) → `npm ci` → `npm test` → `npm run build` (`NODE_ENV=production`) → `peaceiris/actions-gh-pages@v4` publishes `_site/` to the `gh-pages` branch with `cname: imfw.io`.
 
 The verification gate is `npm test` (vitest): unit tests for [lib/filters.mjs](../lib/filters.mjs), frontmatter content rules for every post, and a build smoke suite that runs `npm run build` and asserts on `_site/` (CNAME, feed order, compiled CSS, tag pages, SEO metadata/JSON-LD, sitemap/robots, and social-image dimensions). A failing test blocks the deploy. There is still no linter.
 

@@ -21,6 +21,7 @@ none
 
 ## Done
 
+- 2026-07-13 — CI action bump to clear Node 20 deprecation ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)): `actions/checkout@v4→v7`, `actions/setup-node@v4→v6`, `peaceiris/actions-gh-pages@v3→v4` — all now run on Node 24 (v3 was node16). Build Node stays `node-version: '22'`. Synced docs/project-overview.md pipeline note.
 - 2026-07-13 — Google Analytics (GA4) enabled: set `googleAnalyticsId` in [src/_data/site.json](src/_data/site.json) (current ID `G-QBS6V0SVT1`; initially `G-H39765SSFE`, swapped same day); the pre-existing conditional gtag hook in `base.njk` now emits on every page (verified in `_site/index.html`). Synced docs/project-overview.md (§1.2, §1.3, integrations table).
 - 2026-07-13 — Technical SEO completed: canonical and robots metadata, Open Graph/X cards, `WebSite`/`BlogPosting` JSON-LD, automatic legacy-post descriptions, 1200×630 default social image, `/sitemap.xml`, `/robots.txt`, Search Console hook, and build coverage.
 - 2026-07-13 — Test gate established: vitest (26 tests: lib/filters units, frontmatter content checks, `_site/` build smoke) + `npm test` in CI before deploy. Fixed en route: feed.njk served the 10 **oldest** posts (`reverse | limit` → `limit`), readingTime was space-based and useless for Chinese (now CJK-aware), tag slug collisions/empty slugs now fail the build (`lib/filters.mjs`).
