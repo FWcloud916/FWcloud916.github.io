@@ -20,12 +20,11 @@
 
 - **GitHub Pages** serves the built site from the `gh-pages` branch; the custom domain `imfw.io` is bound via the `CNAME` file.
 - **GitHub Actions** ([.github/workflows/deploy.yml](../.github/workflows/deploy.yml)) builds and deploys on every push to `main`.
-- **Google Analytics** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) but **not enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is empty.
+- **Google Analytics (GA4)** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) and **enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is set to `G-H39765SSFE`.
 - **Google Search Console verification** is wired in the same layout but **not enabled** — `googleSiteVerification` is empty.
 
 ### 1.3 Deprecated / Retired or Not-Yet-Enabled Features
 
-- **Not yet enabled:** Google Analytics (empty `googleAnalyticsId`, see §1.2).
 - **Not yet enabled:** Google Search Console verification (empty `googleSiteVerification`, see §1.2).
 - **Retired:** `tailwind.config.js` / `postcss.config.js` — removed in the Tailwind v4 migration; configuration now lives in CSS (`src/assets/css/input.css`). Do not recreate them.
 
@@ -199,7 +198,7 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
 | Google Search Console verification | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleSiteVerification` | **not enabled** (empty token) |
-| Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | **not enabled** (empty ID) |
+| Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-H39765SSFE`) |
 
 No other outbound integrations; the built site makes no API calls.
 

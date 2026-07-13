@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-13 · commit `8dd0cb5` · tests: passing (39/39)
+> **Last session:** 2026-07-13 · commit `8dd0cb5` · tests: 38/39 (1 pre-existing failure unrelated to this change: build smoke expects `_site/assets/css/prism-one-dark.css`, which is not produced)
 
 ## Now (WIP = 1)
 
@@ -16,11 +16,12 @@ none
 | 4 | Chinese tags produce valid pinyin URLs (e.g. 工具 → /tags/gong-ju/); colliding/empty slugs fail the build | `npm test` (tests/filters.test.mjs) | passing |
 | 5 | RSS feed carries the 10 newest posts (was: 10 oldest once count > 10) | `npm test` (tests/build.test.mjs feed assertion) | passing |
 | 6 | Reading time is CJK-aware (Chinese long-form no longer stuck at 1 分鐘) | `npm test` (tests/filters.test.mjs readingTime) | passing |
-| 7 | Google Analytics enabled | set `googleAnalyticsId` in src/_data/site.json, then `npm run build` and grep gtag in _site | not_started |
+| 7 | Google Analytics enabled | set `googleAnalyticsId` in src/_data/site.json, then `npm run build` and grep gtag in _site | active (`G-H39765SSFE`) |
 | 8 | Technical SEO: canonical, social cards, JSON-LD, sitemap/robots, noindex controls, Search Console hook | `npm test` (SEO build assertions) | passing |
 
 ## Done
 
+- 2026-07-13 — Google Analytics (GA4) enabled: set `googleAnalyticsId` to `G-H39765SSFE` in [src/_data/site.json](src/_data/site.json); the pre-existing conditional gtag hook in `base.njk` now emits on every page (verified `G-H39765SSFE` in `_site/index.html`). Synced docs/project-overview.md (§1.2, §1.3, integrations table).
 - 2026-07-13 — Technical SEO completed: canonical and robots metadata, Open Graph/X cards, `WebSite`/`BlogPosting` JSON-LD, automatic legacy-post descriptions, 1200×630 default social image, `/sitemap.xml`, `/robots.txt`, Search Console hook, and build coverage.
 - 2026-07-13 — Test gate established: vitest (26 tests: lib/filters units, frontmatter content checks, `_site/` build smoke) + `npm test` in CI before deploy. Fixed en route: feed.njk served the 10 **oldest** posts (`reverse | limit` → `limit`), readingTime was space-based and useless for Chinese (now CJK-aware), tag slug collisions/empty slugs now fail the build (`lib/filters.mjs`).
 - 2026-07-13 — Documentation bootstrap: AGENTS.md (+ CLAUDE.md symlink), docs/project-overview.md, DESIGN.md, PROGRESS.md; stale-config fixes in README.md, QUICKSTART.md, docs/README.md (doc-architect Mode B).
@@ -35,7 +36,6 @@ none
 
 - Publish remaining posts (commit `6de29ec` says "first 5 posts" — more presumably queued).
 - Add the Google Search Console verification token to `googleSiteVerification`, then submit `/sitemap.xml`.
-- Decide whether to enable Google Analytics (row 7) or remove the dead gtag hook from base.njk.
 
 ## Decision log
 
