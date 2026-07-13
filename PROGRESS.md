@@ -46,6 +46,33 @@ _Nothing in progress — pick up the next item from "Next steps" below._
 - Publish remaining posts (commit `6de29ec` says "first 5 posts" — more presumably queued).
 - Monitor Search Console sitemap processing and indexing results; no repository change is required.
 
+### SEO / AI-SEO improvement backlog (2026-07-13 audit, not started)
+
+Three-agent audit found the machine-readability foundation (JSON-LD, llms.txt,
+robots + OAI-SearchBot, IndexNow, sitemap, canonical/OG, CJK reading time) is
+strong and test-guarded. Remaining gaps, prioritized:
+
+**Tier 1 — quick technical wins (test-safe):**
+1. Favicon set + `theme-color` (none exist today)
+2. `BreadcrumbList` JSON-LD + breadcrumb UI (biggest structured-data gap)
+3. Heading anchor IDs via `markdown-it-anchor` (AI engines can only cite whole pages today, not sections)
+4. Resource hints (`preconnect` googletagmanager, `preload` main CSS, skip Prism CSS on code-free pages)
+5. Backfill `description`/`updated` on the one orphan post (`2019-03-19-nvm-install.md`)
+
+**Tier 2 — AI-answer-engine structured data:**
+6. `FAQPage`/`HowTo` schema (frontmatter-driven) — Docker guide and comparison posts qualify but aren't marked up
+7. `BlogPosting` publisher → `Organization` + logo; `image` → `ImageObject`
+8. `llms-full.txt` full-text companion to the existing index-only `llms.txt`
+9. Strengthen author `sameAs` (only GitHub today — needs user-supplied profile URLs)
+
+**Tier 3 — discovery, linking & content depth:**
+10. Related-posts module; pull orphan posts (nvm, social-platform-apis) into a link cluster
+11. Full `/archive/` page + optional on-site search (Pagefind) as content grows
+12. Unique (non-templated) tag-page descriptions
+13. **Content volume/breadth is the dominant weakness** — only 7 posts across ~2 topics (6 Docker + 1 API + 1 orphan). Not a code task; consider a second pillar cluster to match the Docker hub-and-spoke.
+
+Test constraint: `tests/build.test.mjs` asserts exact robots.txt bytes, JSON-LD shapes, and the one-`<h1>` rule — any future implementation above must update the matching assertion in the same commit.
+
 ## Decision log
 
 - 2026-07-13 — Bing scan's “Meta Language tag missing” is not remediated with `meta http-equiv="content-language"`: HTML Living Standard marks that pragma non-conforming and recommends the existing root `<html lang="zh-TW">`. Production audit found one H1 and the correct `lang` on every sitemap HTML page; stale scan results should be rerun after deployment.
