@@ -1,8 +1,10 @@
 {
   "title": "FW Blog",
   "url": "https://imfw.io",
-  "description": "A personal blog about web development and technology",
+  "description": "分享 Web 開發和技術的心得",
   "author": "FW",
   "currentYear": "2025",
+  "socialImage": "/assets/images/og-default.png",
+  "googleSiteVerification": "",
   "googleAnalyticsId": ""
 }

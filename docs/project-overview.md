@@ -13,7 +13,7 @@
 ### 1.1 Core Responsibilities
 
 - Publish blog posts written in Markdown (Traditional Chinese content about web development and technology) at https://imfw.io.
-- Generate per-tag pages, an all-tags index, an Atom feed (`/feed.xml`), and an `llms.txt` (`/llms.txt`) for LLM crawlers.
+- Generate per-tag pages, an all-tags index, an Atom feed (`/feed.xml`), a sitemap (`/sitemap.xml`), crawler rules (`/robots.txt`), and an `llms.txt` (`/llms.txt`) for LLM crawlers.
 - Optimize images at build time (responsive sizes, WebP) via the `image` shortcode.
 
 ### 1.2 Relationship with Other Systems
@@ -113,7 +113,9 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   ├── tags.njk               # paginated per-tag pages at /tags/<slug>/
 │   ├── tags-list.njk          # all-tags index at /tags/
 │   ├── feed.njk               # Atom feed at /feed.xml
-│   └── llms.njk               # /llms.txt for LLM crawlers
+│   ├── llms.njk               # /llms.txt for LLM crawlers
+│   ├── sitemap.njk            # search-engine sitemap at /sitemap.xml
+│   └── robots.njk             # crawler rules at /robots.txt
 ├── _site/                     # build output (gitignored)
 └── .cache/                    # eleventy-img cache (gitignored)
 ```
@@ -151,11 +153,12 @@ No database — the "domain model" is the content model: Markdown files + frontm
 | `date` | yes | `YYYY-MM-DD`; sorts collections; rendered via `dateDisplay` (`yyyy年MM月dd日`, UTC) |
 | `tags` | no | list; Chinese tags allowed (slugified via pinyin); `posts` is added by directory data — never manually |
 | `description` | no | card excerpt + meta description; missing → card falls back to truncated content (150 chars) |
+| `socialImage` | no | site-relative or absolute social image URL; missing → `site.socialImage` |
 | `layout` | no — **do not set** | supplied by `src/posts/posts.json` |
 
 **Tag** — not a file; derived by the `tagList` collection from all post frontmatter (excluding `posts`). URL: `/tags/{{ tag | slug }}/`.
 
-**Site metadata** — [src/_data/site.json](../src/_data/site.json): `title`, `url`, `description`, `author`, `currentYear`, `googleAnalyticsId`.
+**Site metadata** — [src/_data/site.json](../src/_data/site.json): `title`, `url`, `description`, `author`, `currentYear`, `socialImage`, `googleSiteVerification`, `googleAnalyticsId`. Empty verification/analytics values keep their snippets disabled.
 
 ## 6. API / Interface Structure
 
@@ -171,12 +174,14 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/404.html` | src/404.md | not-found page (excluded from collections) |
 | `/feed.xml` | src/feed.njk | Atom feed, newest 10 posts (excluded from collections) |
 | `/llms.txt` | src/llms.njk | machine-readable site summary for LLMs (excluded from collections) |
+| `/sitemap.xml` | src/sitemap.njk | indexable content and every generated tag URL |
+| `/robots.txt` | src/robots.njk | allows crawling and advertises the sitemap |
 | `/assets/css/styles.css` | Tailwind CLI output | compiled site CSS |
 | `/assets/css/prism-one-dark.css` | passthrough from node_modules/prism-themes | code-block theme |
 | `/assets/img/…` | eleventy-img output | optimized images (webp + jpeg; 300/600/1200 px) |
 | `/assets/images/…` | passthrough of src/assets/images | raw static images |
 
-Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min, HTML-stripped — logic in [lib/filters.mjs](../lib/filters.mjs)), `filterByTag`, `limit`, `slug` (pinyin override, also in lib/filters.mjs); shortcode `image(src, alt, sizes)`.
+Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription` (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD serialization), `filterByTag`, `limit`, `slug` (pinyin override); shortcode `image(src, alt, sizes)`. Filter logic lives in [lib/filters.mjs](../lib/filters.mjs).
 
 ## 7. Background Jobs & Scheduled Tasks
 
@@ -211,7 +216,7 @@ No staging environment; no env files or secrets beyond the implicit `GITHUB_TOKE
 
 Push to `main` (or manual `workflow_dispatch`) → GitHub Actions: checkout → Node 22 setup (npm cache) → `npm ci` → `npm test` → `npm run build` (`NODE_ENV=production`) → `peaceiris/actions-gh-pages@v3` publishes `_site/` to the `gh-pages` branch with `cname: imfw.io`.
 
-The verification gate is `npm test` (vitest): unit tests for [lib/filters.mjs](../lib/filters.mjs), frontmatter content rules for every post, and a build smoke suite that runs `npm run build` and asserts on `_site/` (CNAME, newest post on the homepage and first in feed.xml, compiled CSS, one page per tag). A failing test blocks the deploy. There is still no linter.
+The verification gate is `npm test` (vitest): unit tests for [lib/filters.mjs](../lib/filters.mjs), frontmatter content rules for every post, and a build smoke suite that runs `npm run build` and asserts on `_site/` (CNAME, feed order, compiled CSS, tag pages, SEO metadata/JSON-LD, sitemap/robots, and social-image dimensions). A failing test blocks the deploy. There is still no linter.
 
 ### Configuration Hierarchy
 

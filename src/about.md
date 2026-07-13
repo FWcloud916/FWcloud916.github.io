@@ -2,6 +2,7 @@
 layout: layouts/base.njk
 title: 關於我
 permalink: /about/
+description: 關於 FW Blog 使用的技術、內容方向與聯絡方式。
 ---
 
 # 關於我

@@ -1,0 +1,20 @@
+---
+permalink: /sitemap.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{% for item in collections.all %}
+  {% if item.url and not item.data.noindex and item.inputPath != "./src/tags.njk" %}
+  <url>
+    <loc>{{ item.url | absoluteUrl(site.url) }}</loc>
+    {% if item.data.isArticle %}<lastmod>{{ item.date | dateIso }}</lastmod>{% endif %}
+  </url>
+  {% endif %}
+{% endfor %}
+{% for tag in collections.tagList %}
+  <url>
+    <loc>{{ ("/tags/" ~ (tag | slug) ~ "/") | absoluteUrl(site.url) }}</loc>
+  </url>
+{% endfor %}
+</urlset>

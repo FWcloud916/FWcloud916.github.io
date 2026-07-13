@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { toSlug, readingTime, assertNoSlugCollisions } from "../lib/filters.mjs";
+import {
+  toSlug,
+  readingTime,
+  seoDescription,
+  seoTags,
+  safeJson,
+  assertNoSlugCollisions,
+} from "../lib/filters.mjs";
 
 describe("toSlug", () => {
   it("中文轉拼音（鎖住既有網址：工具 → gong-ju）", () => {
@@ -43,6 +50,43 @@ describe("readingTime", () => {
   it("最短 1 分鐘", () => {
     expect(readingTime("短")).toBe(1);
     expect(readingTime("")).toBe(1);
+  });
+});
+
+describe("seoDescription", () => {
+  it("清除 Markdown、HTML 與多餘空白", () => {
+    const content = `## 標題\n\n這是 **文章**，請看 [官方文件](https://example.com)。\n<div>補充內容</div>`;
+    expect(seoDescription(content)).toBe("標題 這是 文章，請看 官方文件。 補充內容");
+  });
+
+  it("略過 fenced code 並保留 inline code 文字", () => {
+    const content = "先使用 `npm test`。\n```bash\nsecret --token\n```\n完成。";
+    expect(seoDescription(content)).toBe("先使用 npm test。 完成。");
+  });
+
+  it("超過限制時截短並加省略號", () => {
+    expect(seoDescription("測".repeat(200), 20)).toBe(`${"測".repeat(19)}…`);
+  });
+
+  it("空內容回傳空字串", () => {
+    expect(seoDescription()).toBe("");
+  });
+});
+
+describe("seoTags", () => {
+  it("排除 Eleventy 內部 posts tag", () => {
+    expect(seoTags(["posts", "Docker", "工具"])).toEqual(["Docker", "工具"]);
+  });
+});
+
+describe("safeJson", () => {
+  it("輸出可解析 JSON 並中和 script 結束標籤", () => {
+    const value = { title: "測試 </script><script>alert('&')</script>" };
+    const serialized = safeJson(value);
+    expect(serialized).not.toContain("<");
+    expect(serialized).not.toContain(">");
+    expect(serialized).not.toContain("&");
+    expect(JSON.parse(serialized)).toEqual(value);
   });
 });
 

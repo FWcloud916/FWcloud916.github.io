@@ -2,7 +2,14 @@ import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import pluginRss from "@11ty/eleventy-plugin-rss";
 import Image from "@11ty/eleventy-img";
 import { DateTime } from "luxon";
-import { toSlug, readingTime, assertNoSlugCollisions } from "./lib/filters.mjs";
+import {
+  toSlug,
+  readingTime,
+  seoDescription,
+  seoTags,
+  safeJson,
+  assertNoSlugCollisions,
+} from "./lib/filters.mjs";
 
 export default function(eleventyConfig) {
   // 外掛
@@ -50,6 +57,9 @@ export default function(eleventyConfig) {
   });
 
   eleventyConfig.addFilter("readingTime", readingTime);
+  eleventyConfig.addFilter("seoDescription", seoDescription);
+  eleventyConfig.addFilter("seoTags", seoTags);
+  eleventyConfig.addFilter("safeJson", safeJson);
 
   eleventyConfig.addFilter("filterByTag", (posts, tag) => {
     return posts.filter(post => {
