@@ -51,5 +51,7 @@ There is no linter yet.
 
 ## Docs maintenance
 
+- After every development task, agents MUST review `git diff` for documentation impact and update every affected document before clock-out; documentation review is part of the definition of done.
+
 When modifying any file under `docs/`, update its `> **Last updated:** YYYY-MM-DD`
 frontmatter to today's date. Requirement keywords (MUST, SHOULD, MAY) follow RFC 2119.
