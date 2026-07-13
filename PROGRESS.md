@@ -1,28 +1,10 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-13 · commit `529eaaf` · tests: passing (44/44)
+> **Last session:** 2026-07-13 · commit `85da9e5` · tests: passing (45/45)
 
 ## Now (WIP = 1)
 
-### AISO 基礎建設與內容優化
-
-- **State:** local implementation complete; waiting for deploy/dashboard verification
-- **Started:** 2026-07-13
-- **Implementation commit:** `529eaaf`
-- **Test status:** passing (44/44)
-- **Goal:** 提升文章在 Google AI features、ChatGPT Search、Bing Copilot 等 AI 搜尋中的可發現性、可引用性與成效可量測性。
-- **Scope:**
-  1. 建立 Google Search Console、Bing Webmaster Tools 與 GA4 AI referral 量測基線。
-  2. 補齊作者實體、文章更新日期、`dateModified` 與 sitemap `lastmod`。
-  3. 將社群平台 API 文章重構為 answer-first、具來源與可獨立引用段落的格式。
-  4. 更新 Docker 舊文並建立主題總覽與站內連結。
-  5. 明確化 AI crawler policy、完善 `llms.txt`，並評估／導入 IndexNow。
-- **Definition of done:** 上述項目完成或將需帳號權限的外部步驟明確記為 blocker；`npm test` 通過；受影響文件已同步；worktree 無暫存除錯產物；完成 commit。
-- **Completed locally:** author `Person`／`ProfilePage`; visible publish/update dates; `dateModified`／sitemap `lastmod`; complete `llms.txt`; OAI-SearchBot policy; IndexNow CI notification; Bing verification meta; AISO runbook; answer-first social API article; refreshed four-article Docker cluster and new pillar page; nested worktree test exclusion.
-- **Completed externally:** Google Search Console ownership verified through DNS; `https://imfw.io/sitemap.xml` submitted.
-- **Remaining external steps:**
-  1. After an approved push/deploy, verify Bing Webmaster Tools and submit `/sitemap.xml`.
-  2. With GA4 dashboard access, create the AI referral report described in `docs/aiso.md`.
+_Nothing in progress — pick up the next item from "Next steps" below._
 
 ## Feature list
 
@@ -36,11 +18,15 @@
 | 6 | Reading time is CJK-aware (Chinese long-form no longer stuck at 1 分鐘) | `npm test` (tests/filters.test.mjs readingTime) | passing |
 | 7 | Google Analytics enabled | set `googleAnalyticsId` in src/_data/site.json, then `npm run build` and grep gtag in _site | active (`G-QBS6V0SVT1`) |
 | 8 | Technical SEO: canonical, social cards, JSON-LD, sitemap/robots, noindex controls, Search Console hook | `npm test` (SEO build assertions) | passing |
-| 9 | AISO foundation: author entity, honest freshness, all-post llms.txt, AI crawler policy, Bing verification, IndexNow, answer-first content clusters | `npm test` + `node scripts/submit-indexnow.mjs HEAD HEAD` | deployment authorized; Bing／GA4 verification pending |
+| 9 | AISO foundation: author entity, honest freshness, all-post llms.txt, AI crawler policy, Bing verification, IndexNow, answer-first content clusters | `npm test` + `node scripts/submit-indexnow.mjs HEAD HEAD` | deployed; all external setup steps complete |
 | 10 | Bing SEO/GEO scan hygiene: descriptive homepage title/description; every sitemap HTML page has exactly one H1 and `html[lang=zh-TW]` | `npm test` + production sitemap audit | local passing; rescan after deploy |
 
 ## Done
 
+- 2026-07-13 — **AISO 基礎建設與內容優化 closed.** Goal: 提升文章在 Google AI features、ChatGPT Search、Bing Copilot 等 AI 搜尋中的可發現性、可引用性與成效可量測性。All scope items complete: author entity／freshness structured data／IndexNow／llms.txt／crawler policy (commit `529eaaf`); Google Search Console, Bing Webmaster Tools and GA4 AI-referral measurement baselines established; social API article rewritten answer-first; Docker cluster refreshed. See entries below for the individual steps and commits.
+- 2026-07-13 — GA4 AI referral Exploration built via browser automation: free-form Exploration `AI referral sessions` on the imfw.io property, rows Session source → Landing page + query string, values Sessions + Engaged sessions, regex filter over 7 AI-search hosts, Last 28 days. Auto-saved in GA4 Explore; no matching sessions yet (expected on a low-traffic site). Synced docs/aiso.md.
+- 2026-07-13 — Bing Webmaster Tools ownership verified and `https://imfw.io/sitemap.xml` submitted; synced docs/aiso.md and docs/project-overview.md.
+- 2026-07-13 — Homepage SEO scan signals improved (`85da9e5`): descriptive `<title>`/description on `/`, matching `WebSite` JSON-LD; added build-smoke test asserting exactly one `<h1>` and `html[lang=zh-TW]` on every sitemap HTML page.
 - 2026-07-13 — CI action bump to clear Node 20 deprecation ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)): `actions/checkout@v4→v7`, `actions/setup-node@v4→v6`, `peaceiris/actions-gh-pages@v3→v4` — all now run on Node 24 (v3 was node16). Build Node stays `node-version: '22'`. Synced docs/project-overview.md pipeline note.
 - 2026-07-13 — Google Search Console ownership verified through DNS and `/sitemap.xml` submitted; HTML-meta token is intentionally unnecessary.
 - `529eaaf` — AISO local implementation: author/freshness structured data, Bing verification, IndexNow, complete llms.txt, crawler policy, AISO runbook, social API rewrite, and refreshed Docker topic cluster (44/44 tests).
@@ -53,7 +39,7 @@
 
 ## Blockers
 
-- Browser control is unavailable in this session, so Bing Webmaster Tools verification／sitemap submission and the GA4 AI referral report cannot be completed from the dashboards.
+- None currently open.
 
 ## Next steps
 

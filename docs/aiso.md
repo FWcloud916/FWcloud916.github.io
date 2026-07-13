@@ -53,13 +53,13 @@ Status: ownership verified through DNS and `https://imfw.io/sitemap.xml` submitt
 3. Submit `https://imfw.io/sitemap.xml` and confirm its processing status.
 4. Use AI Performance to record cited URLs and citation changes where the report is available.
 
-Status: token configured; dashboard verification and sitemap submission remain after deploy.
+Status: verified in Bing Webmaster Tools; `https://imfw.io/sitemap.xml` submitted. AI Performance citation tracking continues per the monthly scorecard.
 
 ### Google Analytics 4
 
 Create an exploration or report filtered by page referrer／session source for at least `chatgpt.com`, `perplexity.ai` and `copilot.microsoft.com`. Record sessions, engaged sessions and landing pages monthly. Referral hostnames MAY change and SHOULD be reviewed against observed GA4 data rather than treated as a permanent exhaustive list.
 
-Status: GA4 collection is active; custom AI referral report requires dashboard access.
+Status: built. Free-form Exploration `AI referral sessions` in GA4 Explore (imfw.io property), rows Session source → Landing page + query string, values Sessions + Engaged sessions, filtered to Session source matching regex `chatgpt\.com|perplexity\.ai|copilot\.microsoft\.com|gemini\.google\.com|edgeservices\.bing\.com|claude\.ai|bing\.com`, Last 28 days. No matching sessions in the current window — expected on a low-traffic site; the report is in place to populate as AI referral traffic appears.
 
 ## Monthly Scorecard
 

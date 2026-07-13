@@ -22,7 +22,7 @@
 - **GitHub Actions** ([.github/workflows/deploy.yml](../.github/workflows/deploy.yml)) builds and deploys on every push to `main`.
 - **Google Analytics (GA4)** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) and **enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is set to `G-QBS6V0SVT1`.
 - **Google Search Console** is verified through DNS. The optional HTML-meta hook remains available but unused, so `googleSiteVerification` is empty by design.
-- **Bing Webmaster Tools verification** is configured through `bingSiteVerification`; the verification meta tag becomes live after deployment.
+- **Bing Webmaster Tools** is verified through `bingSiteVerification`; `https://imfw.io/sitemap.xml` is submitted.
 - **IndexNow** is called after successful GitHub Pages deployments. Its notifier submits affected public URLs without blocking an otherwise successful deploy.
 
 ### 1.3 Deprecated / Retired or Not-Yet-Enabled Features
@@ -208,7 +208,7 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
 | Google Search Console | DNS ownership verification; optional HTML-meta hook in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) | verified through DNS; sitemap submitted; HTML token intentionally empty |
-| Bing Webmaster Tools verification | same layout, keyed by `site.bingSiteVerification` | configured; external verification pending deploy |
+| Bing Webmaster Tools | same layout, keyed by `site.bingSiteVerification` | verified; sitemap submitted |
 | Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-QBS6V0SVT1`) |
 | IndexNow | [scripts/submit-indexnow.mjs](../scripts/submit-indexnow.mjs), called by deploy workflow | active after deploy; non-blocking notification |
 
