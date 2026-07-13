@@ -8,6 +8,7 @@ This is FW's personal blog about web development and technology.
 
 Website: https://imfw.io
 RSS Feed: https://imfw.io/feed.xml
+Author: FW (https://imfw.io/about/)
 
 ## Navigation
 
@@ -15,61 +16,81 @@ RSS Feed: https://imfw.io/feed.xml
 - Tags: https://imfw.io/tags/
 - About: https://imfw.io/about/
 
-## Recent Posts
+## Posts
+
+### Docker 基礎學習路線：從 Container、Image 到 Dockerfile
+
+- Published: 2026-07-13T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/
+- Tags: Docker, docker-learning-path
+
+- Description: Docker 初學者的閱讀順序與實作路線，依序理解 container、image、Dockerfile，再完成第一個 nginx 與 Node.js image。
+
 
 ### 2026 年社群平台 API 現況：單人開發者的生存指南
 
 - Published: 2026-07-13T00:00:00.000Z
+- Updated: 2026-07-13T00:00:00.000Z
+
 - URL: https://imfw.io/posts/2026/2026-07-13-social-platform-apis-2026/
 - Tags: api, social-media, automation
 
 - Description: 為了做自動發文工具，把 X、Facebook、Instagram、Threads 四個平台的 API 研究了一輪 — 申請門檻、費用、token 管理與免審核範圍的第一手整理。
 
 
-
 ### Dockerfile - 基本概念
 
 - Published: 2020-03-15T00:00:00.000Z
+- Updated: 2026-07-13T00:00:00.000Z
+
 - URL: https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/
 - Tags: Docker, Dockerfile, w3HexSchool
 
-
+- Description: Dockerfile 常用指令、Node.js 範例、build cache 與避免把不必要檔案打進 image 的做法。
 
 
 ### Docker Image - 基本概念
 
 - Published: 2020-03-08T00:00:00.000Z
+- Updated: 2026-07-13T00:00:00.000Z
+
 - URL: https://imfw.io/posts/2020/2020-03-08-docker-basic-image/
 - Tags: Docker, Docker Image, Image, w3HexSchool
 
-
+- Description: Docker image 的唯讀分層、tag 與 digest，以及 pull、build、inspect、rm 常用指令。
 
 
 ### Docker Container - 基本概念
 
 - Published: 2020-02-22T00:00:00.000Z
+- Updated: 2026-07-13T00:00:00.000Z
+
 - URL: https://imfw.io/posts/2020/2020-02-22-docker-basic-container/
 - Tags: Docker, Docker Container, Container, w3HexSchool
 
-
+- Description: 用 nginx 練習 docker run、port publishing、bind mount 與 container 生命週期。
 
 
 ### Docker - 基本概念
 
 - Published: 2020-02-16T00:00:00.000Z
+- Updated: 2026-07-13T00:00:00.000Z
+
 - URL: https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/
 - Tags: Docker, w3HexSchool
 
-
+- Description: Docker container、image 與 VM 的差異，以及容器化為什麼能讓開發環境更一致。
 
 
 ### NVM - Node Version Manager 安裝
 
 - Published: 2019-03-19T00:00:00.000Z
+
 - URL: https://imfw.io/posts/2019/2019-03-19-nvm-install/
 - Tags: node, nvm, 工具
 
-
+- Description: 由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題 MAC NVM 是由大神 Tim Caswell 所開發的一個專案，提供 linus/mac 使用的 Node 版本管理器，是目前最受歡迎的管理器 安裝方式 1.開啟…
 
 
 
@@ -91,6 +112,8 @@ RSS Feed: https://imfw.io/feed.xml
 
 - automation: https://imfw.io/tags/automation/
 
+- docker-learning-path: https://imfw.io/tags/docker-learning-path/
+
 - node: https://imfw.io/tags/node/
 
 - nvm: https://imfw.io/tags/nvm/
@@ -111,7 +134,7 @@ RSS Feed: https://imfw.io/feed.xml
 
 ## Content License
 
-All content (c) 2025 FW
+All content (c) 2026 FW
 
 ---
 

@@ -13,8 +13,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dockerfile - 基本概念 - FW Blog</title>
-  <meta name="description" content="Dockerfile - 基本概念 簡述 Dockerfile 的基本語法與常用指令 概念 Dockerfile 是 image 的藍圖，描述如何建立一個 image 常用指令 FROM：指定基礎 image RUN：執行指令 COPY：複製檔案到 image ADD：複製檔案或目錄到 image，並自動解壓縮壓縮檔…">
+  <meta name="description" content="Dockerfile 常用指令、Node.js 範例、build cache 與避免把不必要檔案打進 image 的做法。">
   <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
   
   <link rel="canonical" href="https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/">
 
@@ -22,7 +25,7 @@
   <meta property="og:site_name" content="FW Blog">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:title" content="Dockerfile - 基本概念 - FW Blog">
-  <meta property="og:description" content="Dockerfile - 基本概念 簡述 Dockerfile 的基本語法與常用指令 概念 Dockerfile 是 image 的藍圖，描述如何建立一個 image 常用指令 FROM：指定基礎 image RUN：執行指令 COPY：複製檔案到 image ADD：複製檔案或目錄到 image，並自動解壓縮壓縮檔…">
+  <meta property="og:description" content="Dockerfile 常用指令、Node.js 範例、build cache 與避免把不必要檔案打進 image 的做法。">
   <meta property="og:url" content="https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/">
   <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
   <meta property="og:image:alt" content="Dockerfile - 基本概念 - FW Blog">
@@ -31,6 +34,7 @@
   
   <meta property="og:type" content="article">
   <meta property="article:published_time" content="2020-03-15T00:00:00.000Z">
+  <meta property="article:modified_time" content="2026-07-13T00:00:00.000Z">
   
   <meta property="article:tag" content="Docker">
   
@@ -41,7 +45,7 @@
   
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Dockerfile - 基本概念 - FW Blog">
-  <meta name="twitter:description" content="Dockerfile - 基本概念 簡述 Dockerfile 的基本語法與常用指令 概念 Dockerfile 是 image 的藍圖，描述如何建立一個 image 常用指令 FROM：指定基礎 image RUN：執行指令 COPY：複製檔案到 image ADD：複製檔案或目錄到 image，並自動解壓縮壓縮檔…">
+  <meta name="twitter:description" content="Dockerfile 常用指令、Node.js 範例、build cache 與避免把不必要檔案打進 image 的做法。">
   <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
   <meta name="twitter:image:alt" content="Dockerfile - 基本概念 - FW Blog">
 
@@ -59,16 +63,20 @@
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": "Dockerfile - 基本概念",
-    "description": "Dockerfile - 基本概念 簡述 Dockerfile 的基本語法與常用指令 概念 Dockerfile 是 image 的藍圖，描述如何建立一個 image 常用指令 FROM：指定基礎 image RUN：執行指令 COPY：複製檔案到 image ADD：複製檔案或目錄到 image，並自動解壓縮壓縮檔…",
+    "description": "Dockerfile 常用指令、Node.js 範例、build cache 與避免把不必要檔案打進 image 的做法。",
     "url": "https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/",
     "mainEntityOfPage": "https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/",
     "datePublished": "2020-03-15T00:00:00.000Z",
+    "dateModified": "2026-07-13T00:00:00.000Z",
     "image": "https://imfw.io/assets/images/og-default.png",
     "keywords": ["Docker","Dockerfile","w3HexSchool"],
     "inLanguage": "zh-TW",
     "author": {
       "@type": "Person",
-      "name": "FW"
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
     },
     "publisher": {
       "@type": "Person",
@@ -76,6 +84,7 @@
     }
   }
   </script>
+  
   
 
   <!-- Google Analytics -->
@@ -118,8 +127,10 @@
   <header class="mb-8">
     <h1 class="text-4xl font-bold mb-4">Dockerfile - 基本概念</h1>
     <div class="flex flex-wrap gap-4 text-sm text-gray-600">
-      <time datetime="2020-03-15T00:00:00.000Z">2020年03月15日</time>
-      <span>1 分鐘閱讀</span>
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2020-03-15T00:00:00.000Z">2020年03月15日</time></span>
+      <span>更新：<time datetime="2026-07-13T00:00:00.000Z">2026年07月13日</time></span>
+      <span>2 分鐘閱讀</span>
     </div>
     
     <div class="mt-4 flex flex-wrap gap-2">
@@ -149,30 +160,90 @@
   </header>
 
   <div class="prose prose-lg max-w-none">
-    <h1>Dockerfile - 基本概念</h1>
-<p>簡述 Dockerfile 的基本語法與常用指令</p>
-<h2>概念</h2>
-<p>Dockerfile 是 image 的藍圖，描述如何建立一個 image</p>
+    <p>Dockerfile 是描述如何建立 container image 的文字檔。每個指令都應有明確目的：選擇 base image、安裝 dependency、複製應用程式、設定工作目錄，最後指定 container 啟動時執行的程式。</p>
 <h2>常用指令</h2>
-<ul>
-<li><code>FROM</code>：指定基礎 image</li>
-<li><code>RUN</code>：執行指令</li>
-<li><code>COPY</code>：複製檔案到 image</li>
-<li><code>ADD</code>：複製檔案或目錄到 image，並自動解壓縮壓縮檔</li>
-<li><code>CMD</code>：container 啟動時執行的指令</li>
-<li><code>EXPOSE</code>：開放的 port</li>
-<li><code>ENV</code>：設定環境變數</li>
-<li><code>WORKDIR</code>：設定工作目錄</li>
-</ul>
-<h2>範例</h2>
-<pre class="language-dockerfile"><code class="language-dockerfile"><span class="token instruction"><span class="token keyword">FROM</span> node:12</span>
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FROM</code></td>
+<td>指定 base image 並開始新的 build stage</td>
+</tr>
+<tr>
+<td><code>WORKDIR</code></td>
+<td>設定後續指令的工作目錄</td>
+</tr>
+<tr>
+<td><code>COPY</code></td>
+<td>從 build context 或其他 stage 複製檔案</td>
+</tr>
+<tr>
+<td><code>RUN</code></td>
+<td>在 build 階段執行指令並產生 layer</td>
+</tr>
+<tr>
+<td><code>CMD</code></td>
+<td>提供 container 預設啟動命令或參數</td>
+</tr>
+<tr>
+<td><code>ENTRYPOINT</code></td>
+<td>指定 container 的主要 executable</td>
+</tr>
+<tr>
+<td><code>ENV</code></td>
+<td>設定 image 與 container 使用的環境變數</td>
+</tr>
+<tr>
+<td><code>ARG</code></td>
+<td>設定只在 build 階段使用的變數</td>
+</tr>
+<tr>
+<td><code>EXPOSE</code></td>
+<td>描述應用程式監聽的 port，不會自動發布 port</td>
+</tr>
+<tr>
+<td><code>USER</code></td>
+<td>指定後續 build 或 runtime 使用者</td>
+</tr>
+</tbody>
+</table>
+<p>一般檔案優先用 <code>COPY</code>；只有確實需要 <code>ADD</code> 的遠端來源或自動解壓等能力時再使用 <code>ADD</code>。</p>
+<h2>Node.js 範例</h2>
+<pre class="language-dockerfile"><code class="language-dockerfile"><span class="token comment"># syntax=docker/dockerfile:1</span>
+<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine</span>
+
 <span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+
+<span class="token instruction"><span class="token keyword">COPY</span> package.json package-lock.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev</span>
+
 <span class="token instruction"><span class="token keyword">COPY</span> . .</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm install</span>
+
+<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
 <span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"npm"</span>, <span class="token string">"start"</span>]</span></code></pre>
-<h2>參考</h2>
+<p>先複製 lockfile 並安裝 dependency，再複製其餘程式碼，可以讓只有應用程式檔案變更時重用 dependency layer 的 build cache。範例中的版本只是示意；實際專案應使用受支援版本並定期更新 base image。</p>
+<p>搭配 <code>.dockerignore</code>：</p>
+<pre class="language-text"><code class="language-text">.git
+node_modules
+npm-debug.log
+.env*</code></pre>
+<p>Secret 不應透過 <code>COPY</code>、<code>ARG</code> 或 <code>ENV</code> 永久寫入 image layer；建置或執行時應使用平台提供的 secret 機制。</p>
+<h2>建置與執行</h2>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> image build <span class="token parameter variable">--tag</span> my-node-app:1.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> container run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 my-node-app:1.0</code></pre>
+<p><code>EXPOSE 3000</code> 只提供 metadata；<code>-p 3000:3000</code> 才把 container port 發布到 host。</p>
+<p>回到 <a href="/posts/2026/2026-07-13-docker-basics-guide/">Docker 基礎學習路線</a>，或複習 <a href="/posts/2020/2020-03-08-docker-basic-image/">Docker Image 基本概念</a>。</p>
+<h2>官方參考資料</h2>
 <ul>
-<li><a href="https://docs.docker.com/engine/reference/builder/">Dockerfile 文件</a></li>
+<li><a href="https://docs.docker.com/reference/dockerfile/">Dockerfile reference</a></li>
+<li><a href="https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/">Writing a Dockerfile</a></li>
+<li><a href="https://docs.docker.com/build/building/secrets/">Build secrets</a></li>
 </ul>
 
   </div>
@@ -182,7 +253,7 @@
 
   <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
     <p class="text-center text-gray-600 text-sm">
-      &copy; 2025 FW. All rights reserved.
+      &copy; 2026 FW. All rights reserved.
     </p>
   </footer>
 </body>

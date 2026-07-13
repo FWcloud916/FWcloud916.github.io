@@ -12,127 +12,216 @@
   
   
   <entry>
+    <title>Docker 基礎學習路線：從 Container、Image 到 Dockerfile</title>
+    <link href="https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/"/>
+    <updated>2026-07-13T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/</id>
+    <content type="html">&lt;p&gt;學 Docker 最有效的順序是：先理解 container 是隔離的 process，再理解 image 如何提供執行所需檔案，最後用 Dockerfile 建立自己的 image。不要一開始就背所有 CLI；先完成「run 現成 image → 觀察 container → build 自己的 image」這個循環。&lt;/p&gt;
+&lt;h2&gt;適合誰&lt;/h2&gt;
+&lt;p&gt;這條路線適合第一次接觸 Docker、想統一團隊開發環境，或需要把 Web 應用程式放進 container 的開發者。開始前只需要能使用 terminal，不要求 Kubernetes 或雲端平台知識。&lt;/p&gt;
+&lt;h2&gt;核心關係&lt;/h2&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;Dockerfile ──build──&gt; Image ──run──&gt; Container
+                         │
+                         └──push／pull──&gt; Registry&lt;/code&gt;&lt;/pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Dockerfile&lt;/strong&gt; 保存建置步驟。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Image&lt;/strong&gt; 是唯讀、分層、可分發的應用套件。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Container&lt;/strong&gt; 是 image 的執行實例。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Registry&lt;/strong&gt; 用來保存與分享 image。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;第一步：理解 Container 為什麼存在&lt;/h2&gt;
+&lt;p&gt;先讀 &lt;a href=&quot;https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/&quot;&gt;Docker 基本概念&lt;/a&gt;，理解 container 與 VM 的隔離方式和使用情境。接著用 &lt;a href=&quot;https://imfw.io/posts/2020/2020-02-22-docker-basic-container/&quot;&gt;Docker Container 基本概念&lt;/a&gt;啟動 nginx，練習：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;docker container run&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;port publishing&lt;/li&gt;
+&lt;li&gt;bind mount&lt;/li&gt;
+&lt;li&gt;查看 log、停止與清理 container&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;完成標準：能解釋為什麼 &lt;code&gt;EXPOSE 80&lt;/code&gt; 不等於 host 可以直接連到 port 80。&lt;/p&gt;
+&lt;h2&gt;第二步：理解 Image 與版本&lt;/h2&gt;
+&lt;p&gt;閱讀 &lt;a href=&quot;https://imfw.io/posts/2020/2020-03-08-docker-basic-image/&quot;&gt;Docker Image 基本概念&lt;/a&gt;，練習 pull、list、inspect 與 remove。特別確認：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;image 為什麼由 layers 組成&lt;/li&gt;
+&lt;li&gt;tag 與 digest 的差異&lt;/li&gt;
+&lt;li&gt;為什麼正式部署不應盲目依賴 &lt;code&gt;latest&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;完成標準：能指出目前執行的 container 使用哪個 image tag 或 digest。&lt;/p&gt;
+&lt;h2&gt;第三步：建立自己的 Image&lt;/h2&gt;
+&lt;p&gt;閱讀 &lt;a href=&quot;https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/&quot;&gt;Dockerfile 基本概念&lt;/a&gt;，用簡單 Node.js 專案完成：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;選擇明確版本的 base image。&lt;/li&gt;
+&lt;li&gt;先複製 lockfile 並安裝 dependency。&lt;/li&gt;
+&lt;li&gt;再複製應用程式，利用 build cache。&lt;/li&gt;
+&lt;li&gt;透過 &lt;code&gt;.dockerignore&lt;/code&gt; 排除 secret 和不必要檔案。&lt;/li&gt;
+&lt;li&gt;build image 並以 container 執行。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;完成標準：修改一個程式檔後重新 build，能從輸出辨認 dependency layer 是否重用 cache。&lt;/p&gt;
+&lt;h2&gt;建議的下一個主題&lt;/h2&gt;
+&lt;p&gt;掌握這四篇後，再依需求學習：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Docker Compose：管理多個互相依賴的服務。&lt;/li&gt;
+&lt;li&gt;Named volume：保存需要跨 container 留存的資料。&lt;/li&gt;
+&lt;li&gt;Container network：讓服務透過名稱互相連線。&lt;/li&gt;
+&lt;li&gt;Multi-stage build：縮小正式 image，避免把建置工具帶進 runtime。&lt;/li&gt;
+&lt;li&gt;Healthcheck 與 resource limits：讓部署平台能判斷服務狀態並限制資源。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;官方延伸閱讀&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/&quot;&gt;Docker Get Started&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/guides/lab-container-getting-started/&quot;&gt;Docker 官方入門 Lab&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/introduction/whats-next/&quot;&gt;Docker：What&#39;s next&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
+  
+  <entry>
     <title>2026 年社群平台 API 現況：單人開發者的生存指南</title>
     <link href="https://imfw.io/posts/2026/2026-07-13-social-platform-apis-2026/"/>
     <updated>2026-07-13T00:00:00Z</updated>
     <id>https://imfw.io/posts/2026/2026-07-13-social-platform-apis-2026/</id>
-    <content type="html">&lt;p&gt;最近在做部落格的自動發文工具，文章發布後自動轉發到 X 、 Facebook 、 Instagram 、 Threads&lt;/p&gt;
-&lt;p&gt;結果最花時間的不是寫程式，而是搞懂四個平台的 API 現在長什麼樣子&lt;/p&gt;
-&lt;p&gt;如果你的印象還停留在「 Twitter API 免費申請就能用」的年代，這篇整理了新的現況
-以下都是實際申請、查過官方文件的第一手資訊&lt;/p&gt;
-&lt;h2&gt;X：開始需要付費&lt;/h2&gt;
-&lt;p&gt;X 在 2026 年 2 月把開發者方案全面改成&lt;strong&gt;按次計費&lt;/strong&gt;，新開發者已經沒有免費方案可以選了&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;發一則貼文 : &lt;strong&gt;$0.015&lt;/strong&gt;&lt;/li&gt;
-&lt;li&gt;貼文含連結 : &lt;strong&gt;$0.20&lt;/strong&gt; ( 貴 13 倍，平台就是不想讓你導流出去 )&lt;/li&gt;
-&lt;li&gt;讀取 : $0.005/則，每月上限 200 萬則&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;舊的 Free tier ( 每月 500 則 ) 只剩既有用戶沿用，Basic ( $200/月 ) 跟 Pro ( $5,000/月 ) 也關閉新申請了&lt;/p&gt;
-&lt;p&gt;對自動發文來說，等於&lt;strong&gt;每篇文章 $0.2 美元&lt;/strong&gt;
-錢不多，但你會開始思考「這則值得發嗎」&lt;/p&gt;
-&lt;h3&gt;技術面&lt;/h3&gt;
-&lt;ul&gt;
-&lt;li&gt;OAuth 2.0 Authorization Code + PKCE，要 &lt;code&gt;offline.access&lt;/code&gt; scope 才拿得到 refresh token&lt;/li&gt;
-&lt;li&gt;一個坑 : &lt;strong&gt;refresh token 每次刷新都會輪替&lt;/strong&gt;，沒把新的存回去，下一次刷新就直接失效&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;Meta 三平台：dev mode 是單人工具的甜蜜點&lt;/h2&gt;
-&lt;p&gt;Facebook 、 Instagram 、 Threads 都掛在 Meta 開發者平台下，有一條對個人工具超級友善的共通規則&lt;/p&gt;
+    <content type="html">&lt;p&gt;如果只是替自己的帳號做自動發文，2026 年最容易起步的是 &lt;strong&gt;Threads&lt;/strong&gt;；Facebook 與 Instagram 在 App 維持 Development mode、只操作自己資產時也很實用；X 則要先接受按次計費。真正容易讓自動化失效的地方不是發文 API，而是 Instagram 與 Threads 的 60 天 token，以及 X refresh token 的輪替。&lt;/p&gt;
 &lt;blockquote&gt;
-&lt;p&gt;App 維持 Development mode 、你的帳號持有 app role 的情況下
-對「自己的資產」發文&lt;strong&gt;不需要 App Review，完全免費&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;查核範圍：&lt;/strong&gt; 本文資訊於 2026 年 7 月 13 日依官方文件與實際申請流程整理。平台價格、權限與額度可能調整，實作前請再檢查文中連結的官方文件。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;App Review 是 Meta 出名的繁瑣流程 ( 要錄影、要寫使用情境、要等審核 )
-但那是給「服務其他使用者」的 App 用的
-單人工具只操作自己的粉專、自己的 IG 、自己的 Threads — dev mode 就是完全體!!&lt;/p&gt;
-&lt;h3&gt;Facebook：只能發粉專，但 token 幾乎永生&lt;/h3&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;個人檔案不能用 API 發文&lt;/strong&gt;，只能發粉絲專頁，想自動發文要先開一個粉專&lt;/li&gt;
-&lt;li&gt;權限要 &lt;code&gt;pages_manage_posts&lt;/code&gt; + &lt;code&gt;pages_read_engagement&lt;/code&gt; + &lt;code&gt;pages_show_list&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;發文就是對 &lt;code&gt;/{page-id}/feed&lt;/code&gt; POST 一個 &lt;code&gt;message&lt;/code&gt; ( 可帶 &lt;code&gt;link&lt;/code&gt; 產生預覽卡 )&lt;/li&gt;
-&lt;li&gt;用長效 User token 換到的 &lt;strong&gt;Page token 幾乎不過期&lt;/strong&gt;，換一次可以用超久，是最簡單的&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Instagram：不用綁粉專了，但圖片比較麻煩&lt;/h3&gt;
-&lt;p&gt;2024 年中推出的「 Instagram API with Instagram Login 」是個大改善
-以前發 IG 要先有 FB 粉專、把帳號綁上去、權限一路串過去
-現在直接用 IG 帳號登入授權就好 ( 帳號要轉商業或創作者，免費、可逆 )&lt;/p&gt;
-&lt;p&gt;不過內容發布的限制是四平台最多的&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;圖片&lt;strong&gt;只收 JPEG&lt;/strong&gt;&lt;/li&gt;
-&lt;li&gt;圖片必須放在&lt;strong&gt;公開 URL&lt;/strong&gt; — Meta 的伺服器會自己來抓，不能直接上傳檔案
-&lt;ul&gt;
-&lt;li&gt;個人工具可以租圖床或是把圖丟到靜態部落格一起部署&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;發布是&lt;strong&gt;兩段式&lt;/strong&gt; : 先建 media container 、再 publish&lt;/li&gt;
-&lt;li&gt;API 發文上限 25 則/24 小時&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Threads：目前對開發者最友善&lt;/h3&gt;
-&lt;p&gt;Threads API 意外地是四個裡面體驗最好的&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;免費，純文字就能發 ( 不像 IG 強制要圖 )&lt;/li&gt;
-&lt;li&gt;每則 500 字，發文上限 250 則/24 小時&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;支援串文&lt;/strong&gt; : 用 &lt;code&gt;reply_to_id&lt;/code&gt; 回覆自己的貼文就能串起來，做出「主文講重點、細節放留言」的格式
-&lt;ul&gt;
-&lt;li&gt;回覆另計額度 ( 1,000 則/24 小時 )，不吃發文額度&lt;/li&gt;
-&lt;li&gt;回覆自己的貼文也不需要額外權限&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;一樣是兩段式發布，官方建議 container 建立後等 30 秒再 publish&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;要注意 Threads 跟 IG 是&lt;strong&gt;完全獨立的產品&lt;/strong&gt;
-即使掛在同一個 Meta App 下，token 、 App Secret 、權限 ( &lt;code&gt;threads_basic&lt;/code&gt; + &lt;code&gt;threads_content_publish&lt;/code&gt; ) 都是分開的一套&lt;/p&gt;
-&lt;h2&gt;Token 管理：三種生命週期&lt;/h2&gt;
+&lt;h2&gt;30 秒比較&lt;/h2&gt;
 &lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
 &lt;th&gt;平台&lt;/th&gt;
-&lt;th&gt;Token 效期&lt;/th&gt;
-&lt;th&gt;維護方式&lt;/th&gt;
+&lt;th&gt;自動發文成本&lt;/th&gt;
+&lt;th&gt;個人工具的主要門檻&lt;/th&gt;
+&lt;th&gt;Token 維護&lt;/th&gt;
+&lt;th&gt;建議順序&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Threads&lt;/td&gt;
+&lt;td&gt;免費&lt;/td&gt;
+&lt;td&gt;建立 Meta App，自己的帳號需有 app role&lt;/td&gt;
+&lt;td&gt;60 天內刷新&lt;/td&gt;
+&lt;td&gt;第一個做&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Facebook&lt;/td&gt;
+&lt;td&gt;免費&lt;/td&gt;
+&lt;td&gt;只能發粉絲專頁，不能發個人檔案&lt;/td&gt;
+&lt;td&gt;長效 Page token&lt;/td&gt;
+&lt;td&gt;與 IG 一起做&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Instagram&lt;/td&gt;
+&lt;td&gt;免費&lt;/td&gt;
+&lt;td&gt;專業帳號；圖片須為公開可抓取的 JPEG&lt;/td&gt;
+&lt;td&gt;60 天內刷新&lt;/td&gt;
+&lt;td&gt;解決圖片託管後做&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;X&lt;/td&gt;
+&lt;td&gt;按次計費&lt;/td&gt;
+&lt;td&gt;預先購買 API credits&lt;/td&gt;
+&lt;td&gt;refresh token 輪替&lt;/td&gt;
+&lt;td&gt;確認受眾後再做&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;這個排序是針對「單人維護、只發布自己的內容」做出的實作建議，不代表各平台對所有產品的通用排名。&lt;/p&gt;
+&lt;h2&gt;為什麼重新研究這四套 API&lt;/h2&gt;
+&lt;p&gt;我在做部落格的自動發文工具：文章發布後，自動轉發到 X、Facebook、Instagram 和 Threads。結果最花時間的不是寫程式，而是搞懂四個平台目前的申請方式、權限、費用和 token 生命週期。&lt;/p&gt;
+&lt;p&gt;以下先列官方規則，再補上我針對單人工具的實作判斷。&lt;/p&gt;
+&lt;h2&gt;X：按次計費，含連結的貼文最貴&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://docs.x.com/x-api/getting-started/pricing&quot;&gt;X 官方定價&lt;/a&gt;採預付 credits 的 pay-per-usage 模式，沒有固定月費。查核當下的公開價格為：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;建立一般內容：&lt;strong&gt;US$0.015／次&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;建立含 URL 的內容：&lt;strong&gt;US$0.20／次&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;讀取 Post：&lt;strong&gt;US$0.005／筆&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;自有帳號資料的 Owned Read：&lt;strong&gt;US$0.001／筆&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;因此，部落格每發布一篇含連結的宣傳貼文，API 成本約為 US$0.20。金額不算高，但如果讀者不在 X 上，就值得先衡量投入效益。&lt;/p&gt;
+&lt;h3&gt;X 的授權注意事項&lt;/h3&gt;
+&lt;p&gt;發文使用 OAuth 2.0 Authorization Code Flow with PKCE；需要離線存取時，必須要求 &lt;code&gt;offline.access&lt;/code&gt; scope。依 &lt;a href=&quot;https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code&quot;&gt;X OAuth 2.0 官方文件&lt;/a&gt;，refresh token 使用後可能輪替，所以刷新 access token 時必須把新的 refresh token 一併回存，不能繼續使用舊值。&lt;/p&gt;
+&lt;h2&gt;Meta 三平台：個人工具可先留在 Development mode&lt;/h2&gt;
+&lt;p&gt;Facebook、Instagram、Threads 都在 Meta 開發者平台管理。對只操作自己帳號或資產的單人工具，實際申請時可以讓 App 維持 Development mode，並把自己的帳號加入 app role；這樣能先完成自己的發布流程，不必一開始就走提供外部使用者授權所需的 App Review。&lt;/p&gt;
+&lt;p&gt;這是開發與自用情境，不等於可以把 Development mode 的 App 當成公開服務。只要開始替其他使用者操作資產，就應重新檢查 App Review、Business Verification 與各權限要求。&lt;/p&gt;
+&lt;h3&gt;Facebook：只能發粉絲專頁&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;API 可以發布到自己管理的粉絲專頁，不能替個人 Profile 自動發文。&lt;/li&gt;
+&lt;li&gt;常用權限包括 &lt;code&gt;pages_manage_posts&lt;/code&gt;、&lt;code&gt;pages_read_engagement&lt;/code&gt; 與 &lt;code&gt;pages_show_list&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;發文可對 &lt;code&gt;/{page-id}/feed&lt;/code&gt; 傳送 &lt;code&gt;message&lt;/code&gt;，並以 &lt;code&gt;link&lt;/code&gt; 帶入文章網址。&lt;/li&gt;
+&lt;li&gt;長效 User token 可交換 Page access token；實際效期仍應以 Access Token Debugger 與 &lt;a href=&quot;https://developers.facebook.com/docs/pages-api/getting-started/&quot;&gt;Pages API 入門文件&lt;/a&gt;顯示為準，不要只靠程式假設永久有效。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Facebook 適合已經有粉絲專頁的人。如果只有個人 Profile，必須先建立專頁才能走這條 API 流程。&lt;/p&gt;
+&lt;h3&gt;Instagram：發布流程不再強制綁 Facebook 粉專&lt;/h3&gt;
+&lt;p&gt;使用 &lt;a href=&quot;https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/&quot;&gt;Instagram API with Instagram Login&lt;/a&gt;時，可以直接以 Instagram 專業帳號授權，不必沿用早期先綁 Facebook 粉專的流程。&lt;/p&gt;
+&lt;p&gt;依 &lt;a href=&quot;https://developers.facebook.com/docs/instagram-platform/content-publishing/&quot;&gt;Instagram Content Publishing 官方文件&lt;/a&gt;，自動發布要特別處理：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;圖片必須放在 Meta 伺服器能存取的公開 URL。&lt;/li&gt;
+&lt;li&gt;圖片格式與尺寸必須符合端點要求；建立流程前應再次核對官方限制。&lt;/li&gt;
+&lt;li&gt;發布分成兩段：先建立 media container，再呼叫 publish。&lt;/li&gt;
+&lt;li&gt;API 有內容發布頻率限制，程式應主動查詢使用量，不要只依賴寫死的數字。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;對靜態部落格而言，可以把社群圖片隨網站一起部署，等正式 URL 可公開存取後再請 Instagram 抓取。&lt;/p&gt;
+&lt;h3&gt;Threads：純文字最適合驗證流程&lt;/h3&gt;
+&lt;p&gt;Threads 支援純文字貼文，不需要先解決 Instagram 的圖片託管問題，因此最適合拿來驗證「建置完成 → 取得文章 URL → 產生貼文 → 發布」這條自動化流程。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;權限通常從 &lt;code&gt;threads_basic&lt;/code&gt; 與 &lt;code&gt;threads_content_publish&lt;/code&gt; 開始。&lt;/li&gt;
+&lt;li&gt;支援用 &lt;code&gt;reply_to_id&lt;/code&gt; 回覆自己的貼文，適合做主文加補充串文。&lt;/li&gt;
+&lt;li&gt;container 建立與正式 publish 是兩個步驟，程式應處理媒體狀態與重試，而不是只用固定秒數等待。&lt;/li&gt;
+&lt;li&gt;額度與回覆規則應以 &lt;a href=&quot;https://developers.facebook.com/docs/threads/posts/&quot;&gt;Threads 發布文件&lt;/a&gt;和 &lt;a href=&quot;https://developers.facebook.com/docs/threads/retrieve-and-manage-replies/create-replies/&quot;&gt;Threads 回覆文件&lt;/a&gt;為準。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Threads 與 Instagram 即使掛在同一個 Meta App 下，token、App Secret 和權限仍是分開管理的兩套資料，不能共用。&lt;/p&gt;
+&lt;h2&gt;Token 管理是自動發文最容易壞的地方&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;平台&lt;/th&gt;
+&lt;th&gt;主要生命週期風險&lt;/th&gt;
+&lt;th&gt;建議維護方式&lt;/th&gt;
 &lt;/tr&gt;
 &lt;/thead&gt;
 &lt;tbody&gt;
 &lt;tr&gt;
 &lt;td&gt;X&lt;/td&gt;
-&lt;td&gt;access token 短效&lt;/td&gt;
-&lt;td&gt;遇 401 用 refresh token 換新 ( &lt;strong&gt;會輪替，要回存&lt;/strong&gt; )&lt;/td&gt;
+&lt;td&gt;refresh token 可能輪替&lt;/td&gt;
+&lt;td&gt;每次刷新都原子化回存新 access token 與 refresh token&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;Facebook&lt;/td&gt;
-&lt;td&gt;幾乎不過期&lt;/td&gt;
-&lt;td&gt;不用管&lt;/td&gt;
+&lt;td&gt;token 狀態會受角色、密碼與權限變動影響&lt;/td&gt;
+&lt;td&gt;定期驗證 token，不把「長效」當成永不失效&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;Instagram&lt;/td&gt;
-&lt;td&gt;60 天&lt;/td&gt;
-&lt;td&gt;存滿 24 小時後可刷新，&lt;strong&gt;過期就不能刷&lt;/strong&gt;，只能重新授權&lt;/td&gt;
+&lt;td&gt;長效 token 需在有效期間內刷新&lt;/td&gt;
+&lt;td&gt;排程提早刷新，失敗時告警並保留重新授權流程&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;Threads&lt;/td&gt;
-&lt;td&gt;60 天&lt;/td&gt;
-&lt;td&gt;同上，跟 IG 分開刷&lt;/td&gt;
+&lt;td&gt;與 Instagram 分開的 token 生命週期&lt;/td&gt;
+&lt;td&gt;獨立儲存、獨立刷新、獨立告警&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;p&gt;IG 跟 Threads 的「 60 天過期就死」最容易出事
-忘記刷新，兩個月後你的自動發文就靜悄悄地壞掉囉
-可以考慮透過排程自動刷新&lt;/p&gt;
-&lt;h2&gt;給單人開發者的建議&lt;/h2&gt;
+&lt;p&gt;不要等發文收到 401 才處理。實作時至少要保存 token 到期時間、最後刷新時間與最後一次錯誤，並在失效前主動刷新。&lt;/p&gt;
+&lt;h2&gt;給單人開發者的實作順序&lt;/h2&gt;
 &lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;從 Threads 開始&lt;/strong&gt; — 免費、純文字可發、限制最少，驗證整條流程的最佳起點&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;FB/IG 一起辦&lt;/strong&gt; — 同一個 Meta App 搞定 ; IG 的 JPEG + 公開 URL 限制先想好圖從哪來&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;X 想清楚再上&lt;/strong&gt; — 含連結每則 $0.2，一年發 100 篇就是 $20，如果讀者不在 X 上這筆可以省&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Token 刷新自動化&lt;/strong&gt; — 60 天剛好長到讓你忘記它的存在&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;先接 Threads&lt;/strong&gt;：純文字即可發布，最容易驗證整條自動化。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;再做 Facebook&lt;/strong&gt;：如果已有粉絲專頁，發布流程相對直接。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;處理 Instagram 圖片&lt;/strong&gt;：先確保正式圖片 URL、格式與發布狀態檢查都可靠。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;最後評估 X&lt;/strong&gt;：確認受眾與 US$0.20 含連結貼文成本值得，再購買 credits。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;統一做 token 監控&lt;/strong&gt;：刷新、輪替、失敗告警與重新授權都要在正式自動化前完成。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;平台 API 的免費紅利確實過去了
-但對「只操作自己帳號」的個人工具來說，2026 年的現況比想像中友善&lt;/p&gt;
-&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;h2&gt;結論&lt;/h2&gt;
+&lt;p&gt;2026 年仍然可以用官方 API 為自己的社群帳號做自動發文，但四個平台沒有真正共用的授權或發布抽象。最穩定的做法是共用「文章資料、排程、錯誤處理與觀測」，平台 token 與發布流程則各自封裝。&lt;/p&gt;
+&lt;p&gt;如果目標只是替個人部落格省下重複貼文時間，從 Threads 做出最小可行流程，再逐一增加 Facebook、Instagram 和 X，會比一次處理四套權限更容易維護。&lt;/p&gt;
+&lt;h2&gt;官方參考資料&lt;/h2&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://postproxy.dev/blog/x-api-pricing-2026/&quot;&gt;X API pricing 2026 ( Postproxy 整理 )&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.x.com/x-api/getting-started/pricing&quot;&gt;X API pricing&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code&quot;&gt;X OAuth 2.0 Authorization Code Flow&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/pages-api/getting-started/&quot;&gt;Meta Pages API — Get Started&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/&quot;&gt;Instagram API with Instagram Login&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/instagram-platform/content-publishing/&quot;&gt;Instagram Content Publishing&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/threads/get-started/get-access-tokens-and-permissions/&quot;&gt;Threads API — Access Tokens and Permissions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/threads/posts/&quot;&gt;Threads API — Publish Content&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/threads/retrieve-and-manage-replies/create-replies/&quot;&gt;Threads API — Create Replies&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </content>
@@ -143,30 +232,90 @@
     <link href="https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/"/>
     <updated>2020-03-15T00:00:00Z</updated>
     <id>https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/</id>
-    <content type="html">&lt;h1&gt;Dockerfile - 基本概念&lt;/h1&gt;
-&lt;p&gt;簡述 Dockerfile 的基本語法與常用指令&lt;/p&gt;
-&lt;h2&gt;概念&lt;/h2&gt;
-&lt;p&gt;Dockerfile 是 image 的藍圖，描述如何建立一個 image&lt;/p&gt;
+    <content type="html">&lt;p&gt;Dockerfile 是描述如何建立 container image 的文字檔。每個指令都應有明確目的：選擇 base image、安裝 dependency、複製應用程式、設定工作目錄，最後指定 container 啟動時執行的程式。&lt;/p&gt;
 &lt;h2&gt;常用指令&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;FROM&lt;/code&gt;：指定基礎 image&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;RUN&lt;/code&gt;：執行指令&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;COPY&lt;/code&gt;：複製檔案到 image&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;ADD&lt;/code&gt;：複製檔案或目錄到 image，並自動解壓縮壓縮檔&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;CMD&lt;/code&gt;：container 啟動時執行的指令&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;EXPOSE&lt;/code&gt;：開放的 port&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;ENV&lt;/code&gt;：設定環境變數&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;WORKDIR&lt;/code&gt;：設定工作目錄&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;範例&lt;/h2&gt;
-&lt;pre class=&quot;language-dockerfile&quot;&gt;&lt;code class=&quot;language-dockerfile&quot;&gt;&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;FROM&lt;/span&gt; node:12&lt;/span&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;指令&lt;/th&gt;
+&lt;th&gt;用途&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;FROM&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;指定 base image 並開始新的 build stage&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;WORKDIR&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;設定後續指令的工作目錄&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;COPY&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;從 build context 或其他 stage 複製檔案&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RUN&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;在 build 階段執行指令並產生 layer&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;CMD&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;提供 container 預設啟動命令或參數&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;ENTRYPOINT&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;指定 container 的主要 executable&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;ENV&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;設定 image 與 container 使用的環境變數&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;ARG&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;設定只在 build 階段使用的變數&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;EXPOSE&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;描述應用程式監聽的 port，不會自動發布 port&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;USER&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;指定後續 build 或 runtime 使用者&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;一般檔案優先用 &lt;code&gt;COPY&lt;/code&gt;；只有確實需要 &lt;code&gt;ADD&lt;/code&gt; 的遠端來源或自動解壓等能力時再使用 &lt;code&gt;ADD&lt;/code&gt;。&lt;/p&gt;
+&lt;h2&gt;Node.js 範例&lt;/h2&gt;
+&lt;pre class=&quot;language-dockerfile&quot;&gt;&lt;code class=&quot;language-dockerfile&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;# syntax=docker/dockerfile:1&lt;/span&gt;
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;FROM&lt;/span&gt; node:22-alpine&lt;/span&gt;
+
 &lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;WORKDIR&lt;/span&gt; /app&lt;/span&gt;
+
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;COPY&lt;/span&gt; package.json package-lock.json ./&lt;/span&gt;
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;RUN&lt;/span&gt; npm ci --omit=dev&lt;/span&gt;
+
 &lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;COPY&lt;/span&gt; . .&lt;/span&gt;
-&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;RUN&lt;/span&gt; npm install&lt;/span&gt;
+
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;ENV&lt;/span&gt; NODE_ENV=production&lt;/span&gt;
+&lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;EXPOSE&lt;/span&gt; 3000&lt;/span&gt;
 &lt;span class=&quot;token instruction&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;CMD&lt;/span&gt; [&lt;span class=&quot;token string&quot;&gt;&quot;npm&quot;&lt;/span&gt;, &lt;span class=&quot;token string&quot;&gt;&quot;start&quot;&lt;/span&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;h2&gt;參考&lt;/h2&gt;
+&lt;p&gt;先複製 lockfile 並安裝 dependency，再複製其餘程式碼，可以讓只有應用程式檔案變更時重用 dependency layer 的 build cache。範例中的版本只是示意；實際專案應使用受支援版本並定期更新 base image。&lt;/p&gt;
+&lt;p&gt;搭配 &lt;code&gt;.dockerignore&lt;/code&gt;：&lt;/p&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;.git
+node_modules
+npm-debug.log
+.env*&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Secret 不應透過 &lt;code&gt;COPY&lt;/code&gt;、&lt;code&gt;ARG&lt;/code&gt; 或 &lt;code&gt;ENV&lt;/code&gt; 永久寫入 image layer；建置或執行時應使用平台提供的 secret 機制。&lt;/p&gt;
+&lt;h2&gt;建置與執行&lt;/h2&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; image build &lt;span class=&quot;token parameter variable&quot;&gt;--tag&lt;/span&gt; my-node-app:1.0 &lt;span class=&quot;token builtin class-name&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container run &lt;span class=&quot;token parameter variable&quot;&gt;--rm&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-p&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;3000&lt;/span&gt;:3000 my-node-app:1.0&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;code&gt;EXPOSE 3000&lt;/code&gt; 只提供 metadata；&lt;code&gt;-p 3000:3000&lt;/code&gt; 才把 container port 發布到 host。&lt;/p&gt;
+&lt;p&gt;回到 &lt;a href=&quot;https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/&quot;&gt;Docker 基礎學習路線&lt;/a&gt;，或複習 &lt;a href=&quot;https://imfw.io/posts/2020/2020-03-08-docker-basic-image/&quot;&gt;Docker Image 基本概念&lt;/a&gt;。&lt;/p&gt;
+&lt;h2&gt;官方參考資料&lt;/h2&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/engine/reference/builder/&quot;&gt;Dockerfile 文件&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/reference/dockerfile/&quot;&gt;Dockerfile reference&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/&quot;&gt;Writing a Dockerfile&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/build/building/secrets/&quot;&gt;Build secrets&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </content>
   </entry>
@@ -176,23 +325,37 @@
     <link href="https://imfw.io/posts/2020/2020-03-08-docker-basic-image/"/>
     <updated>2020-03-08T00:00:00Z</updated>
     <id>https://imfw.io/posts/2020/2020-03-08-docker-basic-image/</id>
-    <content type="html">&lt;h1&gt;Docker Image - 基本概念&lt;/h1&gt;
-&lt;p&gt;簡述 Docker Image 的基本概念與常用指令&lt;/p&gt;
-&lt;h2&gt;概念&lt;/h2&gt;
-&lt;p&gt;image 是 container 的樣板，container 是根據 image 產生的&lt;/p&gt;
-&lt;p&gt;image 是根據 dockerfile 產生的，dockerfile 是 image 的藍圖&lt;/p&gt;
+    <content type="html">&lt;p&gt;Docker image 是執行 container 所需檔案、binary、library 與設定的標準化套件。Image 建立後不會直接被修改；內容變更時會產生新的 layer 與新 image。Tag 是方便閱讀的名稱，digest 才是特定內容的不可變識別值。&lt;/p&gt;
+&lt;h2&gt;Image 和 container 的關係&lt;/h2&gt;
+&lt;p&gt;Image 是可重複使用的套件，container 是它的執行實例。同一個 image 可以啟動多個 container；container runtime 產生的可寫資料不會反向修改原始 image。&lt;/p&gt;
+&lt;p&gt;Image 通常由多個 layer 組成。不同 image 可以共用相同 layer，因此下載或儲存時不一定要重複保存全部內容。&lt;/p&gt;
 &lt;h2&gt;常用指令&lt;/h2&gt;
-&lt;pre class=&quot;language-docker&quot;&gt;&lt;code class=&quot;language-docker&quot;&gt;docker image ls&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;列出所有 image&lt;/p&gt;
-&lt;pre class=&quot;language-docker&quot;&gt;&lt;code class=&quot;language-docker&quot;&gt;docker image pull [OPTIONS] NAME[:TAG|@DIGEST]&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;下載 image&lt;/p&gt;
-&lt;pre class=&quot;language-docker&quot;&gt;&lt;code class=&quot;language-docker&quot;&gt;docker image rm [OPTIONS] IMAGE [IMAGE...]&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;刪除 image&lt;/p&gt;
-&lt;pre class=&quot;language-docker&quot;&gt;&lt;code class=&quot;language-docker&quot;&gt;docker image build [OPTIONS] PATH | URL | -&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;根據 dockerfile 建立 image&lt;/p&gt;
-&lt;h2&gt;參考&lt;/h2&gt;
+&lt;h3&gt;列出本機 image&lt;/h3&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; image &lt;span class=&quot;token function&quot;&gt;ls&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;h3&gt;從 registry 下載&lt;/h3&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; image pull nginx:alpine&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;正式部署應明確指定 tag，對可重現性要求更高時可固定 digest，避免 &lt;code&gt;latest&lt;/code&gt; 指向的內容日後改變。&lt;/p&gt;
+&lt;h3&gt;從 Dockerfile 建置&lt;/h3&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; image build &lt;span class=&quot;token parameter variable&quot;&gt;--tag&lt;/span&gt; my-app:1.0 &lt;span class=&quot;token builtin class-name&quot;&gt;.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;最後的 &lt;code&gt;.&lt;/code&gt; 是 build context；Dockerfile 中的 &lt;code&gt;COPY&lt;/code&gt; 只能讀取 context 內允許的檔案。應搭配 &lt;code&gt;.dockerignore&lt;/code&gt; 排除 &lt;code&gt;.git&lt;/code&gt;、dependency cache、secret 和其他不需要的內容。&lt;/p&gt;
+&lt;h3&gt;查看詳細資料與 history&lt;/h3&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; image inspect my-app:1.0
+&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; image &lt;span class=&quot;token function&quot;&gt;history&lt;/span&gt; my-app:1.0&lt;/code&gt;&lt;/pre&gt;
+&lt;h3&gt;移除 image&lt;/h3&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; image &lt;span class=&quot;token function&quot;&gt;rm&lt;/span&gt; my-app:1.0&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;若仍有 container 引用該 image，必須先確認並清理 container，不要在不理解影響時直接強制刪除。&lt;/p&gt;
+&lt;h2&gt;Tag 與 digest 怎麼選&lt;/h2&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/engine/reference/commandline/image/&quot;&gt;Docker 官方文件&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Tag&lt;/strong&gt; 適合人員閱讀與版本管理，例如 &lt;code&gt;my-app:1.0&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Digest&lt;/strong&gt; 對應確切 image 內容，例如 &lt;code&gt;nginx@sha256:...&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;開發流程可以使用有意義的 tag；需要嚴格重現的部署則保存並使用 digest。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;回到 &lt;a href=&quot;https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/&quot;&gt;Docker 基礎學習路線&lt;/a&gt;，或繼續閱讀 &lt;a href=&quot;https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/&quot;&gt;Dockerfile 基本概念&lt;/a&gt;。&lt;/p&gt;
+&lt;h2&gt;官方參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/&quot;&gt;Docker：What is an image?&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/reference/cli/docker/image/&quot;&gt;docker image CLI&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/reference/cli/docker/image/pull/&quot;&gt;docker image pull&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </content>
   </entry>
@@ -202,35 +365,49 @@
     <link href="https://imfw.io/posts/2020/2020-02-22-docker-basic-container/"/>
     <updated>2020-02-22T00:00:00Z</updated>
     <id>https://imfw.io/posts/2020/2020-02-22-docker-basic-container/</id>
-    <content type="html">&lt;h1&gt;Docker Container - 基本概念&lt;/h1&gt;
-&lt;p&gt;簡述 Docker Container 使用方式、基本常用指令&lt;/p&gt;
-&lt;h2&gt;概念&lt;/h2&gt;
-&lt;p&gt;container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的&lt;/p&gt;
-&lt;p&gt;image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的&lt;/p&gt;
-&lt;h2&gt;常用指令&lt;/h2&gt;
-&lt;pre class=&quot;language-docker&quot;&gt;&lt;code class=&quot;language-docker&quot;&gt;docker container run [OPTIONS] IMAGE [COMMAND] [ARG...]&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;運行一個 &lt;a href=&quot;https://hub.docker.com/_/nginx?tab=description&quot;&gt;nginx&lt;/a&gt;&lt;/p&gt;
-&lt;pre class=&quot;language-docker&quot;&gt;&lt;code class=&quot;language-docker&quot;&gt;docker container run -p 8080:80 nginx&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;如果電腦上沒有 nginx 的 image 會從 docker 的儲存庫下載，預設通常是官方的 &lt;a href=&quot;https://hub.docker.com/&quot;&gt;Docker Hub&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;上面這行指令中 &lt;code&gt;-p&lt;/code&gt; 是 &lt;code&gt;--port&lt;/code&gt; 的縮寫，傳入兩個參數，一個是主機的 port (8080) ，一個是 container 的（80），代表的意思是將 container 的 80 埠對應到主機的 8080 埠
-所以在主機的電腦上可以開啟瀏覽器輸入 localhost:8080 就會看到 container 開啟的 nginx 伺服器&lt;/p&gt;
-&lt;p&gt;如果要知道開啟的 port 是多少，基本上有三種方法&lt;/p&gt;
+    <content type="html">&lt;p&gt;Container 是 image 的可執行實例。最常用的起點是 &lt;code&gt;docker run&lt;/code&gt;：它會在本機沒有 image 時先下載，再建立並啟動 container。本篇用 nginx 示範 port publishing、bind mount、背景執行與清理流程。&lt;/p&gt;
+&lt;h2&gt;啟動第一個 container&lt;/h2&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container run &lt;span class=&quot;token parameter variable&quot;&gt;--name&lt;/span&gt; web &lt;span class=&quot;token parameter variable&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-p&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;8080&lt;/span&gt;:80 nginx&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;這行指令會：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;從 Docker Hub 上的&lt;a href=&quot;https://hub.docker.com/_/nginx?tab=description&quot;&gt;說明&lt;/a&gt;中查詢&lt;/li&gt;
-&lt;li&gt;從 Docker Hub 上的 &lt;a href=&quot;https://hub.docker.com/layers/nginx/library/nginx/latest/images/sha256-d7ffce801c3c92dac436bc5dc65235384dcc1b6bbb8210ccb65f466f975f8f88?context=explore&quot;&gt;tag&lt;/a&gt; 中查詢&lt;/li&gt;
-&lt;li&gt;從 &lt;a href=&quot;https://github.com/nginxinc/docker-nginx/blob/5971de30c487356d5d2a2e1a79e02b2612f9a72f/mainline/buster/Dockerfile&quot;&gt;dockerfile&lt;/a&gt; 裡面查詢&lt;/li&gt;
+&lt;li&gt;以 &lt;code&gt;nginx&lt;/code&gt; image 建立名為 &lt;code&gt;web&lt;/code&gt; 的 container。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-d&lt;/code&gt;／&lt;code&gt;--detach&lt;/code&gt; 讓它在背景執行。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-p&lt;/code&gt;／&lt;code&gt;--publish&lt;/code&gt; 將 host 的 &lt;code&gt;8080&lt;/code&gt; 對應到 container 的 &lt;code&gt;80&lt;/code&gt;。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;EXPOSE 是 dockerfile 中的指令，代表服務對外開啟的 port&lt;/p&gt;
-&lt;p&gt;這邊可以開始感受到
-dockerfile 是 image 的藍圖
-image 是 container 的樣板&lt;/p&gt;
-&lt;p&gt;所以在使用 image 的時候最好可以看到 dockerfile 才可以確保開啟的 container 有做什麼事情&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;docker container run -v ~/Documents/demo:/usr/share/nginx/html -p 8080:80 nginx
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;這次加上 &lt;code&gt;-v&lt;/code&gt; 是 &lt;code&gt;--volume&lt;/code&gt; 的縮寫，代表綁定檔案目錄，藉由設置這個參數可以修改 container 中要執行的檔案，這邊綁定了 nginx 的預設目錄，就可以修改預設顯示的頁面了&lt;/p&gt;
-&lt;p&gt;其他還有&lt;a href=&quot;https://docs.docker.com/engine/reference/commandline/container_run/&quot;&gt;許多參數&lt;/a&gt;可以設定&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;-d&lt;/code&gt; &lt;code&gt;--detach&lt;/code&gt; 代表背景執行，執行後只會回傳 container ID&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;-i&lt;/code&gt; &lt;code&gt;--interactive&lt;/code&gt; 開啟互動模式，可以直接操作 container&lt;/p&gt;
+&lt;p&gt;完成後開啟 &lt;code&gt;http://localhost:8080&lt;/code&gt;，應該會看到 nginx 預設頁面。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Dockerfile 的 &lt;code&gt;EXPOSE 80&lt;/code&gt; 只是描述服務預期監聽的 port，不會自動把 port 發布到 host；實際對外映射仍要使用 &lt;code&gt;-p&lt;/code&gt; 或其他網路設定。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2&gt;查看狀態與 log&lt;/h2&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container &lt;span class=&quot;token function&quot;&gt;ls&lt;/span&gt;
+&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container logs web
+&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container inspect web&lt;/code&gt;&lt;/pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ls&lt;/code&gt; 列出執行中的 container。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;logs&lt;/code&gt; 查看主要 process 寫到標準輸出的 log。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;inspect&lt;/code&gt; 查看完整設定、網路和 mount 資訊。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;把本機檔案掛進 container&lt;/h2&gt;
+&lt;p&gt;先準備一個含 &lt;code&gt;index.html&lt;/code&gt; 的本機目錄，再執行：&lt;/p&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container run &lt;span class=&quot;token parameter variable&quot;&gt;--name&lt;/span&gt; custom-web &lt;span class=&quot;token parameter variable&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;-p&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;8081&lt;/span&gt;:80 &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--mount&lt;/span&gt; &lt;span class=&quot;token assign-left variable&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;bind,source&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token environment constant&quot;&gt;$HOME&lt;/span&gt;/Documents/demo&quot;&lt;/span&gt;,target&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;/usr/share/nginx/html,readonly &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  nginx&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;這個 bind mount 讓 nginx 讀取本機目錄內容。&lt;code&gt;readonly&lt;/code&gt; 可避免 container 修改本機檔案。路徑需要依自己的環境調整；正式資料持久化則應比較 bind mount 與 named volume 的差異。&lt;/p&gt;
+&lt;h2&gt;停止與清理&lt;/h2&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container stop web custom-web
+&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container &lt;span class=&quot;token function&quot;&gt;rm&lt;/span&gt; web custom-web&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;停止 container 不會自動刪除它；不再需要時再以 &lt;code&gt;rm&lt;/code&gt; 清理。要查看包含已停止 container 的清單，可使用：&lt;/p&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container &lt;span class=&quot;token function&quot;&gt;ls&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;--all&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;h2&gt;Image、Dockerfile 與 Container 的關係&lt;/h2&gt;
+&lt;p&gt;Dockerfile 定義建置步驟，image 保存建置結果，container 則是 image 的執行實例。同一個 image 可以啟動多個彼此獨立的 container，但每個 container 的 runtime 狀態不同。&lt;/p&gt;
+&lt;p&gt;回到 &lt;a href=&quot;https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/&quot;&gt;Docker 基礎學習路線&lt;/a&gt;，或繼續了解 &lt;a href=&quot;https://imfw.io/posts/2020/2020-03-08-docker-basic-image/&quot;&gt;Docker Image&lt;/a&gt;。&lt;/p&gt;
+&lt;h2&gt;官方參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/&quot;&gt;Docker：What is a container?&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/reference/cli/docker/container/run/&quot;&gt;docker container run&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/engine/storage/bind-mounts/&quot;&gt;Bind mounts&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
 </content>
   </entry>
   
@@ -239,42 +416,73 @@ image 是 container 的樣板&lt;/p&gt;
     <link href="https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/"/>
     <updated>2020-02-16T00:00:00Z</updated>
     <id>https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/</id>
-    <content type="html">&lt;h1&gt;Docker - 基本概念&lt;/h1&gt;
-&lt;p&gt;簡述 Docker 架構、優勢、好處並與 VM 作比較&lt;/p&gt;
-&lt;h2&gt;建立環境&lt;/h2&gt;
-&lt;p&gt;建立一個 Web Service 的環境
-可能需要 Linux + Apache + MySQL + PHP (LAMP)
-又或者再加上 Nginx 組成 LNAMP&lt;/p&gt;
-&lt;h3&gt;使用 VM&lt;/h3&gt;
-&lt;p&gt;一個環境就是一個&lt;strong&gt;完整&lt;/strong&gt;的系統
-在獨立開發的時候，也許這個情況並不會造成困擾
-但是在團隊開發的時候，如果每個人都需要一個可以開發的環境&lt;/p&gt;
+    <content type="html">&lt;p&gt;Docker 把應用程式和它需要的檔案、函式庫及設定包成 image，再以隔離的 container process 執行。它比完整 VM 輕量、啟動快，也容易在開發機、CI 和正式環境重現；但 container 通常與 host 共用 kernel，隔離模型和 VM 不相同。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本文於 2026 年 7 月 13 日依目前 Docker 文件重新查核。不同作業系統上的 Docker Desktop 會使用虛擬化層，因此「與 host 共用 kernel」需要依實際平台理解。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2&gt;為什麼需要一致的開發環境&lt;/h2&gt;
+&lt;p&gt;建立一個 Web Service 可能同時需要 Linux、Web server、資料庫和語言 runtime。直接把所有依賴裝在每位開發者的電腦上，容易遇到版本不一致、套件互相影響，以及「我的電腦可以跑」的問題。&lt;/p&gt;
+&lt;p&gt;Container 讓每個服務以自己的隔離 process 執行，並由 image 定義執行時需要的檔案與設定。團隊可以在開發機、CI 和部署環境使用同一份 image，減少環境漂移。&lt;/p&gt;
+&lt;h2&gt;Container 和 VM 的差異&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;比較&lt;/th&gt;
+&lt;th&gt;Container&lt;/th&gt;
+&lt;th&gt;Virtual machine&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;隔離單位&lt;/td&gt;
+&lt;td&gt;Process 與相關 namespace／resource&lt;/td&gt;
+&lt;td&gt;完整 guest OS&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Kernel&lt;/td&gt;
+&lt;td&gt;通常與 host 或虛擬化層共用&lt;/td&gt;
+&lt;td&gt;Guest OS 有自己的 kernel&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;啟動與體積&lt;/td&gt;
+&lt;td&gt;通常較快、較小&lt;/td&gt;
+&lt;td&gt;通常較慢、較大&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;適合情境&lt;/td&gt;
+&lt;td&gt;打包與執行應用服務&lt;/td&gt;
+&lt;td&gt;需要完整 OS 或較強邊界的工作負載&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;在 macOS 或 Windows 使用 Docker Desktop 時，Linux container 實際上會跑在輕量 Linux VM 裡；因此不是直接拿 macOS 或 Windows kernel 執行 Linux container。&lt;/p&gt;
+&lt;h2&gt;Docker 的核心物件&lt;/h2&gt;
 &lt;ul&gt;
-&lt;li&gt;整個團隊共用一個環境 =&amp;gt; 每個開發者互相影響&lt;/li&gt;
-&lt;li&gt;每個人有獨立的開發環境 =&amp;gt; 很難確保每個人都有相同的環境&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Dockerfile&lt;/strong&gt;：描述如何建置 image 的文字檔。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Image&lt;/strong&gt;：包含執行 container 所需檔案、函式庫與設定的唯讀分層套件。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Container&lt;/strong&gt;：由 image 建立並正在執行或已停止的實例。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Registry&lt;/strong&gt;：儲存和分發 image 的服務，例如 Docker Hub。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;h3&gt;使用 Docker&lt;/h3&gt;
-&lt;p&gt;Docker 不需要自己的系統，Docker 的架構是建立在原有的系統上，使用原有系統的運算資源，只安裝需要的東西，相比基於硬體上的系統建立，Docker 建立的系統只是一個程式而已&lt;/p&gt;
-&lt;p&gt;所以 Docker 具有快速建立、轉移、複製的特性&lt;/p&gt;
-&lt;p&gt;不過即便透過 namespace 隔離，但因為與原系統共用 kernel，所以 Docker 也不像 VM 是完全隔離的系統&lt;/p&gt;
-&lt;h2&gt;資源分配及建立限制&lt;/h2&gt;
-&lt;h3&gt;VM&lt;/h3&gt;
-&lt;ul&gt;
-&lt;li&gt;虛擬化硬體資源，執行自己的作業系統&lt;/li&gt;
-&lt;li&gt;可以建立任何環境， Linux 、 MAC OS 或是 Windows&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Docker&lt;/h3&gt;
-&lt;ul&gt;
-&lt;li&gt;Docker 使用原系統的 kernel 作為運算，不需要執行自己的作業系統&lt;/li&gt;
-&lt;li&gt;只能建立相同 kernel 的環境使用&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;最簡化的流程是：撰寫 Dockerfile → build image → run container。&lt;/p&gt;
 &lt;h2&gt;Docker 帶來的優勢&lt;/h2&gt;
-&lt;h3&gt;快速建立相同環境&lt;/h3&gt;
-&lt;p&gt;當環境建立好之後（ image 、 Dockerfile ）可以在不同的機器直接部署、安裝&lt;/p&gt;
-&lt;h3&gt;快速調整環境&lt;/h3&gt;
-&lt;p&gt;只需要調整 image 或 Dockerfile 就可完成環境的變更&lt;/p&gt;
-&lt;h3&gt;節省資源提升效能&lt;/h3&gt;
-&lt;p&gt;不需要運行額外的作業系統，直接使用原本 kernel ，將資源更有效率的運用&lt;/p&gt;
+&lt;h3&gt;重現環境&lt;/h3&gt;
+&lt;p&gt;同一份 Dockerfile 與鎖定版本的 base image，可以建立可重複的應用環境。若需要完全固定內容，正式環境還可使用 image digest，而不只依賴會移動的 tag。&lt;/p&gt;
+&lt;h3&gt;快速交付與回滾&lt;/h3&gt;
+&lt;p&gt;image 可以經 registry 分發；部署與回滾時切換 image 版本，不必在伺服器上逐項重裝依賴。&lt;/p&gt;
+&lt;h3&gt;提高資源使用效率&lt;/h3&gt;
+&lt;p&gt;container 不需要為每個服務啟動完整 guest OS，通常能比 VM 更快啟動並使用更少額外資源。不過安全性、網路、儲存與資源限制仍需要明確設定，不能把 container 當成天然安全邊界。&lt;/p&gt;
+&lt;h2&gt;下一步&lt;/h2&gt;
+&lt;p&gt;按照 &lt;a href=&quot;https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/&quot;&gt;Docker 基礎學習路線&lt;/a&gt;繼續閱讀：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&quot;https://imfw.io/posts/2020/2020-02-22-docker-basic-container/&quot;&gt;Docker Container 基本概念&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://imfw.io/posts/2020/2020-03-08-docker-basic-image/&quot;&gt;Docker Image 基本概念&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/&quot;&gt;Dockerfile 基本概念&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2&gt;官方參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/&quot;&gt;Docker：What is a container?&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/&quot;&gt;Docker：What is an image?&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
 </content>
   </entry>
   

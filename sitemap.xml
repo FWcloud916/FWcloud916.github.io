@@ -11,28 +11,35 @@
   
   <url>
     <loc>https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/</loc>
-    <lastmod>2020-02-16T00:00:00.000Z</lastmod>
+    <lastmod>2026-07-13T00:00:00.000Z</lastmod>
   </url>
   
 
   
   <url>
     <loc>https://imfw.io/posts/2020/2020-02-22-docker-basic-container/</loc>
-    <lastmod>2020-02-22T00:00:00.000Z</lastmod>
+    <lastmod>2026-07-13T00:00:00.000Z</lastmod>
   </url>
   
 
   
   <url>
     <loc>https://imfw.io/posts/2020/2020-03-08-docker-basic-image/</loc>
-    <lastmod>2020-03-08T00:00:00.000Z</lastmod>
+    <lastmod>2026-07-13T00:00:00.000Z</lastmod>
   </url>
   
 
   
   <url>
     <loc>https://imfw.io/posts/2020/2020-03-15-docker-basic-dockerfile/</loc>
-    <lastmod>2020-03-15T00:00:00.000Z</lastmod>
+    <lastmod>2026-07-13T00:00:00.000Z</lastmod>
+  </url>
+  
+
+  
+  <url>
+    <loc>https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/</loc>
+    <lastmod>2026-07-13T00:00:00.000Z</lastmod>
   </url>
   
 
@@ -97,6 +104,10 @@
 
   <url>
     <loc>https://imfw.io/tags/automation/</loc>
+  </url>
+
+  <url>
+    <loc>https://imfw.io/tags/docker-learning-path/</loc>
   </url>
 
   <url>

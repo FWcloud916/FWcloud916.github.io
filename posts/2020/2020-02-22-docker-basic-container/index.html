@@ -13,8 +13,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Docker Container - 基本概念 - FW Blog</title>
-  <meta name="description" content="Docker Container - 基本概念 簡述 Docker Container 使用方式、基本常用指令 概念 container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的 imag…">
+  <meta name="description" content="用 nginx 練習 docker run、port publishing、bind mount 與 container 生命週期。">
   <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
   
   <link rel="canonical" href="https://imfw.io/posts/2020/2020-02-22-docker-basic-container/">
 
@@ -22,7 +25,7 @@
   <meta property="og:site_name" content="FW Blog">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:title" content="Docker Container - 基本概念 - FW Blog">
-  <meta property="og:description" content="Docker Container - 基本概念 簡述 Docker Container 使用方式、基本常用指令 概念 container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的 imag…">
+  <meta property="og:description" content="用 nginx 練習 docker run、port publishing、bind mount 與 container 生命週期。">
   <meta property="og:url" content="https://imfw.io/posts/2020/2020-02-22-docker-basic-container/">
   <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
   <meta property="og:image:alt" content="Docker Container - 基本概念 - FW Blog">
@@ -31,6 +34,7 @@
   
   <meta property="og:type" content="article">
   <meta property="article:published_time" content="2020-02-22T00:00:00.000Z">
+  <meta property="article:modified_time" content="2026-07-13T00:00:00.000Z">
   
   <meta property="article:tag" content="Docker">
   
@@ -43,7 +47,7 @@
   
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Docker Container - 基本概念 - FW Blog">
-  <meta name="twitter:description" content="Docker Container - 基本概念 簡述 Docker Container 使用方式、基本常用指令 概念 container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的 imag…">
+  <meta name="twitter:description" content="用 nginx 練習 docker run、port publishing、bind mount 與 container 生命週期。">
   <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
   <meta name="twitter:image:alt" content="Docker Container - 基本概念 - FW Blog">
 
@@ -61,16 +65,20 @@
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": "Docker Container - 基本概念",
-    "description": "Docker Container - 基本概念 簡述 Docker Container 使用方式、基本常用指令 概念 container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的 imag…",
+    "description": "用 nginx 練習 docker run、port publishing、bind mount 與 container 生命週期。",
     "url": "https://imfw.io/posts/2020/2020-02-22-docker-basic-container/",
     "mainEntityOfPage": "https://imfw.io/posts/2020/2020-02-22-docker-basic-container/",
     "datePublished": "2020-02-22T00:00:00.000Z",
+    "dateModified": "2026-07-13T00:00:00.000Z",
     "image": "https://imfw.io/assets/images/og-default.png",
     "keywords": ["Docker","Docker Container","Container","w3HexSchool"],
     "inLanguage": "zh-TW",
     "author": {
       "@type": "Person",
-      "name": "FW"
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
     },
     "publisher": {
       "@type": "Person",
@@ -78,6 +86,7 @@
     }
   }
   </script>
+  
   
 
   <!-- Google Analytics -->
@@ -120,7 +129,9 @@
   <header class="mb-8">
     <h1 class="text-4xl font-bold mb-4">Docker Container - 基本概念</h1>
     <div class="flex flex-wrap gap-4 text-sm text-gray-600">
-      <time datetime="2020-02-22T00:00:00.000Z">2020年02月22日</time>
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2020-02-22T00:00:00.000Z">2020年02月22日</time></span>
+      <span>更新：<time datetime="2026-07-13T00:00:00.000Z">2026年07月13日</time></span>
       <span>2 分鐘閱讀</span>
     </div>
     
@@ -157,35 +168,49 @@
   </header>
 
   <div class="prose prose-lg max-w-none">
-    <h1>Docker Container - 基本概念</h1>
-<p>簡述 Docker Container 使用方式、基本常用指令</p>
-<h2>概念</h2>
-<p>container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的</p>
-<p>image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的</p>
-<h2>常用指令</h2>
-<pre class="language-docker"><code class="language-docker">docker container run [OPTIONS] IMAGE [COMMAND] [ARG...]</code></pre>
-<p>運行一個 <a href="https://hub.docker.com/_/nginx?tab=description">nginx</a></p>
-<pre class="language-docker"><code class="language-docker">docker container run -p 8080:80 nginx</code></pre>
-<p>如果電腦上沒有 nginx 的 image 會從 docker 的儲存庫下載，預設通常是官方的 <a href="https://hub.docker.com/">Docker Hub</a></p>
-<p>上面這行指令中 <code>-p</code> 是 <code>--port</code> 的縮寫，傳入兩個參數，一個是主機的 port (8080) ，一個是 container 的（80），代表的意思是將 container 的 80 埠對應到主機的 8080 埠
-所以在主機的電腦上可以開啟瀏覽器輸入 localhost:8080 就會看到 container 開啟的 nginx 伺服器</p>
-<p>如果要知道開啟的 port 是多少，基本上有三種方法</p>
+    <p>Container 是 image 的可執行實例。最常用的起點是 <code>docker run</code>：它會在本機沒有 image 時先下載，再建立並啟動 container。本篇用 nginx 示範 port publishing、bind mount、背景執行與清理流程。</p>
+<h2>啟動第一個 container</h2>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> container run <span class="token parameter variable">--name</span> web <span class="token parameter variable">-d</span> <span class="token parameter variable">-p</span> <span class="token number">8080</span>:80 nginx</code></pre>
+<p>這行指令會：</p>
 <ul>
-<li>從 Docker Hub 上的<a href="https://hub.docker.com/_/nginx?tab=description">說明</a>中查詢</li>
-<li>從 Docker Hub 上的 <a href="https://hub.docker.com/layers/nginx/library/nginx/latest/images/sha256-d7ffce801c3c92dac436bc5dc65235384dcc1b6bbb8210ccb65f466f975f8f88?context=explore">tag</a> 中查詢</li>
-<li>從 <a href="https://github.com/nginxinc/docker-nginx/blob/5971de30c487356d5d2a2e1a79e02b2612f9a72f/mainline/buster/Dockerfile">dockerfile</a> 裡面查詢</li>
+<li>以 <code>nginx</code> image 建立名為 <code>web</code> 的 container。</li>
+<li><code>-d</code>／<code>--detach</code> 讓它在背景執行。</li>
+<li><code>-p</code>／<code>--publish</code> 將 host 的 <code>8080</code> 對應到 container 的 <code>80</code>。</li>
 </ul>
-<p>EXPOSE 是 dockerfile 中的指令，代表服務對外開啟的 port</p>
-<p>這邊可以開始感受到
-dockerfile 是 image 的藍圖
-image 是 container 的樣板</p>
-<p>所以在使用 image 的時候最好可以看到 dockerfile 才可以確保開啟的 container 有做什麼事情</p>
-<pre><code>docker container run -v ~/Documents/demo:/usr/share/nginx/html -p 8080:80 nginx
-</code></pre>
-<p>這次加上 <code>-v</code> 是 <code>--volume</code> 的縮寫，代表綁定檔案目錄，藉由設置這個參數可以修改 container 中要執行的檔案，這邊綁定了 nginx 的預設目錄，就可以修改預設顯示的頁面了</p>
-<p>其他還有<a href="https://docs.docker.com/engine/reference/commandline/container_run/">許多參數</a>可以設定</p>
-<p><code>-d</code> <code>--detach</code> 代表背景執行，執行後只會回傳 container ID</p>
-<p><code>-i</code> <code>--interactive</code> 開啟互動模式，可以直接操作 container</p>
+<p>完成後開啟 <code>http://localhost:8080</code>，應該會看到 nginx 預設頁面。</p>
+<blockquote>
+<p>Dockerfile 的 <code>EXPOSE 80</code> 只是描述服務預期監聽的 port，不會自動把 port 發布到 host；實際對外映射仍要使用 <code>-p</code> 或其他網路設定。</p>
+</blockquote>
+<h2>查看狀態與 log</h2>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> container <span class="token function">ls</span>
+<span class="token function">docker</span> container logs web
+<span class="token function">docker</span> container inspect web</code></pre>
+<ul>
+<li><code>ls</code> 列出執行中的 container。</li>
+<li><code>logs</code> 查看主要 process 寫到標準輸出的 log。</li>
+<li><code>inspect</code> 查看完整設定、網路和 mount 資訊。</li>
+</ul>
+<h2>把本機檔案掛進 container</h2>
+<p>先準備一個含 <code>index.html</code> 的本機目錄，再執行：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> container run <span class="token parameter variable">--name</span> custom-web <span class="token parameter variable">-d</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-p</span> <span class="token number">8081</span>:80 <span class="token punctuation">\</span>
+  <span class="token parameter variable">--mount</span> <span class="token assign-left variable">type</span><span class="token operator">=</span>bind,source<span class="token operator">=</span><span class="token string">"<span class="token environment constant">$HOME</span>/Documents/demo"</span>,target<span class="token operator">=</span>/usr/share/nginx/html,readonly <span class="token punctuation">\</span>
+  nginx</code></pre>
+<p>這個 bind mount 讓 nginx 讀取本機目錄內容。<code>readonly</code> 可避免 container 修改本機檔案。路徑需要依自己的環境調整；正式資料持久化則應比較 bind mount 與 named volume 的差異。</p>
+<h2>停止與清理</h2>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> container stop web custom-web
+<span class="token function">docker</span> container <span class="token function">rm</span> web custom-web</code></pre>
+<p>停止 container 不會自動刪除它；不再需要時再以 <code>rm</code> 清理。要查看包含已停止 container 的清單，可使用：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> container <span class="token function">ls</span> <span class="token parameter variable">--all</span></code></pre>
+<h2>Image、Dockerfile 與 Container 的關係</h2>
+<p>Dockerfile 定義建置步驟，image 保存建置結果，container 則是 image 的執行實例。同一個 image 可以啟動多個彼此獨立的 container，但每個 container 的 runtime 狀態不同。</p>
+<p>回到 <a href="/posts/2026/2026-07-13-docker-basics-guide/">Docker 基礎學習路線</a>，或繼續了解 <a href="/posts/2020/2020-03-08-docker-basic-image/">Docker Image</a>。</p>
+<h2>官方參考資料</h2>
+<ul>
+<li><a href="https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/">Docker：What is a container?</a></li>
+<li><a href="https://docs.docker.com/reference/cli/docker/container/run/">docker container run</a></li>
+<li><a href="https://docs.docker.com/engine/storage/bind-mounts/">Bind mounts</a></li>
+</ul>
 
   </div>
 </article>
@@ -194,7 +219,7 @@ image 是 container 的樣板</p>
 
   <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
     <p class="text-center text-gray-600 text-sm">
-      &copy; 2025 FW. All rights reserved.
+      &copy; 2026 FW. All rights reserved.
     </p>
   </footer>
 </body>
