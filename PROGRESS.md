@@ -19,10 +19,10 @@
   5. 明確化 AI crawler policy、完善 `llms.txt`，並評估／導入 IndexNow。
 - **Definition of done:** 上述項目完成或將需帳號權限的外部步驟明確記為 blocker；`npm test` 通過；受影響文件已同步；worktree 無暫存除錯產物；完成 commit。
 - **Completed locally:** author `Person`／`ProfilePage`; visible publish/update dates; `dateModified`／sitemap `lastmod`; complete `llms.txt`; OAI-SearchBot policy; IndexNow CI notification; Bing verification meta; AISO runbook; answer-first social API article; refreshed four-article Docker cluster and new pillar page; nested worktree test exclusion.
+- **Completed externally:** Google Search Console ownership verified through DNS; `https://imfw.io/sitemap.xml` submitted.
 - **Remaining external steps:**
-  1. Submit／confirm `/sitemap.xml` in the DNS-verified Google Search Console property.
-  2. After an approved push/deploy, verify Bing Webmaster Tools and submit `/sitemap.xml`.
-  3. With GA4 dashboard access, create the AI referral report described in `docs/aiso.md`.
+  1. After an approved push/deploy, verify Bing Webmaster Tools and submit `/sitemap.xml`.
+  2. With GA4 dashboard access, create the AI referral report described in `docs/aiso.md`.
 
 ## Feature list
 
@@ -41,6 +41,7 @@
 ## Done
 
 - 2026-07-13 — CI action bump to clear Node 20 deprecation ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)): `actions/checkout@v4→v7`, `actions/setup-node@v4→v6`, `peaceiris/actions-gh-pages@v3→v4` — all now run on Node 24 (v3 was node16). Build Node stays `node-version: '22'`. Synced docs/project-overview.md pipeline note.
+- 2026-07-13 — Google Search Console ownership verified through DNS and `/sitemap.xml` submitted; HTML-meta token is intentionally unnecessary.
 - `56cf7c5` — AISO local implementation: author/freshness structured data, Bing verification, IndexNow, complete llms.txt, crawler policy, AISO runbook, social API rewrite, and refreshed Docker topic cluster (44/44 tests).
 - 2026-07-13 — Google Analytics (GA4) enabled: set `googleAnalyticsId` in [src/_data/site.json](src/_data/site.json) (current ID `G-QBS6V0SVT1`; initially `G-H39765SSFE`, swapped same day); the pre-existing conditional gtag hook in `base.njk` now emits on every page (verified in `_site/index.html`). Synced docs/project-overview.md (§1.2, §1.3, integrations table).
 - 2026-07-13 — Technical SEO completed: canonical and robots metadata, Open Graph/X cards, `WebSite`/`BlogPosting` JSON-LD, automatic legacy-post descriptions, 1200×630 default social image, `/sitemap.xml`, `/robots.txt`, Search Console hook, and build coverage.
@@ -57,7 +58,7 @@
 ## Next steps
 
 - Publish remaining posts (commit `6de29ec` says "first 5 posts" — more presumably queued).
-- Submit `/sitemap.xml` in the DNS-verified Google Search Console property and confirm processing.
+- Monitor Search Console sitemap processing and indexing results; no repository change is required.
 
 ## Decision log
 

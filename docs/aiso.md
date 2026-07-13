@@ -44,7 +44,7 @@ These steps require access to third-party dashboards and cannot be completed sol
 2. Submit `https://imfw.io/sitemap.xml` and confirm its processing status.
 3. Record indexed pages, Web impressions, clicks and queries monthly. Google AI features are included in the Web search type rather than a separate AISO report.
 
-Status: ownership verified through DNS; sitemap submission／processing confirmation remains external.
+Status: ownership verified through DNS and `https://imfw.io/sitemap.xml` submitted. Continue monitoring processing and indexing results in Search Console.
 
 ### Bing Webmaster Tools
 
