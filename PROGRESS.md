@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-13 · commit `56cf7c5` · tests: passing (44/44)
+> **Last session:** 2026-07-13 · commit `529eaaf` · tests: passing (44/44)
 
 ## Now (WIP = 1)
 
@@ -8,7 +8,7 @@
 
 - **State:** local implementation complete; waiting for deploy/dashboard verification
 - **Started:** 2026-07-13
-- **Implementation commit:** `56cf7c5`
+- **Implementation commit:** `529eaaf`
 - **Test status:** passing (44/44)
 - **Goal:** 提升文章在 Google AI features、ChatGPT Search、Bing Copilot 等 AI 搜尋中的可發現性、可引用性與成效可量測性。
 - **Scope:**
@@ -36,13 +36,13 @@
 | 6 | Reading time is CJK-aware (Chinese long-form no longer stuck at 1 分鐘) | `npm test` (tests/filters.test.mjs readingTime) | passing |
 | 7 | Google Analytics enabled | set `googleAnalyticsId` in src/_data/site.json, then `npm run build` and grep gtag in _site | active (`G-QBS6V0SVT1`) |
 | 8 | Technical SEO: canonical, social cards, JSON-LD, sitemap/robots, noindex controls, Search Console hook | `npm test` (SEO build assertions) | passing |
-| 9 | AISO foundation: author entity, honest freshness, all-post llms.txt, AI crawler policy, Bing verification, IndexNow, answer-first content clusters | `npm test` + `node scripts/submit-indexnow.mjs HEAD HEAD` | local passing; external verification pending |
+| 9 | AISO foundation: author entity, honest freshness, all-post llms.txt, AI crawler policy, Bing verification, IndexNow, answer-first content clusters | `npm test` + `node scripts/submit-indexnow.mjs HEAD HEAD` | deployment authorized; Bing／GA4 verification pending |
 
 ## Done
 
 - 2026-07-13 — CI action bump to clear Node 20 deprecation ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)): `actions/checkout@v4→v7`, `actions/setup-node@v4→v6`, `peaceiris/actions-gh-pages@v3→v4` — all now run on Node 24 (v3 was node16). Build Node stays `node-version: '22'`. Synced docs/project-overview.md pipeline note.
 - 2026-07-13 — Google Search Console ownership verified through DNS and `/sitemap.xml` submitted; HTML-meta token is intentionally unnecessary.
-- `56cf7c5` — AISO local implementation: author/freshness structured data, Bing verification, IndexNow, complete llms.txt, crawler policy, AISO runbook, social API rewrite, and refreshed Docker topic cluster (44/44 tests).
+- `529eaaf` — AISO local implementation: author/freshness structured data, Bing verification, IndexNow, complete llms.txt, crawler policy, AISO runbook, social API rewrite, and refreshed Docker topic cluster (44/44 tests).
 - 2026-07-13 — Google Analytics (GA4) enabled: set `googleAnalyticsId` in [src/_data/site.json](src/_data/site.json) (current ID `G-QBS6V0SVT1`; initially `G-H39765SSFE`, swapped same day); the pre-existing conditional gtag hook in `base.njk` now emits on every page (verified in `_site/index.html`). Synced docs/project-overview.md (§1.2, §1.3, integrations table).
 - 2026-07-13 — Technical SEO completed: canonical and robots metadata, Open Graph/X cards, `WebSite`/`BlogPosting` JSON-LD, automatic legacy-post descriptions, 1200×630 default social image, `/sitemap.xml`, `/robots.txt`, Search Console hook, and build coverage.
 - 2026-07-13 — Test gate established: vitest (26 tests: lib/filters units, frontmatter content checks, `_site/` build smoke) + `npm test` in CI before deploy. Fixed en route: feed.njk served the 10 **oldest** posts (`reverse | limit` → `limit`), readingTime was space-based and useless for Chinese (now CJK-aware), tag slug collisions/empty slugs now fail the build (`lib/filters.mjs`).
@@ -53,7 +53,6 @@
 ## Blockers
 
 - Browser control is unavailable in this session, so Bing Webmaster Tools verification／sitemap submission and the GA4 AI referral report cannot be completed from the dashboards.
-- Pushing `main` deploys directly to production; local AISO commits are intentionally not pushed without explicit deployment approval.
 
 ## Next steps
 
