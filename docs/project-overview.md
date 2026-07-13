@@ -20,7 +20,7 @@
 
 - **GitHub Pages** serves the built site from the `gh-pages` branch; the custom domain `imfw.io` is bound via the `CNAME` file.
 - **GitHub Actions** ([.github/workflows/deploy.yml](../.github/workflows/deploy.yml)) builds and deploys on every push to `main`.
-- **Google Analytics (GA4)** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) and **enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is set to `G-H39765SSFE`.
+- **Google Analytics (GA4)** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) and **enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is set to `G-QBS6V0SVT1`.
 - **Google Search Console verification** is wired in the same layout but **not enabled** — `googleSiteVerification` is empty.
 
 ### 1.3 Deprecated / Retired or Not-Yet-Enabled Features
@@ -198,7 +198,7 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
 | Google Search Console verification | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleSiteVerification` | **not enabled** (empty token) |
-| Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-H39765SSFE`) |
+| Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-QBS6V0SVT1`) |
 
 No other outbound integrations; the built site makes no API calls.
 
