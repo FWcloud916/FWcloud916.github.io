@@ -37,6 +37,7 @@
 | 7 | Google Analytics enabled | set `googleAnalyticsId` in src/_data/site.json, then `npm run build` and grep gtag in _site | active (`G-QBS6V0SVT1`) |
 | 8 | Technical SEO: canonical, social cards, JSON-LD, sitemap/robots, noindex controls, Search Console hook | `npm test` (SEO build assertions) | passing |
 | 9 | AISO foundation: author entity, honest freshness, all-post llms.txt, AI crawler policy, Bing verification, IndexNow, answer-first content clusters | `npm test` + `node scripts/submit-indexnow.mjs HEAD HEAD` | deployment authorized; Bing／GA4 verification pending |
+| 10 | Bing SEO/GEO scan hygiene: descriptive homepage title/description; every sitemap HTML page has exactly one H1 and `html[lang=zh-TW]` | `npm test` + production sitemap audit | local passing; rescan after deploy |
 
 ## Done
 
@@ -61,6 +62,7 @@
 
 ## Decision log
 
+- 2026-07-13 — Bing scan's “Meta Language tag missing” is not remediated with `meta http-equiv="content-language"`: HTML Living Standard marks that pragma non-conforming and recommends the existing root `<html lang="zh-TW">`. Production audit found one H1 and the correct `lang` on every sitemap HTML page; stale scan results should be rerun after deployment.
 - 2026-07-13 — Tag slug collisions (case variants, Chinese homophones) and empty slugs **fail the build** with a named-tag error, rather than auto-merging tags — user decision.
 - 2026-07-13 — Feed takes `collections.posts | limit(10)` (newest first); reading speed constants: 400 CJK chars/min + 200 words/min (lib/filters.mjs).
 - 2026-07-13 — SEO descriptions prefer frontmatter, fall back to a normalized 160-character article excerpt, then the site description; social images prefer per-post `socialImage`, then `site.socialImage`.

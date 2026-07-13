@@ -33,6 +33,8 @@ describe("build output", () => {
 
   it("共用 SEO metadata 使用正式站絕對網址", () => {
     const home = read("index.html");
+    expect(home).toContain("<title>Web 開發、API、自動化與 Docker 實作筆記 - FW Blog</title>");
+    expect(home).toContain('<meta name="description" content="FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。">');
     expect(home).toContain('<link rel="canonical" href="https://imfw.io/">');
     expect(home).toContain('<meta property="og:url" content="https://imfw.io/">');
     expect(home).toContain('<meta property="og:image" content="https://imfw.io/assets/images/og-default.png">');
@@ -95,10 +97,19 @@ describe("build output", () => {
     expect(website).toMatchObject({
       name: "FW Blog",
       url: "https://imfw.io",
-      description: "分享 Web 開發和技術的心得",
+      description: "FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。",
       inLanguage: "zh-TW",
     });
     expect(read("404.html")).toContain('<meta name="robots" content="noindex, nofollow">');
+  });
+
+  it("每個 HTML 頁只有一個 H1，且宣告繁體中文語言", () => {
+    const htmlFiles = fs.readdirSync(SITE_DIR, { recursive: true }).filter((file) => file.endsWith(".html"));
+    for (const file of htmlFiles) {
+      const html = read(file);
+      expect(html, `${file} 缺少 html lang`).toContain('<html lang="zh-TW">');
+      expect(html.match(/<h1\b/gi)?.length ?? 0, `${file} 的 H1 數量不等於 1`).toBe(1);
+    }
   });
 
   it("作者頁有 ProfilePage JSON-LD", () => {
