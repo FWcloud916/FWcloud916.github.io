@@ -1,17 +1,80 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Docker - 基本概念 - FW Blog</title>
-  <meta name="description" content="A personal blog about web development and technology">
+  <meta name="description" content="Docker - 基本概念 簡述 Docker 架構、優勢、好處並與 VM 作比較 建立環境 建立一個 Web Service 的環境 可能需要 Linux + Apache + MySQL + PHP (LAMP) 又或者再加上 Nginx 組成 LNAMP 使用 VM 一個環境就是一個完整的系統 在獨立開發的時候…">
+  <meta name="robots" content="index, follow">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="Docker - 基本概念 - FW Blog">
+  <meta property="og:description" content="Docker - 基本概念 簡述 Docker 架構、優勢、好處並與 VM 作比較 建立環境 建立一個 Web Service 的環境 可能需要 Linux + Apache + MySQL + PHP (LAMP) 又或者再加上 Nginx 組成 LNAMP 使用 VM 一個環境就是一個完整的系統 在獨立開發的時候…">
+  <meta property="og:url" content="https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="Docker - 基本概念 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2020-02-16T00:00:00.000Z">
+  
+  <meta property="article:tag" content="Docker">
+  
+  <meta property="article:tag" content="w3HexSchool">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Docker - 基本概念 - FW Blog">
+  <meta name="twitter:description" content="Docker - 基本概念 簡述 Docker 架構、優勢、好處並與 VM 作比較 建立環境 建立一個 Web Service 的環境 可能需要 Linux + Apache + MySQL + PHP (LAMP) 又或者再加上 Nginx 組成 LNAMP 使用 VM 一個環境就是一個完整的系統 在獨立開發的時候…">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="Docker - 基本概念 - FW Blog">
 
   <!-- Styles -->
   <link rel="stylesheet" href="/assets/css/prism-one-dark.css">
   <link rel="stylesheet" href="/assets/css/styles.css">
 
   <!-- RSS Feed -->
-  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="/feed.xml">
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Docker - 基本概念",
+    "description": "Docker - 基本概念 簡述 Docker 架構、優勢、好處並與 VM 作比較 建立環境 建立一個 Web Service 的環境 可能需要 Linux + Apache + MySQL + PHP (LAMP) 又或者再加上 Nginx 組成 LNAMP 使用 VM 一個環境就是一個完整的系統 在獨立開發的時候…",
+    "url": "https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/",
+    "mainEntityOfPage": "https://imfw.io/posts/2020/2020-02-16-docker-basic-concept/",
+    "datePublished": "2020-02-16T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["Docker","w3HexSchool"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "name": "FW"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
 
   <!-- Google Analytics -->
   
