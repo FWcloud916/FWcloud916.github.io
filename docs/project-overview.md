@@ -21,13 +21,13 @@
 - **GitHub Pages** serves the built site from the `gh-pages` branch; the custom domain `imfw.io` is bound via the `CNAME` file.
 - **GitHub Actions** ([.github/workflows/deploy.yml](../.github/workflows/deploy.yml)) builds and deploys on every push to `main`.
 - **Google Analytics (GA4)** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) and **enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is set to `G-QBS6V0SVT1`.
-- **Google Search Console verification** is wired in the same layout but **not enabled** — `googleSiteVerification` is empty.
+- **Google Search Console** is verified through DNS. The optional HTML-meta hook remains available but unused, so `googleSiteVerification` is empty by design.
 - **Bing Webmaster Tools verification** is configured through `bingSiteVerification`; the verification meta tag becomes live after deployment.
 - **IndexNow** is called after successful GitHub Pages deployments. Its notifier submits affected public URLs without blocking an otherwise successful deploy.
 
 ### 1.3 Deprecated / Retired or Not-Yet-Enabled Features
 
-- **Not yet enabled:** Google Search Console verification (empty `googleSiteVerification`, see §1.2).
+- **Not used:** HTML-meta Search Console verification — ownership is already verified through DNS; the empty `googleSiteVerification` value intentionally emits no redundant tag.
 - **Retired:** `tailwind.config.js` / `postcss.config.js` — removed in the Tailwind v4 migration; configuration now lives in CSS (`src/assets/css/input.css`). Do not recreate them.
 
 ## 2. Tech Stack
@@ -207,7 +207,7 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 |---|---|---|
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
-| Google Search Console verification | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleSiteVerification` | **not enabled** (empty token) |
+| Google Search Console | DNS ownership verification; optional HTML-meta hook in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) | verified through DNS; HTML token intentionally empty |
 | Bing Webmaster Tools verification | same layout, keyed by `site.bingSiteVerification` | configured; external verification pending deploy |
 | Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-QBS6V0SVT1`) |
 | IndexNow | [scripts/submit-indexnow.mjs](../scripts/submit-indexnow.mjs), called by deploy workflow | active after deploy; non-blocking notification |

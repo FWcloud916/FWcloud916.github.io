@@ -20,7 +20,7 @@
 - **Definition of done:** 上述項目完成或將需帳號權限的外部步驟明確記為 blocker；`npm test` 通過；受影響文件已同步；worktree 無暫存除錯產物；完成 commit。
 - **Completed locally:** author `Person`／`ProfilePage`; visible publish/update dates; `dateModified`／sitemap `lastmod`; complete `llms.txt`; OAI-SearchBot policy; IndexNow CI notification; Bing verification meta; AISO runbook; answer-first social API article; refreshed four-article Docker cluster and new pillar page; nested worktree test exclusion.
 - **Remaining external steps:**
-  1. Obtain the Google Search Console HTML-tag token and set `googleSiteVerification`.
+  1. Submit／confirm `/sitemap.xml` in the DNS-verified Google Search Console property.
   2. After an approved push/deploy, verify Bing Webmaster Tools and submit `/sitemap.xml`.
   3. With GA4 dashboard access, create the AI referral report described in `docs/aiso.md`.
 
@@ -51,14 +51,13 @@
 
 ## Blockers
 
-- Google Search Console verification token has not been provided.
 - Browser control is unavailable in this session, so Bing Webmaster Tools verification／sitemap submission and the GA4 AI referral report cannot be completed from the dashboards.
-- Pushing `main` deploys directly to production; local commit `56cf7c5` is intentionally not pushed without explicit deployment approval.
+- Pushing `main` deploys directly to production; local AISO commits are intentionally not pushed without explicit deployment approval.
 
 ## Next steps
 
 - Publish remaining posts (commit `6de29ec` says "first 5 posts" — more presumably queued).
-- Add the Google Search Console verification token to `googleSiteVerification`, then submit `/sitemap.xml`.
+- Submit `/sitemap.xml` in the DNS-verified Google Search Console property and confirm processing.
 
 ## Decision log
 

@@ -40,12 +40,11 @@ These steps require access to third-party dashboards and cannot be completed sol
 
 ### Google Search Console
 
-1. Add the URL-prefix property `https://imfw.io/`.
-2. Copy the HTML tag content token into `site.googleSiteVerification`.
-3. Deploy, verify the property, then submit `https://imfw.io/sitemap.xml`.
-4. Record indexed pages, Web impressions, clicks and queries monthly. Google AI features are included in the Web search type rather than a separate AISO report.
+1. Keep the DNS verification record active; no HTML meta tag is required.
+2. Submit `https://imfw.io/sitemap.xml` and confirm its processing status.
+3. Record indexed pages, Web impressions, clicks and queries monthly. Google AI features are included in the Web search type rather than a separate AISO report.
 
-Status: token not yet provided; repository hook exists but is disabled.
+Status: ownership verified through DNS; sitemap submission／processing confirmation remains external.
 
 ### Bing Webmaster Tools
 
