@@ -22,6 +22,8 @@
 - **GitHub Actions** ([.github/workflows/deploy.yml](../.github/workflows/deploy.yml)) builds and deploys on every push to `main`.
 - **Google Analytics (GA4)** is wired in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) and **enabled** — `googleAnalyticsId` in [src/_data/site.json](../src/_data/site.json) is set to `G-QBS6V0SVT1`.
 - **Google Search Console verification** is wired in the same layout but **not enabled** — `googleSiteVerification` is empty.
+- **Bing Webmaster Tools verification** is configured through `bingSiteVerification`; the verification meta tag becomes live after deployment.
+- **IndexNow** is called after successful GitHub Pages deployments. Its notifier submits affected public URLs without blocking an otherwise successful deploy.
 
 ### 1.3 Deprecated / Retired or Not-Yet-Enabled Features
 
@@ -74,6 +76,8 @@ gh-pages branch → GitHub Pages → https://imfw.io
 - **Data flows from `src/_data/site.json`**: templates MUST read site metadata as `{{ site.* }}`, never hardcode it.
 - **Directory data over frontmatter**: [src/posts/posts.json](../src/posts/posts.json) supplies `layout: layouts/post.njk` and the `posts` tag to every post — individual posts do not repeat them.
 - **One SEO source of truth**: [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) builds canonical URLs, robots directives, Open Graph/X cards, and JSON-LD from page data plus `site.json`. Article descriptions prefer frontmatter, then a normalized 160-character content excerpt, then the site description; social images prefer per-post `socialImage`, then `site.socialImage`.
+- **One author entity**: visible article bylines, `BlogPosting.author`, the About page's `ProfilePage` schema, and external profile links share the stable `https://imfw.io/about/#person` identity.
+- **Honest freshness signals**: posts MAY define `updated`; the visible date, Open Graph metadata, `BlogPosting.dateModified`, sitemap `lastmod`, and `llms.txt` all use it. It MUST NOT precede `date` or be changed without a substantive content update.
 - **Chinese-safe URLs**: the built-in `slug` filter is overridden (via [lib/filters.mjs](../lib/filters.mjs) `toSlug`) to transliterate Chinese via pinyin-pro; without it, CJK tags slugify to empty strings and collide. Tags whose slugs collide anyway (case variants, homophones) or come out empty **fail the build** (`assertNoSlugCollisions`, called from the `tagList` collection).
 - **CSS builds after Eleventy**: `npm run build` runs `build:11ty` then `build:css` because Tailwind writes directly into `_site/assets/css/`.
 
@@ -84,6 +88,8 @@ gh-pages branch → GitHub Pages → https://imfw.io
 ├── eleventy.config.mjs        # Eleventy config: plugins, passthroughs, collections, filters, image shortcode
 ├── lib/filters.mjs            # testable slug, reading-time, SEO-summary/tag, and safe-JSON logic
 ├── tests/                     # vitest: filters.test (units), content.test (frontmatter rules), build.test (_site smoke)
+├── vitest.config.mjs          # excludes nested .claude worktrees from the active test run
+├── scripts/submit-indexnow.mjs # deployment-time IndexNow notifier
 ├── package.json               # scripts (build/start/test/clean); all deps are devDependencies
 ├── CNAME                      # "imfw.io" — passthrough-copied into _site/
 ├── QUICKSTART.md              # setup + first-post walkthrough
@@ -95,6 +101,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   └── prompts/               # original project-plan prompt (historical)
 ├── docs/
 │   ├── README.md              # configuration / content-management / customization how-tos
+│   ├── aiso.md                # AI-search operations, crawler policy, content and measurement checklist
 │   ├── project-overview.md    # this file
 │   └── sample-post.md         # example post showing frontmatter + Markdown features
 ├── src/
@@ -117,7 +124,8 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   ├── feed.njk               # Atom feed at /feed.xml
 │   ├── llms.njk               # /llms.txt for LLM crawlers
 │   ├── sitemap.njk            # search-engine sitemap at /sitemap.xml
-│   └── robots.njk             # crawler rules at /robots.txt
+│   ├── robots.njk             # crawler rules at /robots.txt
+│   └── indexnow-key.njk       # public IndexNow ownership key
 ├── _site/                     # build output (gitignored)
 └── .cache/                    # eleventy-img cache (gitignored)
 ```
@@ -142,7 +150,7 @@ No database — the "domain model" is the content model: Markdown files + frontm
         |                                                        |
         +--> index.njk (newest 10)                               +--> tags-list.njk (/tags/)
         +--> feed.njk (newest 10)                                +--> tags.njk (pagination size 1
-        +--> llms.njk (newest 10)                                     → /tags/{{ tag | slug }}/)
+        +--> llms.njk (all public posts)                              → /tags/{{ tag | slug }}/)
 ```
 
 ### Model Details
@@ -156,11 +164,12 @@ No database — the "domain model" is the content model: Markdown files + frontm
 | `tags` | no | list; Chinese tags allowed (slugified via pinyin); `posts` is added by directory data — never manually |
 | `description` | no | card excerpt + meta description; missing → card uses rendered content (150 chars), SEO uses normalized source content (160 chars) |
 | `socialImage` | no | site-relative or absolute social image URL; missing → `site.socialImage` |
+| `updated` | no | substantive update date; MUST be on/after `date`; drives visible and machine-readable freshness signals |
 | `layout` | no — **do not set** | supplied by `src/posts/posts.json` |
 
 **Tag** — not a file; derived by the `tagList` collection from all post frontmatter (excluding `posts`). URL: `/tags/{{ tag | slug }}/`.
 
-**Site metadata** — [src/_data/site.json](../src/_data/site.json): `title`, `url`, `description`, `author`, `currentYear`, `socialImage`, `googleSiteVerification`, `googleAnalyticsId`. Empty verification/analytics values keep their snippets disabled.
+**Site metadata** — [src/_data/site.json](../src/_data/site.json): site and author identity, display values, IndexNow key, Google/Bing verification tokens, and analytics ID. Empty optional verification/analytics values keep their snippets disabled.
 
 **Index control** — layout-backed pages MAY set `noindex: true`; the base layout emits `noindex, nofollow`, and the sitemap excludes the page. The 404 page uses this setting.
 
@@ -180,6 +189,7 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/llms.txt` | src/llms.njk | machine-readable site summary for LLMs (excluded from collections) |
 | `/sitemap.xml` | src/sitemap.njk | indexable content and every generated tag URL |
 | `/robots.txt` | src/robots.njk | allows crawling and advertises the sitemap |
+| `/<indexNowKey>.txt` | src/indexnow-key.njk | public IndexNow ownership proof |
 | `/assets/css/styles.css` | Tailwind CLI output | compiled site CSS |
 | `/assets/css/prism-one-dark.css` | passthrough from node_modules/prism-themes | code-block theme |
 | `/assets/img/…` | eleventy-img output | optimized images (webp + jpeg; 300/600/1200 px) |
@@ -198,9 +208,11 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
 | Google Search Console verification | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleSiteVerification` | **not enabled** (empty token) |
+| Bing Webmaster Tools verification | same layout, keyed by `site.bingSiteVerification` | configured; external verification pending deploy |
 | Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-QBS6V0SVT1`) |
+| IndexNow | [scripts/submit-indexnow.mjs](../scripts/submit-indexnow.mjs), called by deploy workflow | active after deploy; non-blocking notification |
 
-No other outbound integrations; the built site makes no API calls.
+The deployed static pages make no runtime API calls other than GA; IndexNow runs only in CI after deployment.
 
 ## 9. Database / Data Stores
 
@@ -219,7 +231,7 @@ No staging environment; no env files or secrets beyond the implicit `GITHUB_TOKE
 
 ### Deployment Pipeline
 
-Push to `main` (or manual `workflow_dispatch`) → GitHub Actions: checkout → Node 22 setup (npm cache) → `npm ci` → `npm test` → `npm run build` (`NODE_ENV=production`) → `peaceiris/actions-gh-pages@v4` publishes `_site/` to the `gh-pages` branch with `cname: imfw.io`.
+Push to `main` (or manual `workflow_dispatch`) → GitHub Actions: full-history checkout → Node 22 setup (npm cache) → `npm ci` → `npm test` → `npm run build` (`NODE_ENV=production`) → `peaceiris/actions-gh-pages@v4` publishes `_site/` to the `gh-pages` branch with `cname: imfw.io` → non-blocking IndexNow notification for affected public URLs.
 
 The verification gate is `npm test` (vitest): unit tests for [lib/filters.mjs](../lib/filters.mjs), frontmatter content rules for every post, and a build smoke suite that runs `npm run build` and asserts on `_site/` (CNAME, feed order, compiled CSS, tag pages, SEO metadata/JSON-LD, sitemap/robots, and social-image dimensions). A failing test blocks the deploy. There is still no linter.
 

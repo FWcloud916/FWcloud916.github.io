@@ -6,7 +6,9 @@ layout: layouts/base.njk
   <header class="mb-8">
     <h1 class="text-4xl font-bold mb-4">{{ title }}</h1>
     <div class="flex flex-wrap gap-4 text-sm text-gray-600">
-      <time datetime="{{ date | dateIso }}">{{ date | dateDisplay }}</time>
+      <span>作者：<a href="{{ site.authorUrl }}" rel="author" class="hover:text-blue-600 transition">{{ site.author }}</a></span>
+      <span>發布：<time datetime="{{ date | dateIso }}">{{ date | dateDisplay }}</time></span>
+      {% if updated %}<span>更新：<time datetime="{{ updated | dateIso }}">{{ updated | dateDisplay }}</time></span>{% endif %}
       <span>{{ content | readingTime }} 分鐘閱讀</span>
     </div>
     {% if tags %}

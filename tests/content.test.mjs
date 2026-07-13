@@ -21,6 +21,13 @@ describe("post frontmatter", () => {
     const date = new Date(post.data.date).toISOString().slice(0, 10);
     expect(date).toBe(prefix);
 
+    // updated 是選填；若提供，必須是有效日期且不得早於發布日
+    if (post.data.updated) {
+      const updated = new Date(post.data.updated);
+      expect(Number.isNaN(updated.valueOf()), "updated 不是有效日期").toBe(false);
+      expect(updated.valueOf(), "updated 不得早於 date").toBeGreaterThanOrEqual(new Date(post.data.date).valueOf());
+    }
+
     // layout 與 posts tag 由 src/posts/posts.json 供給，不可手動設定
     expect(post.data.layout, "layout 不可手動設定（posts.json 會給）").toBeUndefined();
     expect(post.data.tags ?? [], "posts tag 不可手動加（posts.json 會給）").not.toContain("posts");

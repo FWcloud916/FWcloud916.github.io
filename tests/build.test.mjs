@@ -39,6 +39,7 @@ describe("build output", () => {
     expect(home).toContain('<meta name="twitter:card" content="summary_large_image">');
     expect(home).toContain('href="https://imfw.io/feed.xml"');
     expect(home).not.toContain('name="google-site-verification"');
+    expect(home).toContain('<meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">');
   });
 
   it("文章有獨立摘要、article metadata 與可解析的 BlogPosting JSON-LD", () => {
@@ -46,17 +47,24 @@ describe("build output", () => {
     const html = read(postOutputPath(post));
     expect(html).toContain(`<meta name="description" content="${escapeHtml(post.data.description)}">`);
     expect(html).toContain('<meta property="og:type" content="article">');
-    expect(html).toContain('<meta property="article:tag" content="api">');
+    expect(html).toContain(`<meta property="article:tag" content="${escapeHtml(post.data.tags[0])}">`);
     expect(html).not.toContain('<meta property="article:tag" content="posts">');
 
     const schema = jsonLd(html).find((entry) => entry["@type"] === "BlogPosting");
     expect(schema).toMatchObject({
       headline: post.data.title,
       description: post.data.description,
-      url: "https://imfw.io/posts/2026/2026-07-13-social-platform-apis-2026/",
+      url: `https://imfw.io/${postOutputPath(post).replace(/index\.html$/, "")}`,
       image: "https://imfw.io/assets/images/og-default.png",
       inLanguage: "zh-TW",
+      author: {
+        "@id": "https://imfw.io/about/#person",
+        name: "FW",
+        url: "https://imfw.io/about/",
+        sameAs: ["https://github.com/FWcloud916"],
+      },
     });
+    expect(schema.dateModified).toBe(schema.datePublished);
     expect(schema.keywords).toEqual(post.data.tags);
   });
 
@@ -69,6 +77,19 @@ describe("build output", () => {
     expect(description.length).toBeLessThanOrEqual(160);
   });
 
+  it("文章更新日期會同步到畫面、metadata、JSON-LD 與 sitemap", () => {
+    const post = posts.find((item) => item.data.updated && new Date(item.data.updated) > new Date(item.data.date));
+    expect(post).toBeTruthy();
+    const html = read(postOutputPath(post));
+    const updatedIso = new Date(post.data.updated).toISOString();
+    const updatedDisplay = updatedIso.slice(0, 10).replace(/(\d{4})-(\d{2})-(\d{2})/, "$1年$2月$3日");
+    expect(html).toContain(`<meta property="article:modified_time" content="${updatedIso}">`);
+    expect(html).toContain(`更新：<time datetime="${updatedIso}">${updatedDisplay}</time>`);
+    const schema = jsonLd(html).find((entry) => entry["@type"] === "BlogPosting");
+    expect(schema.dateModified).toBe(updatedIso);
+    expect(read("sitemap.xml")).toContain(`<lastmod>${updatedIso}</lastmod>`);
+  });
+
   it("首頁有 WebSite JSON-LD，404 禁止索引", () => {
     const website = jsonLd(read("index.html")).find((entry) => entry["@type"] === "WebSite");
     expect(website).toMatchObject({
@@ -78,6 +99,19 @@ describe("build output", () => {
       inLanguage: "zh-TW",
     });
     expect(read("404.html")).toContain('<meta name="robots" content="noindex, nofollow">');
+  });
+
+  it("作者頁有 ProfilePage JSON-LD", () => {
+    const profile = jsonLd(read("about/index.html")).find((entry) => entry["@type"] === "ProfilePage");
+    expect(profile).toMatchObject({
+      url: "https://imfw.io/about/",
+      mainEntity: {
+        "@type": "Person",
+        "@id": "https://imfw.io/about/#person",
+        name: "FW",
+        sameAs: ["https://github.com/FWcloud916"],
+      },
+    });
   });
 
   it("feed.xml 是 Atom feed，且第一個 entry 是最新文章", () => {
@@ -118,12 +152,26 @@ describe("build output", () => {
     expect(sitemap.trimEnd()).toMatch(/<\/urlset>$/);
   });
 
-  it("robots 指向 sitemap，預設分享圖是 1200×630 PNG", () => {
-    expect(read("robots.txt")).toBe("User-agent: *\nAllow: /\n\nSitemap: https://imfw.io/sitemap.xml\n");
+  it("robots 允許搜尋 crawler 並指向 sitemap，預設分享圖是 1200×630 PNG", () => {
+    expect(read("robots.txt")).toBe("User-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: *\nAllow: /\n\nSitemap: https://imfw.io/sitemap.xml\n");
 
     const image = fs.readFileSync(path.join(SITE_DIR, "assets/images/og-default.png"));
     expect(image.subarray(1, 4).toString("ascii")).toBe("PNG");
     expect(image.readUInt32BE(16)).toBe(1200);
     expect(image.readUInt32BE(20)).toBe(630);
+  });
+
+  it("發布 IndexNow 驗證 key", () => {
+    expect(read("39245e75ee9fd5fa1be891668b72c3d0.txt").trim()).toBe("39245e75ee9fd5fa1be891668b72c3d0");
+  });
+
+  it("llms.txt 收錄全部文章、作者與機器可讀摘要", () => {
+    const llms = read("llms.txt");
+    expect(llms).toContain("Author: FW (https://imfw.io/about/)");
+    for (const post of posts) {
+      expect(llms).toContain(`### ${post.data.title}`);
+      expect(llms).toContain(`https://imfw.io/${postOutputPath(post).replace(/index\.html$/, "")}`);
+      expect(llms).toContain("- Description:");
+    }
   });
 });

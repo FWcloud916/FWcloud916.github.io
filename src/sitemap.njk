@@ -8,7 +8,7 @@ eleventyExcludeFromCollections: true
   {% if item.url and not item.data.noindex and item.inputPath != "./src/tags.njk" %}
   <url>
     <loc>{{ item.url | absoluteUrl(site.url) }}</loc>
-    {% if item.data.isArticle %}<lastmod>{{ item.date | dateIso }}</lastmod>{% endif %}
+    {% if item.data.isArticle %}<lastmod>{{ (item.data.updated or item.date) | dateIso }}</lastmod>{% endif %}
   </url>
   {% endif %}
 {% endfor %}

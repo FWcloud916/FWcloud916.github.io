@@ -1,54 +1,79 @@
 ---
 title: Docker Container - 基本概念
 date: 2020-02-22
+updated: 2026-07-13
 tags:
   - Docker
   - Docker Container
   - Container
   - w3HexSchool
+description: 用 nginx 練習 docker run、port publishing、bind mount 與 container 生命週期。
 ---
-# Docker Container - 基本概念
 
-簡述 Docker Container 使用方式、基本常用指令
+Container 是 image 的可執行實例。最常用的起點是 `docker run`：它會在本機沒有 image 時先下載，再建立並啟動 container。本篇用 nginx 示範 port publishing、bind mount、背景執行與清理流程。
 
-## 概念
-container 是根據 image 產生的，image 是根據 dockerfile 產生的，所以 container 包含什麼、有什麼功能都是依據 dockerfile 的內容所決定的
+## 啟動第一個 container
 
-image 可以想像成 container 的規格、標準，每次使用相同的 image 開啟 container 的時候，可以確保執行的功能都會是一模一樣的
-
-## 常用指令
-```docker
-docker container run [OPTIONS] IMAGE [COMMAND] [ARG...]
+```bash
+docker container run --name web -d -p 8080:80 nginx
 ```
-運行一個 [nginx](https://hub.docker.com/_/nginx?tab=description)
-```docker
-docker container run -p 8080:80 nginx
+
+這行指令會：
+
+- 以 `nginx` image 建立名為 `web` 的 container。
+- `-d`／`--detach` 讓它在背景執行。
+- `-p`／`--publish` 將 host 的 `8080` 對應到 container 的 `80`。
+
+完成後開啟 `http://localhost:8080`，應該會看到 nginx 預設頁面。
+
+> Dockerfile 的 `EXPOSE 80` 只是描述服務預期監聽的 port，不會自動把 port 發布到 host；實際對外映射仍要使用 `-p` 或其他網路設定。
+
+## 查看狀態與 log
+
+```bash
+docker container ls
+docker container logs web
+docker container inspect web
 ```
-如果電腦上沒有 nginx 的 image 會從 docker 的儲存庫下載，預設通常是官方的 [Docker Hub](https://hub.docker.com/)
 
-上面這行指令中 `-p` 是 `--port` 的縮寫，傳入兩個參數，一個是主機的 port (8080) ，一個是 container 的（80），代表的意思是將 container 的 80 埠對應到主機的 8080 埠
-所以在主機的電腦上可以開啟瀏覽器輸入 localhost:8080 就會看到 container 開啟的 nginx 伺服器
+- `ls` 列出執行中的 container。
+- `logs` 查看主要 process 寫到標準輸出的 log。
+- `inspect` 查看完整設定、網路和 mount 資訊。
 
-如果要知道開啟的 port 是多少，基本上有三種方法
-- 從 Docker Hub 上的[說明](https://hub.docker.com/_/nginx?tab=description)中查詢
-- 從 Docker Hub 上的 [tag](https://hub.docker.com/layers/nginx/library/nginx/latest/images/sha256-d7ffce801c3c92dac436bc5dc65235384dcc1b6bbb8210ccb65f466f975f8f88?context=explore) 中查詢
-- 從 [dockerfile](https://github.com/nginxinc/docker-nginx/blob/5971de30c487356d5d2a2e1a79e02b2612f9a72f/mainline/buster/Dockerfile) 裡面查詢
+## 把本機檔案掛進 container
 
-EXPOSE 是 dockerfile 中的指令，代表服務對外開啟的 port
+先準備一個含 `index.html` 的本機目錄，再執行：
 
-這邊可以開始感受到
-dockerfile 是 image 的藍圖
-image 是 container 的樣板
-
-所以在使用 image 的時候最好可以看到 dockerfile 才可以確保開啟的 container 有做什麼事情
-
+```bash
+docker container run --name custom-web -d \
+  -p 8081:80 \
+  --mount type=bind,source="$HOME/Documents/demo",target=/usr/share/nginx/html,readonly \
+  nginx
 ```
-docker container run -v ~/Documents/demo:/usr/share/nginx/html -p 8080:80 nginx
+
+這個 bind mount 讓 nginx 讀取本機目錄內容。`readonly` 可避免 container 修改本機檔案。路徑需要依自己的環境調整；正式資料持久化則應比較 bind mount 與 named volume 的差異。
+
+## 停止與清理
+
+```bash
+docker container stop web custom-web
+docker container rm web custom-web
 ```
-這次加上 `-v` 是 `--volume` 的縮寫，代表綁定檔案目錄，藉由設置這個參數可以修改 container 中要執行的檔案，這邊綁定了 nginx 的預設目錄，就可以修改預設顯示的頁面了
 
-其他還有[許多參數](https://docs.docker.com/engine/reference/commandline/container_run/)可以設定
+停止 container 不會自動刪除它；不再需要時再以 `rm` 清理。要查看包含已停止 container 的清單，可使用：
 
-`-d` `--detach` 代表背景執行，執行後只會回傳 container ID
+```bash
+docker container ls --all
+```
 
-`-i` `--interactive` 開啟互動模式，可以直接操作 container
+## Image、Dockerfile 與 Container 的關係
+
+Dockerfile 定義建置步驟，image 保存建置結果，container 則是 image 的執行實例。同一個 image 可以啟動多個彼此獨立的 container，但每個 container 的 runtime 狀態不同。
+
+回到 [Docker 基礎學習路線](/posts/2026/2026-07-13-docker-basics-guide/)，或繼續了解 [Docker Image](/posts/2020/2020-03-08-docker-basic-image/)。
+
+## 官方參考資料
+
+- [Docker：What is a container?](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/)
+- [docker container run](https://docs.docker.com/reference/cli/docker/container/run/)
+- [Bind mounts](https://docs.docker.com/engine/storage/bind-mounts/)

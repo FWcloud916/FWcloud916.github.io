@@ -18,6 +18,9 @@
   {% if site.googleSiteVerification %}
   <meta name="google-site-verification" content="{{ site.googleSiteVerification }}">
   {% endif %}
+  {% if site.bingSiteVerification %}
+  <meta name="msvalidate.01" content="{{ site.bingSiteVerification }}">
+  {% endif %}
   <link rel="canonical" href="{{ canonicalUrl }}">
 
   <!-- Social sharing -->
@@ -33,6 +36,7 @@
   {% if isArticle %}
   <meta property="og:type" content="article">
   <meta property="article:published_time" content="{{ date | dateIso }}">
+  {% if updated %}<meta property="article:modified_time" content="{{ updated | dateIso }}">{% endif %}
   {% for tag in tags | seoTags %}
   <meta property="article:tag" content="{{ tag }}">
   {% endfor %}
@@ -63,7 +67,10 @@
     "inLanguage": "zh-TW",
     "author": {
       "@type": "Person",
-      "name": {{ site.author | safeJson | safe }}
+      "@id": {{ (site.authorUrl ~ "#person") | safeJson | safe }},
+      "name": {{ site.author | safeJson | safe }},
+      "url": {{ site.authorUrl | safeJson | safe }},
+      "sameAs": {{ site.authorSameAs | safeJson | safe }}
     }
   }
   </script>
@@ -78,16 +85,38 @@
     "url": {{ canonicalUrl | safeJson | safe }},
     "mainEntityOfPage": {{ canonicalUrl | safeJson | safe }},
     "datePublished": {{ (date | dateIso) | safeJson | safe }},
+    "dateModified": {{ ((updated or date) | dateIso) | safeJson | safe }},
     "image": {{ socialImageUrl | safeJson | safe }},
     "keywords": {{ (tags | seoTags) | safeJson | safe }},
     "inLanguage": "zh-TW",
     "author": {
       "@type": "Person",
-      "name": {{ site.author | safeJson | safe }}
+      "@id": {{ (site.authorUrl ~ "#person") | safeJson | safe }},
+      "name": {{ site.author | safeJson | safe }},
+      "url": {{ site.authorUrl | safeJson | safe }},
+      "sameAs": {{ site.authorSameAs | safeJson | safe }}
     },
     "publisher": {
       "@type": "Person",
       "name": {{ site.author | safeJson | safe }}
+    }
+  }
+  </script>
+  {% endif %}
+  {% if isProfile %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "name": {{ title | safeJson | safe }},
+    "url": {{ canonicalUrl | safeJson | safe }},
+    "mainEntity": {
+      "@type": "Person",
+      "@id": {{ (site.authorUrl ~ "#person") | safeJson | safe }},
+      "name": {{ site.author | safeJson | safe }},
+      "url": {{ site.authorUrl | safeJson | safe }},
+      "description": {{ site.authorDescription | safeJson | safe }},
+      "sameAs": {{ site.authorSameAs | safeJson | safe }}
     }
   }
   </script>

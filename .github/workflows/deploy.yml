@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -39,3 +41,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./_site
           cname: imfw.io
+
+      - name: Notify IndexNow
+        continue-on-error: true
+        run: node scripts/submit-indexnow.mjs "${{ github.event.before }}" "${{ github.sha }}"

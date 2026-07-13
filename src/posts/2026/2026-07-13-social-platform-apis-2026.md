@@ -1,6 +1,7 @@
 ---
 title: 2026 年社群平台 API 現況：單人開發者的生存指南
 date: 2026-07-13
+updated: 2026-07-13
 tags:
   - api
   - social-media
@@ -8,106 +9,112 @@ tags:
 description: 為了做自動發文工具，把 X、Facebook、Instagram、Threads 四個平台的 API 研究了一輪 — 申請門檻、費用、token 管理與免審核範圍的第一手整理。
 ---
 
-最近在做部落格的自動發文工具，文章發布後自動轉發到 X 、 Facebook 、 Instagram 、 Threads
+如果只是替自己的帳號做自動發文，2026 年最容易起步的是 **Threads**；Facebook 與 Instagram 在 App 維持 Development mode、只操作自己資產時也很實用；X 則要先接受按次計費。真正容易讓自動化失效的地方不是發文 API，而是 Instagram 與 Threads 的 60 天 token，以及 X refresh token 的輪替。
 
-結果最花時間的不是寫程式，而是搞懂四個平台的 API 現在長什麼樣子
+> **查核範圍：** 本文資訊於 2026 年 7 月 13 日依官方文件與實際申請流程整理。平台價格、權限與額度可能調整，實作前請再檢查文中連結的官方文件。
 
-如果你的印象還停留在「 Twitter API 免費申請就能用」的年代，這篇整理了新的現況
-以下都是實際申請、查過官方文件的第一手資訊
+## 30 秒比較
 
-## X：開始需要付費
+| 平台 | 自動發文成本 | 個人工具的主要門檻 | Token 維護 | 建議順序 |
+|------|--------------|--------------------|------------|----------|
+| Threads | 免費 | 建立 Meta App，自己的帳號需有 app role | 60 天內刷新 | 第一個做 |
+| Facebook | 免費 | 只能發粉絲專頁，不能發個人檔案 | 長效 Page token | 與 IG 一起做 |
+| Instagram | 免費 | 專業帳號；圖片須為公開可抓取的 JPEG | 60 天內刷新 | 解決圖片託管後做 |
+| X | 按次計費 | 預先購買 API credits | refresh token 輪替 | 確認受眾後再做 |
 
-X 在 2026 年 2 月把開發者方案全面改成**按次計費**，新開發者已經沒有免費方案可以選了
+這個排序是針對「單人維護、只發布自己的內容」做出的實作建議，不代表各平台對所有產品的通用排名。
 
-- 發一則貼文 : **$0.015**
-- 貼文含連結 : **$0.20** ( 貴 13 倍，平台就是不想讓你導流出去 )
-- 讀取 : $0.005/則，每月上限 200 萬則
+## 為什麼重新研究這四套 API
 
-舊的 Free tier ( 每月 500 則 ) 只剩既有用戶沿用，Basic ( $200/月 ) 跟 Pro ( $5,000/月 ) 也關閉新申請了
+我在做部落格的自動發文工具：文章發布後，自動轉發到 X、Facebook、Instagram 和 Threads。結果最花時間的不是寫程式，而是搞懂四個平台目前的申請方式、權限、費用和 token 生命週期。
 
-對自動發文來說，等於**每篇文章 $0.2 美元**
-錢不多，但你會開始思考「這則值得發嗎」
+以下先列官方規則，再補上我針對單人工具的實作判斷。
 
-### 技術面
+## X：按次計費，含連結的貼文最貴
 
-- OAuth 2.0 Authorization Code + PKCE，要 `offline.access` scope 才拿得到 refresh token
-- 一個坑 : **refresh token 每次刷新都會輪替**，沒把新的存回去，下一次刷新就直接失效
+[X 官方定價](https://docs.x.com/x-api/getting-started/pricing)採預付 credits 的 pay-per-usage 模式，沒有固定月費。查核當下的公開價格為：
 
-## Meta 三平台：dev mode 是單人工具的甜蜜點
+- 建立一般內容：**US$0.015／次**
+- 建立含 URL 的內容：**US$0.20／次**
+- 讀取 Post：**US$0.005／筆**
+- 自有帳號資料的 Owned Read：**US$0.001／筆**
 
-Facebook 、 Instagram 、 Threads 都掛在 Meta 開發者平台下，有一條對個人工具超級友善的共通規則
+因此，部落格每發布一篇含連結的宣傳貼文，API 成本約為 US$0.20。金額不算高，但如果讀者不在 X 上，就值得先衡量投入效益。
 
-> App 維持 Development mode 、你的帳號持有 app role 的情況下
-> 對「自己的資產」發文**不需要 App Review，完全免費**
+### X 的授權注意事項
 
-App Review 是 Meta 出名的繁瑣流程 ( 要錄影、要寫使用情境、要等審核 )
-但那是給「服務其他使用者」的 App 用的
-單人工具只操作自己的粉專、自己的 IG 、自己的 Threads — dev mode 就是完全體!!
+發文使用 OAuth 2.0 Authorization Code Flow with PKCE；需要離線存取時，必須要求 `offline.access` scope。依 [X OAuth 2.0 官方文件](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code)，refresh token 使用後可能輪替，所以刷新 access token 時必須把新的 refresh token 一併回存，不能繼續使用舊值。
 
-### Facebook：只能發粉專，但 token 幾乎永生
+## Meta 三平台：個人工具可先留在 Development mode
 
-- **個人檔案不能用 API 發文**，只能發粉絲專頁，想自動發文要先開一個粉專
-- 權限要 `pages_manage_posts` + `pages_read_engagement` + `pages_show_list`
-- 發文就是對 `/{page-id}/feed` POST 一個 `message` ( 可帶 `link` 產生預覽卡 )
-- 用長效 User token 換到的 **Page token 幾乎不過期**，換一次可以用超久，是最簡單的
+Facebook、Instagram、Threads 都在 Meta 開發者平台管理。對只操作自己帳號或資產的單人工具，實際申請時可以讓 App 維持 Development mode，並把自己的帳號加入 app role；這樣能先完成自己的發布流程，不必一開始就走提供外部使用者授權所需的 App Review。
 
-### Instagram：不用綁粉專了，但圖片比較麻煩
+這是開發與自用情境，不等於可以把 Development mode 的 App 當成公開服務。只要開始替其他使用者操作資產，就應重新檢查 App Review、Business Verification 與各權限要求。
 
-2024 年中推出的「 Instagram API with Instagram Login 」是個大改善
-以前發 IG 要先有 FB 粉專、把帳號綁上去、權限一路串過去
-現在直接用 IG 帳號登入授權就好 ( 帳號要轉商業或創作者，免費、可逆 )
+### Facebook：只能發粉絲專頁
 
-不過內容發布的限制是四平台最多的
+- API 可以發布到自己管理的粉絲專頁，不能替個人 Profile 自動發文。
+- 常用權限包括 `pages_manage_posts`、`pages_read_engagement` 與 `pages_show_list`。
+- 發文可對 `/{page-id}/feed` 傳送 `message`，並以 `link` 帶入文章網址。
+- 長效 User token 可交換 Page access token；實際效期仍應以 Access Token Debugger 與 [Pages API 入門文件](https://developers.facebook.com/docs/pages-api/getting-started/)顯示為準，不要只靠程式假設永久有效。
 
-- 圖片**只收 JPEG**
-- 圖片必須放在**公開 URL** — Meta 的伺服器會自己來抓，不能直接上傳檔案
-  - 個人工具可以租圖床或是把圖丟到靜態部落格一起部署
-- 發布是**兩段式** : 先建 media container 、再 publish
-- API 發文上限 25 則/24 小時
+Facebook 適合已經有粉絲專頁的人。如果只有個人 Profile，必須先建立專頁才能走這條 API 流程。
 
-### Threads：目前對開發者最友善
+### Instagram：發布流程不再強制綁 Facebook 粉專
 
-Threads API 意外地是四個裡面體驗最好的
+使用 [Instagram API with Instagram Login](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/)時，可以直接以 Instagram 專業帳號授權，不必沿用早期先綁 Facebook 粉專的流程。
 
-- 免費，純文字就能發 ( 不像 IG 強制要圖 )
-- 每則 500 字，發文上限 250 則/24 小時
-- **支援串文** : 用 `reply_to_id` 回覆自己的貼文就能串起來，做出「主文講重點、細節放留言」的格式
-  - 回覆另計額度 ( 1,000 則/24 小時 )，不吃發文額度
-  - 回覆自己的貼文也不需要額外權限
-- 一樣是兩段式發布，官方建議 container 建立後等 30 秒再 publish
+依 [Instagram Content Publishing 官方文件](https://developers.facebook.com/docs/instagram-platform/content-publishing/)，自動發布要特別處理：
 
-要注意 Threads 跟 IG 是**完全獨立的產品**
-即使掛在同一個 Meta App 下，token 、 App Secret 、權限 ( `threads_basic` + `threads_content_publish` ) 都是分開的一套
+- 圖片必須放在 Meta 伺服器能存取的公開 URL。
+- 圖片格式與尺寸必須符合端點要求；建立流程前應再次核對官方限制。
+- 發布分成兩段：先建立 media container，再呼叫 publish。
+- API 有內容發布頻率限制，程式應主動查詢使用量，不要只依賴寫死的數字。
 
-## Token 管理：三種生命週期
+對靜態部落格而言，可以把社群圖片隨網站一起部署，等正式 URL 可公開存取後再請 Instagram 抓取。
 
-| 平台 | Token 效期 | 維護方式 |
-|------|-----------|---------|
-| X | access token 短效 | 遇 401 用 refresh token 換新 ( **會輪替，要回存** ) |
-| Facebook | 幾乎不過期 | 不用管 |
-| Instagram | 60 天 | 存滿 24 小時後可刷新，**過期就不能刷**，只能重新授權 |
-| Threads | 60 天 | 同上，跟 IG 分開刷 |
+### Threads：純文字最適合驗證流程
 
-IG 跟 Threads 的「 60 天過期就死」最容易出事
-忘記刷新，兩個月後你的自動發文就靜悄悄地壞掉囉
-可以考慮透過排程自動刷新
+Threads 支援純文字貼文，不需要先解決 Instagram 的圖片託管問題，因此最適合拿來驗證「建置完成 → 取得文章 URL → 產生貼文 → 發布」這條自動化流程。
 
-## 給單人開發者的建議
+- 權限通常從 `threads_basic` 與 `threads_content_publish` 開始。
+- 支援用 `reply_to_id` 回覆自己的貼文，適合做主文加補充串文。
+- container 建立與正式 publish 是兩個步驟，程式應處理媒體狀態與重試，而不是只用固定秒數等待。
+- 額度與回覆規則應以 [Threads 發布文件](https://developers.facebook.com/docs/threads/posts/)和 [Threads 回覆文件](https://developers.facebook.com/docs/threads/retrieve-and-manage-replies/create-replies/)為準。
 
-1. **從 Threads 開始** — 免費、純文字可發、限制最少，驗證整條流程的最佳起點
-2. **FB/IG 一起辦** — 同一個 Meta App 搞定 ; IG 的 JPEG + 公開 URL 限制先想好圖從哪來
-3. **X 想清楚再上** — 含連結每則 $0.2，一年發 100 篇就是 $20，如果讀者不在 X 上這筆可以省
-4. **Token 刷新自動化** — 60 天剛好長到讓你忘記它的存在
+Threads 與 Instagram 即使掛在同一個 Meta App 下，token、App Secret 和權限仍是分開管理的兩套資料，不能共用。
 
-平台 API 的免費紅利確實過去了
-但對「只操作自己帳號」的個人工具來說，2026 年的現況比想像中友善
+## Token 管理是自動發文最容易壞的地方
 
-## 參考資料
+| 平台 | 主要生命週期風險 | 建議維護方式 |
+|------|------------------|--------------|
+| X | refresh token 可能輪替 | 每次刷新都原子化回存新 access token 與 refresh token |
+| Facebook | token 狀態會受角色、密碼與權限變動影響 | 定期驗證 token，不把「長效」當成永不失效 |
+| Instagram | 長效 token 需在有效期間內刷新 | 排程提早刷新，失敗時告警並保留重新授權流程 |
+| Threads | 與 Instagram 分開的 token 生命週期 | 獨立儲存、獨立刷新、獨立告警 |
 
-- [X API pricing 2026 ( Postproxy 整理 )](https://postproxy.dev/blog/x-api-pricing-2026/)
+不要等發文收到 401 才處理。實作時至少要保存 token 到期時間、最後刷新時間與最後一次錯誤，並在失效前主動刷新。
+
+## 給單人開發者的實作順序
+
+1. **先接 Threads**：純文字即可發布，最容易驗證整條自動化。
+2. **再做 Facebook**：如果已有粉絲專頁，發布流程相對直接。
+3. **處理 Instagram 圖片**：先確保正式圖片 URL、格式與發布狀態檢查都可靠。
+4. **最後評估 X**：確認受眾與 US$0.20 含連結貼文成本值得，再購買 credits。
+5. **統一做 token 監控**：刷新、輪替、失敗告警與重新授權都要在正式自動化前完成。
+
+## 結論
+
+2026 年仍然可以用官方 API 為自己的社群帳號做自動發文，但四個平台沒有真正共用的授權或發布抽象。最穩定的做法是共用「文章資料、排程、錯誤處理與觀測」，平台 token 與發布流程則各自封裝。
+
+如果目標只是替個人部落格省下重複貼文時間，從 Threads 做出最小可行流程，再逐一增加 Facebook、Instagram 和 X，會比一次處理四套權限更容易維護。
+
+## 官方參考資料
+
+- [X API pricing](https://docs.x.com/x-api/getting-started/pricing)
 - [X OAuth 2.0 Authorization Code Flow](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code)
 - [Meta Pages API — Get Started](https://developers.facebook.com/docs/pages-api/getting-started/)
 - [Instagram API with Instagram Login](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/)
 - [Instagram Content Publishing](https://developers.facebook.com/docs/instagram-platform/content-publishing/)
-- [Threads API — Access Tokens and Permissions](https://developers.facebook.com/docs/threads/get-started/get-access-tokens-and-permissions/)
+- [Threads API — Publish Content](https://developers.facebook.com/docs/threads/posts/)
 - [Threads API — Create Replies](https://developers.facebook.com/docs/threads/retrieve-and-manage-replies/create-replies/)
