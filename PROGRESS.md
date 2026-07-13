@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-13 · commit `8dd0cb5` · tests: 38/39 (1 pre-existing failure unrelated to this change: build smoke expects `_site/assets/css/prism-one-dark.css`, which is not produced)
+> **Last session:** 2026-07-13 · commit `72d28a7` · tests: passing (39/39)
 
 ## Now (WIP = 1)
 
