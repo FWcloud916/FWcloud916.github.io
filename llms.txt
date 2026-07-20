@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署
+
+- Published: 2026-07-21T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/
+- Tags: Docker, security, devops, ai, agent-skills
+
+- Description: 從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。
+
+
 ### 一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記
 
 - Published: 2026-07-20T00:00:00.000Z
@@ -118,9 +128,15 @@ Author: FW (https://imfw.io/about/)
 
 - Image: https://imfw.io/tags/image/
 
+- agent-skills: https://imfw.io/tags/agent-skills/
+
+- ai: https://imfw.io/tags/ai/
+
 - api: https://imfw.io/tags/api/
 
 - automation: https://imfw.io/tags/automation/
+
+- devops: https://imfw.io/tags/devops/
 
 - docker-learning-path: https://imfw.io/tags/docker-learning-path/
 
@@ -129,6 +145,8 @@ Author: FW (https://imfw.io/about/)
 - node: https://imfw.io/tags/node/
 
 - nvm: https://imfw.io/tags/nvm/
+
+- security: https://imfw.io/tags/security/
 
 - social-media: https://imfw.io/tags/social-media/
 

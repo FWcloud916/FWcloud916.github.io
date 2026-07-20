@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署 - FW Blog</title>
+  <meta name="description" content="從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署 - FW Blog">
+  <meta property="og:description" content="從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-07-21T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="Docker">
+  
+  <meta property="article:tag" content="security">
+  
+  <meta property="article:tag" content="devops">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="agent-skills">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署 - FW Blog">
+  <meta name="twitter:description" content="從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署 - FW Blog">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署",
+    "description": "從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。",
+    "url": "https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/",
+    "datePublished": "2026-07-21T00:00:00.000Z",
+    "dateModified": "2026-07-21T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["Docker","security","devops","ai","agent-skills"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-6">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/tags/" class="text-gray-600 hover:text-gray-900 transition">標籤</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time></span>
+      
+      <span>16 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/docker/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Docker
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+        
+        <a href="/tags/devops/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #devops
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/agent-skills/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #agent-skills
+        </a>
+        
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-07-21 依 Docker 官方文件與 <code>skill-rootless-docker</code> 專案內容查核。Docker 支援版本、套件庫指令與各 Linux 發行版的安全限制可能變動，實際修改主機前請再次確認官方文件。</p>
+</blockquote>
+<p>很多 Docker 教學都會把這行指令列為安裝後的第一件事：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> <span class="token parameter variable">-aG</span> <span class="token function">docker</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span></code></pre>
+<p>登出再登入，之後執行 <code>docker compose up -d</code> 就不用一直輸入 <code>sudo</code>。操作變方便了，看起來也像是「讓一般使用者管理 Docker」。</p>
+<p>問題是，<strong>不用輸入 <code>sudo</code>，不代表你沒有 root 權限</strong>。</p>
+<p><a href="https://docs.docker.com/engine/install/linux-postinstall/">Docker 官方的 Linux post-installation 文件</a>直接警告：<code>docker</code> group 會授予使用者 root-level privileges。原因不是群組名稱特別危險，而是傳統 Docker Engine 的 daemon 本身以 root 執行；只要能控制它的 socket，就能要求它建立容器、掛載 host 路徑、操作網路與啟動高權限 workload。</p>
+<p>在自己的開發機上，這個取捨有時可以接受。但到了長時間對外服務、保存正式資料，而且可能被 CI/CD 或管理工具操作的 production host，這條權限捷徑值得重新檢查。</p>
+<p>我把這套檢查、安裝、遷移與驗證流程整理成 <a href="https://github.com/FWcloud916/skill-rootless-docker"><code>skill-rootless-docker</code></a>。它的目標不只是把 Rootless Docker 裝起來，而是避免 agent 在沒有盤點 workload、沒有說明影響、也沒有 rollback 的情況下，直接改掉一台正式主機。</p>
+<p>這篇先回答最重要的問題：Rootless Docker 究竟降低了什麼風險？哪些 production workload 適合用？又要怎麼確認它真的部署完成，而不只是 installer 顯示 success？</p>
+<h2>問題不在 <code>sudo</code>，而在 daemon 的權限</h2>
+<p>Docker CLI 並不直接建立 container。當你執行 <code>docker run</code> 或 <code>docker compose up</code>，CLI 會透過 Docker API 把要求送給 daemon，再由 daemon 執行真正的工作。</p>
+<p>傳統 rootful Docker 的關係大致是：</p>
+<pre class="language-text"><code class="language-text">developer / deployer
+        │ Docker CLI
+        ▼
+/var/run/docker.sock
+        │
+        ▼
+dockerd（host root）
+        │
+        └─ 建立 containers、掛載 host 路徑、設定網路與 cgroup</code></pre>
+<p>Unix socket 可以限制「誰能連線」，卻不會把連線後能呼叫的 Docker API 自動變成低權限版本。<a href="https://docs.docker.com/engine/security/">Docker Engine security 文件</a>也特別舉例：能控制 daemon 的使用者，可以啟動一個把 host <code>/</code> 掛進 container 的 workload，進而修改 host filesystem。</p>
+<p>因此，把 deployment account 加進 <code>docker</code> group，本質上不是授予「部署這個 app」的權限，而是授予「控制 rootful daemon」的權限。差距非常大。</p>
+<p>這也解釋了另一個常見誤會：</p>
+<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> /var/run/docker.sock<span class="token punctuation">:</span>/var/run/docker.sock<span class="token punctuation">:</span>ro</code></pre>
+<p><code>:ro</code> 只讓 container 不能改寫 socket 這個 filesystem entry，不會把送進 socket 的 <code>POST /containers/create</code> 等 API request 變成唯讀。只要應用程式能對 socket 發出有效要求，它仍然可以控制 daemon。若某個 dashboard、CI runner 或自動更新工具真的需要 Docker API，必須把它視為 daemon administrator；只需要少量操作時，應考慮有 allowlist 的 socket proxy，而不是因為寫了 <code>:ro</code> 就當作風險消失。</p>
+<h2>Rootless Docker 改變了哪一層？</h2>
+<p><a href="https://docs.docker.com/engine/security/rootless/">Docker 的 Rootless mode</a> 會把 Docker daemon 和 containers 一起放進 user namespace，兩者都不以 host root 執行。</p>
+<pre class="language-text"><code class="language-text">deployer（一般使用者）
+        │ Docker CLI / rootless context
+        ▼
+/run/user/<uid>/docker.sock
+        │
+        ▼
+dockerd（由 deployer 擁有，位於 user namespace）
+        │
+        └─ containers（仍受同一個非 root 權限邊界限制）</code></pre>
+<p><picture><source type="image/webp" srcset="/assets/img/bvmubw4_Jg-300.webp 300w, /assets/img/bvmubw4_Jg-600.webp 600w, /assets/img/bvmubw4_Jg-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img src="/assets/img/bvmubw4_Jg-300.jpeg" alt="Rootful Docker 與 Rootless Docker 的權限邊界比較，顯示 socket、daemon 與 container 在 host root 或非 root user namespace 下的差異。" loading="lazy" decoding="async" width="1200" height="800" srcset="/assets/img/bvmubw4_Jg-300.jpeg 300w, /assets/img/bvmubw4_Jg-600.jpeg 600w, /assets/img/bvmubw4_Jg-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>user namespace 會把 container 看到的 UID/GID 映射到 host 上的一段 subordinate IDs。Container 裡的 process 可以看起來是 UID 0，但那個 UID 0 不等於 host 的 UID 0。</p>
+<p>Rootless Docker 需要 <code>newuidmap</code>、<code>newgidmap</code>，而且目標使用者在 <code>/etc/subuid</code> 與 <code>/etc/subgid</code> 都要有至少 65,536 個 subordinate IDs。這些 range 不能靠複製教學裡常見的 <code>100000:65536</code> 隨便填；正式主機可能已有其他使用者、container runtime 或集中式身分管理配置，重疊的 range 必須先排除。</p>
+<h3>它和「container 內不用 root」不同</h3>
+<p>在 Dockerfile 寫 <code>USER app</code> 是很好的做法，但它只控制 container 內應用程式用哪個帳號執行。若背後仍是 rootful daemon，daemon 本身依然持有 host root 權限。</p>
+<p>兩者應該疊加，而不是二選一：</p>
+<ul>
+<li>Container 內使用 non-root user，降低應用程式被入侵後能做的事。</li>
+<li>Docker daemon 使用 rootless mode，降低 daemon 或 runtime 邊界被突破後對 host 的影響。</li>
+<li>再搭配最小 capabilities、seccomp、唯讀 filesystem、secrets 管理、image 更新與網路限制。</li>
+</ul>
+<h3>它和 <code>userns-remap</code> 也不同</h3>
+<p><a href="https://docs.docker.com/engine/security/userns-remap/"><code>userns-remap</code></a> 同樣會重新映射 container 內的 UID/GID，但 Docker 官方文件指出，這個模式下 daemon 仍以 root 執行。Rootless mode 則連 daemon 本身都不持有 root 權限。</p>
+<p>所以兩者處理的是不同深度的邊界：<code>userns-remap</code> 主要降低 container process 對 host UID 的權限；rootless 更進一步移除 daemon 的 host root 身分。</p>
+<h2>為什麼 production 特別需要評估 rootless？</h2>
+<p>我不會說每一台 production host 都能無條件改成 rootless。Kubernetes node、需要 host device 的 workload、複雜網路設備或依賴特定 kernel controller 的服務，都需要另外設計。</p>
+<p>但對常見的「一台 Linux VM 加 Docker Compose」部署，Rootless Docker 應該從額外 hardening 選項，提升為預設評估項。</p>
+<h3>1. Production 的暴露時間與資料價值都更高</h3>
+<p>開發機可能只在工作時啟動，資料也能重建；production daemon 則長時間執行、接收外部流量、掛載 persistent volumes，還可能保存 database、上傳檔案與 deployment credentials。</p>
+<p>Rootless 不會修掉應用程式漏洞，但當攻擊鏈跨過 container 或 Docker runtime 邊界時，daemon 沒有 host root 身分，能減少攻擊者直接取得整台主機最高權限的機會。這是 defense in depth：它不假設上一層永遠不會失敗，而是限制失敗之後的 blast radius。</p>
+<h3>2. Deployment account 不必同時成為系統管理員</h3>
+<p>理想的 production 權限分工是：</p>
+<ul>
+<li>administrator 負責套件、kernel、firewall、SSH 與 system service；</li>
+<li><code>deployer</code> 負責自己的 rootless daemon 與 applications；</li>
+<li>application account 只取得執行服務需要的檔案與 secret。</li>
+</ul>
+<p>日常部署因此不必使用 <code>sudo</code>，也不必讓 <code>deployer</code> 加入 rootful <code>docker</code> group。真的需要 host-level 變更時，再由獨立 administrator 執行一組已審核、可 rollback 的命令。</p>
+<p>這個差異在自動化環境尤其重要。CI credential 外洩時，如果它只能控制某個 deployment account 的 rootless daemon，和它能控制 host root daemon，是兩種完全不同的事故範圍。</p>
+<h3>3. 權限邊界會變得更容易說明與稽核</h3>
+<p>Rootless daemon 的 socket 通常位於 <code>/run/user/&lt;uid&gt;/docker.sock</code>，資料預設放在 <code>~/.local/share/docker</code>，設定則位於 <code>~/.config/docker</code>。Service 由 <code>systemctl --user</code> 管理。</p>
+<p>這讓「誰擁有 daemon、誰能連 socket、資料放在哪裡、服務如何啟動」都能對應到一個明確的 Linux account。比起所有 deployment automation 共用 <code>/var/run/docker.sock</code>，權限模型更容易被檢查。</p>
+<p>不過別把 rootless socket 當成普通 IPC。拿到它的人依然能控制該使用者的所有 rootless containers，也可能讀到 containers 能存取的 secrets 與 bind mounts。Rootless 降低的是 host privilege，不是把 daemon API 變成低風險 API。</p>
+<h2>為什麼我把流程做成一個 skill？</h2>
+<p>Rootless Docker 的安裝命令不長，真正麻煩的是命令前後的決策。</p>
+<ul>
+<li>主機是不是原生 Linux，而且以 systemd 運作？</li>
+<li>要沿用既有 account，還是建立專用 <code>deployer</code>？</li>
+<li>目前有沒有 rootful containers、volumes 或 systemd services？</li>
+<li>新舊 daemon 要 coexist，還是正式 migration？</li>
+<li>Workload 是否依賴 80/443、Docker socket、bind mounts、devices 或嚴格的 cgroup limits？</li>
+<li>User service 能不能跨過 logout，並在 reboot 後自動啟動？</li>
+</ul>
+<p>如果 agent 一看到「幫我裝 Rootless Docker」就直接跑安裝，很容易把 audit 變成 mutation，甚至停掉還在提供服務的 rootful daemon。</p>
+<p><a href="https://github.com/FWcloud916/skill-rootless-docker"><code>rootless-docker-setup</code></a> 把工作拆成固定順序：</p>
+<ol>
+<li><strong>Read-only preflight</strong>：先收集 host 與 target user 狀態，不安裝套件、不用 <code>sudo</code>、不修改 service。</li>
+<li><strong>Change plan</strong>：把已正確、必要、可選與不相容項目分開，列出命令、影響與 rollback。</li>
+<li><strong>Explicit approvals</strong>：套件、daemon migration、networking、access hardening 分組確認。</li>
+<li><strong>Target-user installation</strong>：setup tool 一律由真正的 non-root login session 執行。</li>
+<li><strong>End-to-end validation</strong>：檢查 context、socket、process owner、Compose、user service、linger、container 與對外 port。</li>
+</ol>
+<p><picture><source type="image/webp" srcset="/assets/img/bkTjyuDxlX-300.webp 300w, /assets/img/bkTjyuDxlX-600.webp 600w, /assets/img/bkTjyuDxlX-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img src="/assets/img/bkTjyuDxlX-300.jpeg" alt="Rootless Docker 安全部署流程，從只讀 preflight、變更計畫、明確核准、目標使用者安裝到端對端驗證，失敗時停止診斷或回滾。" loading="lazy" decoding="async" width="1200" height="800" srcset="/assets/img/bkTjyuDxlX-300.jpeg 300w, /assets/img/bkTjyuDxlX-600.jpeg 600w, /assets/img/bkTjyuDxlX-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>可以透過 <code>skills</code> CLI 安裝：</p>
+<pre class="language-bash"><code class="language-bash">npx skills <span class="token function">add</span> FWcloud916/skill-rootless-docker <span class="token punctuation">\</span>
+  <span class="token parameter variable">--skill</span> rootless-docker-setup</code></pre>
+<p>或安裝成 Codex plugin：</p>
+<pre class="language-bash"><code class="language-bash">codex plugin marketplace <span class="token function">add</span> FWcloud916/skill-rootless-docker
+codex plugin <span class="token function">add</span> rootless-docker@fwcloud916</code></pre>
+<p>接著不要一開始就要求它安裝，先要求 audit：</p>
+<pre class="language-text"><code class="language-text">Use $rootless-docker-setup to audit this Ubuntu host for rootless Docker
+readiness for user deployer. Do not change the host.</code></pre>
+<p>這句 <code>Do not change the host</code> 並不是因為 skill 本身沒有安全規則，而是讓任務意圖再次變得明確：現在是盤點，不是安裝。</p>
+<h2>一條適合 Ubuntu production 的落地路線</h2>
+<p>以下不是可以直接複製到任何主機的萬用 script，而是一條變更順序。套件庫與支援版本會變動，實際安裝前仍要以 <a href="https://docs.docker.com/engine/install/ubuntu/">Docker 官方 Ubuntu 文件</a> 為準。</p>
+<h3>第一步：選定 account 與 migration 策略</h3>
+<p>先指定一個 non-root account，例如 <code>deployer</code>。如果現有帳號已符合權限隔離目標，可以直接沿用；建立新帳號、安裝 SSH key 或移除 sudo 都是獨立的 access change，不能和 Docker 安裝一起默默完成。</p>
+<p>接著明確選擇：</p>
+<ul>
+<li><strong>Fresh setup</strong>：主機沒有既有 Docker workload。</li>
+<li><strong>Coexistence</strong>：rootful 與 rootless daemon 暫時並存，靠 Docker context 明確選擇。</li>
+<li><strong>Migration</strong>：盤點並停妥既有 workload 後，停用 rootful <code>docker.service</code> 與 <code>docker.socket</code>。</li>
+</ul>
+<p>Migration 前至少要從 administrator context 盤點：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">docker</span> <span class="token function">ps</span> <span class="token parameter variable">-a</span>
+<span class="token function">sudo</span> <span class="token function">docker</span> image <span class="token function">ls</span>
+<span class="token function">sudo</span> <span class="token function">docker</span> volume <span class="token function">ls</span>
+<span class="token function">sudo</span> <span class="token function">docker</span> network <span class="token function">ls</span>
+<span class="token function">sudo</span> systemctl list-dependencies <span class="token parameter variable">--reverse</span> docker.service
+<span class="token function">sudo</span> ss <span class="token parameter variable">-lntup</span></code></pre>
+<p>這些是 read-only inventory，但因為會使用 <code>sudo</code>，仍應讓主機擁有者先看到命令與目的。還要搜尋 deployment scripts、CI 與其他 system services 是否寫死 <code>/var/run/docker.sock</code>。</p>
+<p>不要把 rootful <code>/var/lib/docker</code> 直接搬進 <code>~/.local/share/docker</code>，也不要在「migration」名義下刪除舊資料。Image 可以重拉，volume 與 database 則需要 workload-specific 的備份和搬遷方案。</p>
+<h3>第二步：跑 read-only preflight</h3>
+<p>Skill 內附的 <code>preflight.sh</code> 會要求明確 target user：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">bash</span> scripts/preflight.sh <span class="token parameter variable">--user</span> deployer</code></pre>
+<p>輸出使用 <code>check.&lt;name&gt;=&lt;status&gt;:&lt;detail&gt;</code> 格式，最後會得到：</p>
+<ul>
+<li><code>overall=ready</code>：基礎條件齊全；</li>
+<li><code>overall=needs-attention</code>：有缺少套件、subordinate IDs、cgroup 或衝突狀態；</li>
+<li><code>overall=unsupported</code>：host class 不在 skill 支援範圍。</li>
+</ul>
+<p>它會檢查 distribution、systemd、target account、<code>newuidmap</code>、<code>newgidmap</code>、subordinate IDs、rootful units 與 socket、rootless context、user socket、linger、cgroup v2、AppArmor/SELinux、firewall tools 與 low-port policy。</p>
+<p><code>needs-attention</code> 不是「可以加 <code>--force</code> 跳過」，而是 change plan 的輸入。每個 attention 都要先判斷它是安裝前提、workload-specific 限制，還是刻意保留的 coexistence 狀態。</p>
+<h3>第三步：準備官方套件與 rootless prerequisites</h3>
+<p>Ubuntu 通常需要 <code>uidmap</code>、<code>dbus-user-session</code>、<code>slirp4netns</code>、<code>fuse-overlayfs</code>，以及 Docker 官方套件中的 <code>docker-ce-rootless-extras</code>。後者提供 <code>dockerd-rootless-setuptool.sh</code> 與所需整合。</p>
+<p>新增 apt repository、安裝或移除套件都會修改 host，必須先展示：</p>
+<ul>
+<li>完整命令與 repository URL；</li>
+<li>會新增或移除哪些 packages；</li>
+<li>是否可能自動啟動 rootful Docker；</li>
+<li>失敗與 rollback 方式。</li>
+</ul>
+<p>套件安裝完成後要立刻檢查 <code>docker.service</code> 和 <code>docker.socket</code>。Ubuntu 的 Docker packages 可能啟動 rootful system service；這不代表應該馬上停掉它，而是要回到前面核准過的 coexistence 或 migration 決策。</p>
+<p>也不要為了方便改用 <code>curl ... | sh</code>。Skill 優先採用 Docker 的 signed distribution packages；只有 packages 路徑不可行時，才下載官方 standalone installer 到具名檔案，讓使用者檢查後另行批准。</p>
+<p>Ubuntu、Debian 與 Fedora 的整體流程相同，但不要混用 package commands：</p>
+<table>
+<thead>
+<tr>
+<th>Distribution</th>
+<th>Rootless prerequisites 重點</th>
+<th>安裝前特別確認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ubuntu</td>
+<td><code>uidmap</code>、<code>dbus-user-session</code>、<code>slirp4netns</code>、<code>fuse-overlayfs</code></td>
+<td>新版 Ubuntu 的 unprivileged user namespace 與 AppArmor 狀態</td>
+</tr>
+<tr>
+<td>Debian</td>
+<td>與 Ubuntu 類似，使用 Debian 專屬 Docker repository</td>
+<td>Derivative distribution 不能自行假設能沿用 Debian codename</td>
+</tr>
+<tr>
+<td>Fedora</td>
+<td><code>newuidmap</code>、<code>newgidmap</code> 通常由 <code>shadow-utils</code> 提供，另檢查 <code>slirp4netns</code>、<code>fuse-overlayfs</code>、<code>iptables</code></td>
+<td>DNF command 版本、repository signing key 與 SELinux 狀態</td>
+</tr>
+</tbody>
+</table>
+<p>實際命令應分別回到 Docker 官方的 <a href="https://docs.docker.com/engine/install/ubuntu/">Ubuntu</a>、<a href="https://docs.docker.com/engine/install/debian/">Debian</a> 或 <a href="https://docs.docker.com/engine/install/fedora/">Fedora</a> 文件核對。Skill 也只會在 preflight 確認 <code>ID</code> 後載入對應 reference，不會把 Debian derivative 或其他 RPM distribution 當成等價環境。</p>
+<h3>第四步：用 target user 的真實 login session 安裝</h3>
+<p>Rootless service 不是一個寫了 <code>User=deployer</code> 的 system-wide service。Docker 官方的 <a href="https://docs.docker.com/engine/security/rootless/tips/">Rootless tips</a> 明確說明，這種模式不受支援。</p>
+<p>應透過 SSH 或真正的 login session 進入 target user，先確認環境，再執行 setup：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">whoami</span>
+<span class="token function">id</span> <span class="token parameter variable">-u</span>
+<span class="token builtin class-name">printf</span> <span class="token string">'HOME=%s\nXDG_RUNTIME_DIR=%s\n'</span> <span class="token string">"<span class="token environment constant">$HOME</span>"</span> <span class="token string">"<span class="token environment constant">$XDG_RUNTIME_DIR</span>"</span>
+dockerd-rootless-setuptool.sh check
+dockerd-rootless-setuptool.sh <span class="token function">install</span></code></pre>
+<p>正常情況下，setup tool 會建立 <code>rootless</code> Docker context 與 user service。優先使用 context：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> context use rootless
+<span class="token function">docker</span> context inspect rootless</code></pre>
+<p>只有不支援 context 的程式才設定：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token builtin class-name">export</span> <span class="token assign-left variable">DOCKER_HOST</span><span class="token operator">=</span><span class="token string">"unix://<span class="token environment constant">$XDG_RUNTIME_DIR</span>/docker.sock"</span></code></pre>
+<p>不要把 <code>DOCKER_HOST</code> 無條件寫進全域 shell 設定，否則它會覆蓋 context selection，之後在 rootful/rootless coexistence 或操作其他 remote context 時很容易連錯 daemon。</p>
+<h3>第五步：讓 service 跨過 logout 與 reboot</h3>
+<p>Production service 不能在 <code>deployer</code> 登出後跟著消失。先說明 user lingering 會讓該帳號的 user manager 在沒有登入 session 時持續存在，取得核准後，由 administrator 執行：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> loginctl enable-linger deployer</code></pre>
+<p>再由 <code>deployer</code> 執行：</p>
+<pre class="language-bash"><code class="language-bash">systemctl <span class="token parameter variable">--user</span> <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> docker.service</code></pre>
+<p>這兩個動作分屬 host policy 與 user service lifecycle，不要因為常被寫在同一段教學裡，就當成同一個無須說明的步驟。</p>
+<h3>第六步：處理 80/443 與 firewall</h3>
+<p>Rootless process 預設不能直接綁定 1024 以下的 privileged ports。最單純的設計是讓 container 發布 8080/8443，再由 host reverse proxy 或外部 load balancer 接 80/443。</p>
+<p>如果 rootless daemon 必須直接發布 80/443，Docker 文件提供兩類做法：</p>
+<ul>
+<li>調低 <code>net.ipv4.ip_unprivileged_port_start</code>：影響 host 上所有 unprivileged processes，範圍較大。</li>
+<li>對實際的 RootlessKit binary 設定 <code>CAP_NET_BIND_SERVICE</code>：範圍較窄，但 package upgrade 後可能需要重新檢查。</li>
+</ul>
+<p>兩者都不是 base installation 的附帶步驟。要先確認需求、顯示 persistent config 或 binary path、取得 approval，再修改 sysctl 或 capability。</p>
+<p>Firewall 也一樣。偵測到 <code>ufw</code>、<code>firewalld</code>、<code>nft</code> 或 <code>iptables</code>，不等於它正在管理這台主機，更不代表可以自動開放 80/443。應先讀取現有 policy，只新增實際需要、來源範圍最小的規則，最後從外部 client 驗證。</p>
+<h2>Installer 顯示成功，還不算完成</h2>
+<p>正式環境最常見的錯誤，是看到 <code>dockerd-rootless-setuptool.sh install</code> exit code 0 就宣布完成。</p>
+<p>至少要在 target user 的 login session 驗證：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> context show
+<span class="token function">docker</span> info
+<span class="token function">docker</span> compose version
+systemctl <span class="token parameter variable">--user</span> is-enabled docker.service
+systemctl <span class="token parameter variable">--user</span> is-active docker.service
+loginctl show-user <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token function">id</span> <span class="token parameter variable">-un</span><span class="token variable">)</span></span>"</span> <span class="token parameter variable">-p</span> Linger
+pgrep <span class="token parameter variable">-u</span> <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token function">id</span> <span class="token parameter variable">-u</span><span class="token variable">)</span></span>"</span> <span class="token parameter variable">-af</span> <span class="token string">'dockerd|rootlesskit'</span>
+<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> hello-world</code></pre>
+<p>重點不是每個 command 都「有輸出」，而是證據彼此一致：</p>
+<ul>
+<li>active context 指向 rootless user socket；</li>
+<li><code>docker info</code> 的 Security Options 包含 <code>rootless</code>；</li>
+<li>daemon process 屬於 target user；</li>
+<li>Compose 可用；</li>
+<li>user service 已 enable 且 active；</li>
+<li>linger 符合 reboot 後啟動需求；</li>
+<li>實際 container 能執行；</li>
+<li>對外 port 能通過預期的 firewall path；</li>
+<li>rootful daemon 是刻意停用，或刻意 coexist。</li>
+</ul>
+<p>最好再做一次真實的 login boundary 或 reboot 驗證。否則你測到的可能只是當前 shell 留下來的環境，不是能在主機重啟後自動恢復的 production service。</p>
+<h2>Rootless 的代價與不適用情境</h2>
+<p>Rootless 是更小的 host privilege，不是免費且透明的相容模式。</p>
+<h3>cgroup resource limits 可能沒有完整生效</h3>
+<p><a href="https://docs.docker.com/engine/security/rootless/tips/">Docker 官方的 Rootless tips</a>說明，rootless mode 的 <code>--cpus</code>、<code>--memory</code>、<code>--pids-limit</code> 等 cgroup flags，需要 cgroup v2 與 systemd。即使條件成立，預設也可能只 delegation 部分 controllers。</p>
+<p>因此 <code>docker compose.yml</code> 寫了 limit 不等於 kernel 真的 enforcement。需要 CPU、cpuset、I/O、memory 或 pids 控制的 workload，要檢查 <code>docker info</code>、可用 controllers 與 user service delegation。Docker 若警告某個 limit 被忽略，就不能把它列為已完成的 production guardrail。</p>
+<h3>Bind mount 會遇到 UID/GID mapping</h3>
+<p>Container 內的 UID/GID 映射到 subordinate range 後，既有 host directory 的 ownership 可能不再符合預期。修正時應針對 workload 真正使用的窄路徑處理，不要為了讓 container 寫入，對大範圍目錄遞迴 <code>chown</code> 或開放權限。</p>
+<h3>特殊網路、device 與 orchestration 要另外評估</h3>
+<p>Rootless networking、privileged ports、host firewall、device access 和嚴格 resource controls 都可能需要額外整合。Docker Desktop、沒有適當 systemd user session 的 WSL、non-systemd 或 immutable hosts，也不適合直接照這篇的 service 流程操作。</p>
+<p>Kubernetes 與多節點 orchestration 更不是「把每台 host 改成 Rootless Docker」就完成。它們有自己的 runtime、node privilege、networking、storage 與 workload security model，應另做平台層級的設計。</p>
+<h3>Rootless 也不會阻止 target user 傷害自己的資料</h3>
+<p>如果 <code>deployer</code> 本來就能寫入 <code>/srv/my-app/data</code>，那麼由它擁有的 rootless containers 也可能透過核准的 bind mount 修改這些資料。攻擊者拿到 rootless socket 後，仍能操作這個 daemon 及其可存取資源。</p>
+<p>所以最精準的說法不是「Rootless Docker 讓 container 變安全」，而是：</p>
+<blockquote>
+<p>Rootless Docker 把 Docker daemon 與 containers 從 host root 權限移開，讓一層安全控制失敗時，不必直接等同整台主機最高權限失守。</p>
+</blockquote>
+<h2>一張 production 決策表</h2>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>建議</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>單機 Linux VM、Docker Compose、一般 Web/API/DB</td>
+<td>優先評估 rootless，通常是很好的預設</td>
+</tr>
+<tr>
+<td>可由 reverse proxy 接 80/443</td>
+<td>Rootless 很適合，container 使用高 host port</td>
+</tr>
+<tr>
+<td>既有 rootful workload 正在服務</td>
+<td>先 inventory，選 coexistence 或分階段 migration</td>
+</tr>
+<tr>
+<td>CI 或 dashboard 需要 Docker socket</td>
+<td>仍視為 daemon admin；限制 account、socket 與可掛載資料</td>
+</tr>
+<tr>
+<td>嚴格 CPU/I/O limits</td>
+<td>先驗證 cgroup v2 與 controller delegation</td>
+</tr>
+<tr>
+<td>大量既有 bind mounts</td>
+<td>先測 UID/GID mapping 與 ownership</td>
+</tr>
+<tr>
+<td>需要 host devices、特殊 networking 或 privileged workload</td>
+<td>不要強套，改做 workload-specific security review</td>
+</tr>
+<tr>
+<td>Kubernetes、多節點或非 systemd host</td>
+<td>不套用本文流程，使用平台專屬設計</td>
+</tr>
+</tbody>
+</table>
+<h2>收尾：把 rootless 當成預設問題，而不是預設答案</h2>
+<p>正式環境要問的，不應只是「Docker 有沒有跑起來」，而是「這個 daemon 為什麼需要 host root？」</p>
+<p>如果答案只是因為安裝教學一直這樣做，那就值得跑一次 read-only audit，盤點實際需求。對一般的單機 Linux 與 Docker Compose 部署，Rootless Docker 往往能用可接受的整合成本，換到更清楚的 account boundary 與更小的 host blast radius。</p>
+<p>但別跳過限制，也別把 migration 當成一條停服務的指令。先 inventory、把 privileged changes 分組、逐項確認 rollback，最後用 context、socket、process owner、service lifecycle 與真實 workload 證明它能在 production 運作。</p>
+<p>這正是 <code>skill-rootless-docker</code> 想固定下來的流程：不是讓 agent 更快取得 root，而是讓它知道什麼時候不該碰 root。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://docs.docker.com/engine/security/rootless/">Docker Docs — Rootless mode</a></li>
+<li><a href="https://docs.docker.com/engine/security/rootless/tips/">Docker Docs — Rootless mode tips</a></li>
+<li><a href="https://docs.docker.com/engine/security/rootless/troubleshoot/">Docker Docs — Rootless mode troubleshooting</a></li>
+<li><a href="https://docs.docker.com/engine/security/">Docker Docs — Docker Engine security</a></li>
+<li><a href="https://docs.docker.com/engine/install/linux-postinstall/">Docker Docs — Linux post-installation steps</a></li>
+<li><a href="https://docs.docker.com/engine/security/userns-remap/">Docker Docs — Isolate containers with a user namespace</a></li>
+<li><a href="https://docs.docker.com/engine/install/ubuntu/">Docker Docs — Install Docker Engine on Ubuntu</a></li>
+<li><a href="https://github.com/FWcloud916/skill-rootless-docker">skill-rootless-docker — GitHub repository</a></li>
+</ul>
+
+  </div>
+</article>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

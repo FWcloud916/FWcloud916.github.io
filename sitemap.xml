@@ -80,6 +80,13 @@
 
   
 
+  
+  <url>
+    <loc>https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/</loc>
+    <lastmod>2026-07-21T00:00:00.000Z</lastmod>
+  </url>
+  
+
 
   <url>
     <loc>https://imfw.io/tags/container/</loc>
@@ -106,11 +113,23 @@
   </url>
 
   <url>
+    <loc>https://imfw.io/tags/agent-skills/</loc>
+  </url>
+
+  <url>
+    <loc>https://imfw.io/tags/ai/</loc>
+  </url>
+
+  <url>
     <loc>https://imfw.io/tags/api/</loc>
   </url>
 
   <url>
     <loc>https://imfw.io/tags/automation/</loc>
+  </url>
+
+  <url>
+    <loc>https://imfw.io/tags/devops/</loc>
   </url>
 
   <url>
@@ -127,6 +146,10 @@
 
   <url>
     <loc>https://imfw.io/tags/nvm/</loc>
+  </url>
+
+  <url>
+    <loc>https://imfw.io/tags/security/</loc>
   </url>
 
   <url>
