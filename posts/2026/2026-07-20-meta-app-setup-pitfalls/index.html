@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記 - FW Blog</title>
+  <meta name="description" content="實際到 developers.facebook.com 幫自動發文工具辦 FB / IG / Threads 的 API 權限，結果建了兩個 App、管三組 Secret — dashboard 操作、Tester 邀請、token 生命週期的第一手踩坑記錄。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記 - FW Blog">
+  <meta property="og:description" content="實際到 developers.facebook.com 幫自動發文工具辦 FB / IG / Threads 的 API 權限，結果建了兩個 App、管三組 Secret — dashboard 操作、Tester 邀請、token 生命週期的第一手踩坑記錄。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-07-20T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="meta-api">
+  
+  <meta property="article:tag" content="social-media">
+  
+  <meta property="article:tag" content="automation">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記 - FW Blog">
+  <meta name="twitter:description" content="實際到 developers.facebook.com 幫自動發文工具辦 FB / IG / Threads 的 API 權限，結果建了兩個 App、管三組 Secret — dashboard 操作、Tester 邀請、token 生命週期的第一手踩坑記錄。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記 - FW Blog">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記",
+    "description": "實際到 developers.facebook.com 幫自動發文工具辦 FB / IG / Threads 的 API 權限，結果建了兩個 App、管三組 Secret — dashboard 操作、Tester 邀請、token 生命週期的第一手踩坑記錄。",
+    "url": "https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/",
+    "datePublished": "2026-07-20T00:00:00.000Z",
+    "dateModified": "2026-07-20T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["meta-api","social-media","automation"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-6">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/tags/" class="text-gray-600 hover:text-gray-900 transition">標籤</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-07-20T00:00:00.000Z">2026年07月20日</time></span>
+      
+      <span>5 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/meta-api/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #meta-api
+        </a>
+        
+      
+        
+        <a href="/tags/social-media/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #social-media
+        </a>
+        
+      
+        
+        <a href="/tags/automation/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #automation
+        </a>
+        
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <p><a href="/posts/2026/2026-07-13-social-platform-apis-2026/">上一篇</a>整理了 2026 年社群平台 API 的現況
+這篇記錄實際到 developers.facebook.com 把 App 辦下來的過程</p>
+<p>動手前我以為「一個 Meta App 搞定 FB / IG / Threads 三平台」
+動手後發現 : 是<strong>兩個 App、三組憑證</strong></p>
+<p>以下是完整流程與每一個坑</p>
+<h2>先攤開地圖：兩個 App、三組憑證</h2>
+<table>
+<thead>
+<tr>
+<th>平台</th>
+<th>掛在哪個 App</th>
+<th>憑證</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Facebook</td>
+<td>App A ( Use case 選 Other → Business )</td>
+<td>App A 的 App ID / Secret</td>
+</tr>
+<tr>
+<td>Instagram</td>
+<td>App A 加 Instagram product</td>
+<td><strong>另一組</strong> Instagram App ID / Secret</td>
+</tr>
+<tr>
+<td>Threads</td>
+<td><strong>App B</strong> ( Use case 選 Access the Threads API )</td>
+<td>App B 的 App ID / Secret</td>
+</tr>
+</tbody>
+</table>
+<p>為什麼會長這樣 ? 兩個坑造成的，一個一個講</p>
+<h2>坑一：Threads 必須另建一個獨立 App</h2>
+<p>新版的 Create App 流程裡，<strong>Use case 決定一切</strong> — 它決定這個 App 之後能加哪些 API 、權限與產品</p>
+<p>問題來了 : 用 Other → Business 建立的 App ( FB / IG 用的那種 )
+事後<strong>加不進</strong> Threads use case，dashboard 裡根本沒有這個選項</p>
+<p>所以流程只能是 :</p>
+<ol>
+<li>My Apps → <strong>Create App</strong> ( 不能沿用 FB / IG 那個 )</li>
+<li>Use case 選 <strong>Access the Threads API</strong></li>
+<li>在 use case 設定裡勾權限 : <code>threads_basic</code> ( 必要 ) + <code>threads_content_publish</code></li>
+<li>App settings → Basic 拿 App ID / App Secret</li>
+</ol>
+<p>Threads 跟 IG 本來就是完全獨立的產品，token 、 Secret 、權限都分開
+現在連 App 都要分開，心理上就當它們是不同公司吧</p>
+<h2>坑二：IG 會偷偷給你第二組 App ID / Secret</h2>
+<p>Instagram 用新的「 Instagram API with Instagram Login 」，好處是<strong>不用綁 FB 粉專</strong>了
+IG 帳號轉成商業或創作者帳號 ( 免費、可逆 ) 就能直接授權</p>
+<p>設定流程 :</p>
+<ol>
+<li>App dashboard → Add Product → <strong>Instagram</strong> → 選 <strong>Instagram API with Instagram Login</strong></li>
+<li>到「 API setup with Instagram business login 」頁面設定</li>
+</ol>
+<p>坑就在第 2 步的頁面裡 —
+這個 product 有<strong>自己專屬的 Instagram App ID / App Secret</strong>
+跟 App settings → Basic 那組<strong>不是同一組</strong>!!</p>
+<pre class="language-bash"><code class="language-bash"><span class="token comment"># .env — 同一個 App 卻有兩組憑證</span>
+<span class="token assign-left variable">META_APP_ID</span><span class="token operator">=</span><span class="token punctuation">..</span>.        <span class="token comment"># App settings → Basic ( FB 用 )</span>
+<span class="token assign-left variable">META_APP_SECRET</span><span class="token operator">=</span><span class="token punctuation">..</span>.
+<span class="token assign-left variable">IG_APP_ID</span><span class="token operator">=</span><span class="token punctuation">..</span>.          <span class="token comment"># Instagram product 頁面 ( IG 用 )</span>
+<span class="token assign-left variable">IG_APP_SECRET</span><span class="token operator">=</span><span class="token punctuation">..</span>.</code></pre>
+<p>拿錯組去跑 OAuth，錯誤訊息不會告訴你「你拿錯組了」，只會讓你懷疑人生
+發 IG 的另外兩個限制順便記著 : 圖片<strong>只收 JPEG</strong> 且必須放在<strong>公開 URL</strong> ( Meta 伺服器會自己來抓 )</p>
+<h2>Facebook：坑最少，但要先有粉專</h2>
+<p>FB 反而是三個裡面最單純的，條件只有一個 :
+<strong>個人檔案不能用 API 發文</strong>，要有一個你當管理員的粉絲專頁</p>
+<ol>
+<li>App dashboard → Add Product → <strong>Facebook Login for Business</strong></li>
+<li>到 <a href="https://developers.facebook.com/tools/explorer">Graph API Explorer</a> 產生 User token，勾三個權限 :
+<code>pages_manage_posts</code> + <code>pages_read_engagement</code> + <code>pages_show_list</code></li>
+<li>用它換<strong>長效 Page token</strong></li>
+</ol>
+<p>換到的 Page token 在 dev mode 、權限不變的情況下<strong>幾乎不過期</strong>
+辦一次就可以忘記它，三平台裡的模範生</p>
+<h2>Tester 邀請：發出去，還要記得去「接受」</h2>
+<p>IG 跟 Threads 都要把自己的帳號加成 Tester，而且是<strong>兩段式</strong>的 :
+dashboard 發邀請是一段，到手機 App 裡接受邀請是另一段</p>
+<ul>
+<li><strong>Instagram</strong> : product 頁加 Instagram Tester → 打開 IG App 接受邀請</li>
+<li><strong>Threads</strong> : App roles → Roles 加 Threads Tester → 打開 Threads App
+( 設定 → 帳號 → 網站權限 → 邀請 ) 接受</li>
+</ul>
+<p>第二段超容易忘
+忘了的症狀是 : token 拿得到，API 打下去卻一直吐權限錯誤，讓你回頭檢查程式碼半天</p>
+<h2>Token 生命週期：三個平台三種個性</h2>
+<table>
+<thead>
+<tr>
+<th>平台</th>
+<th>效期</th>
+<th>維護</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Facebook</td>
+<td>幾乎不過期</td>
+<td>不用管</td>
+</tr>
+<tr>
+<td>Instagram</td>
+<td>60 天</td>
+<td>過期前刷新 ; <strong>過期就不能刷</strong>，只能重新授權</td>
+</tr>
+<tr>
+<td>Threads</td>
+<td>60 天</td>
+<td>同上，而且 token <strong>存在滿 24 小時後才能刷新</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Threads 那條「滿 24 小時才能刷」是文件裡一行小字
+如果你授權完馬上測試刷新流程，會拿到失敗然後開始 debug 一個不存在的 bug ( 我 )</p>
+<p>60 天的過期週期剛好長到讓人忘記它的存在
+建議直接排一個<strong>每月一次</strong>的排程把 IG 跟 Threads 一起刷掉，一勞永逸</p>
+<h2>收尾：dev mode 就是完全體</h2>
+<p>整趟辦下來，最重要的還是這條共通規則 :</p>
+<blockquote>
+<p>App 維持 Development mode 、自己的帳號持有 app role
+對「自己的資產」發文<strong>不需要 App Review，完全免費</strong></p>
+</blockquote>
+<p>不用錄影、不用寫使用情境、不用等審核
+兩個 App 、三組憑證、幾封 Tester 邀請，換來三個平台的免費自動發文
+比起隔壁按次計費的 X，這些 dashboard 上的小坑真的只是小坑啦</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://developers.facebook.com/docs/development/create-an-app/threads-use-case/">Threads Use Case — App Development with Meta</a></li>
+<li><a href="https://developers.facebook.com/docs/threads/get-started/create-an-app/">Threads API — Create an App</a></li>
+<li><a href="https://developers.facebook.com/docs/threads/get-started/get-access-tokens-and-permissions/">Threads API — Access Tokens and Permissions</a></li>
+<li><a href="https://developers.facebook.com/docs/instagram-platform/create-an-instagram-app/">Instagram Platform — Create an Instagram App</a></li>
+<li><a href="https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login/">Business Login for Instagram</a></li>
+<li><a href="https://developers.facebook.com/docs/pages-api/getting-started/">Meta Pages API — Get Started</a></li>
+</ul>
+
+  </div>
+</article>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

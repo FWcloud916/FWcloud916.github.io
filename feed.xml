@@ -4,12 +4,154 @@
   <subtitle>FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。</subtitle>
   <link href="https://imfw.io/feed.xml" rel="self"/>
   <link href="https://imfw.io/"/>
-  <updated>2026-07-13T00:00:00Z</updated>
+  <updated>2026-07-20T00:00:00Z</updated>
   <id>https://imfw.io/</id>
   <author>
     <name>FW</name>
   </author>
   
+  
+  <entry>
+    <title>一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記</title>
+    <link href="https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/"/>
+    <updated>2026-07-20T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/</id>
+    <content type="html">&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-07-13-social-platform-apis-2026/&quot;&gt;上一篇&lt;/a&gt;整理了 2026 年社群平台 API 的現況
+這篇記錄實際到 developers.facebook.com 把 App 辦下來的過程&lt;/p&gt;
+&lt;p&gt;動手前我以為「一個 Meta App 搞定 FB / IG / Threads 三平台」
+動手後發現 : 是&lt;strong&gt;兩個 App、三組憑證&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;以下是完整流程與每一個坑&lt;/p&gt;
+&lt;h2&gt;先攤開地圖：兩個 App、三組憑證&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;平台&lt;/th&gt;
+&lt;th&gt;掛在哪個 App&lt;/th&gt;
+&lt;th&gt;憑證&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Facebook&lt;/td&gt;
+&lt;td&gt;App A ( Use case 選 Other → Business )&lt;/td&gt;
+&lt;td&gt;App A 的 App ID / Secret&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Instagram&lt;/td&gt;
+&lt;td&gt;App A 加 Instagram product&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;另一組&lt;/strong&gt; Instagram App ID / Secret&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Threads&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;App B&lt;/strong&gt; ( Use case 選 Access the Threads API )&lt;/td&gt;
+&lt;td&gt;App B 的 App ID / Secret&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;為什麼會長這樣 ? 兩個坑造成的，一個一個講&lt;/p&gt;
+&lt;h2&gt;坑一：Threads 必須另建一個獨立 App&lt;/h2&gt;
+&lt;p&gt;新版的 Create App 流程裡，&lt;strong&gt;Use case 決定一切&lt;/strong&gt; — 它決定這個 App 之後能加哪些 API 、權限與產品&lt;/p&gt;
+&lt;p&gt;問題來了 : 用 Other → Business 建立的 App ( FB / IG 用的那種 )
+事後&lt;strong&gt;加不進&lt;/strong&gt; Threads use case，dashboard 裡根本沒有這個選項&lt;/p&gt;
+&lt;p&gt;所以流程只能是 :&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;My Apps → &lt;strong&gt;Create App&lt;/strong&gt; ( 不能沿用 FB / IG 那個 )&lt;/li&gt;
+&lt;li&gt;Use case 選 &lt;strong&gt;Access the Threads API&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;在 use case 設定裡勾權限 : &lt;code&gt;threads_basic&lt;/code&gt; ( 必要 ) + &lt;code&gt;threads_content_publish&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;App settings → Basic 拿 App ID / App Secret&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Threads 跟 IG 本來就是完全獨立的產品，token 、 Secret 、權限都分開
+現在連 App 都要分開，心理上就當它們是不同公司吧&lt;/p&gt;
+&lt;h2&gt;坑二：IG 會偷偷給你第二組 App ID / Secret&lt;/h2&gt;
+&lt;p&gt;Instagram 用新的「 Instagram API with Instagram Login 」，好處是&lt;strong&gt;不用綁 FB 粉專&lt;/strong&gt;了
+IG 帳號轉成商業或創作者帳號 ( 免費、可逆 ) 就能直接授權&lt;/p&gt;
+&lt;p&gt;設定流程 :&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;App dashboard → Add Product → &lt;strong&gt;Instagram&lt;/strong&gt; → 選 &lt;strong&gt;Instagram API with Instagram Login&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;到「 API setup with Instagram business login 」頁面設定&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;坑就在第 2 步的頁面裡 —
+這個 product 有&lt;strong&gt;自己專屬的 Instagram App ID / App Secret&lt;/strong&gt;
+跟 App settings → Basic 那組&lt;strong&gt;不是同一組&lt;/strong&gt;!!&lt;/p&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;# .env — 同一個 App 卻有兩組憑證&lt;/span&gt;
+&lt;span class=&quot;token assign-left variable&quot;&gt;META_APP_ID&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;..&lt;/span&gt;.        &lt;span class=&quot;token comment&quot;&gt;# App settings → Basic ( FB 用 )&lt;/span&gt;
+&lt;span class=&quot;token assign-left variable&quot;&gt;META_APP_SECRET&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;..&lt;/span&gt;.
+&lt;span class=&quot;token assign-left variable&quot;&gt;IG_APP_ID&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;..&lt;/span&gt;.          &lt;span class=&quot;token comment&quot;&gt;# Instagram product 頁面 ( IG 用 )&lt;/span&gt;
+&lt;span class=&quot;token assign-left variable&quot;&gt;IG_APP_SECRET&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;..&lt;/span&gt;.&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;拿錯組去跑 OAuth，錯誤訊息不會告訴你「你拿錯組了」，只會讓你懷疑人生
+發 IG 的另外兩個限制順便記著 : 圖片&lt;strong&gt;只收 JPEG&lt;/strong&gt; 且必須放在&lt;strong&gt;公開 URL&lt;/strong&gt; ( Meta 伺服器會自己來抓 )&lt;/p&gt;
+&lt;h2&gt;Facebook：坑最少，但要先有粉專&lt;/h2&gt;
+&lt;p&gt;FB 反而是三個裡面最單純的，條件只有一個 :
+&lt;strong&gt;個人檔案不能用 API 發文&lt;/strong&gt;，要有一個你當管理員的粉絲專頁&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;App dashboard → Add Product → &lt;strong&gt;Facebook Login for Business&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;到 &lt;a href=&quot;https://developers.facebook.com/tools/explorer&quot;&gt;Graph API Explorer&lt;/a&gt; 產生 User token，勾三個權限 :
+&lt;code&gt;pages_manage_posts&lt;/code&gt; + &lt;code&gt;pages_read_engagement&lt;/code&gt; + &lt;code&gt;pages_show_list&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;用它換&lt;strong&gt;長效 Page token&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;換到的 Page token 在 dev mode 、權限不變的情況下&lt;strong&gt;幾乎不過期&lt;/strong&gt;
+辦一次就可以忘記它，三平台裡的模範生&lt;/p&gt;
+&lt;h2&gt;Tester 邀請：發出去，還要記得去「接受」&lt;/h2&gt;
+&lt;p&gt;IG 跟 Threads 都要把自己的帳號加成 Tester，而且是&lt;strong&gt;兩段式&lt;/strong&gt;的 :
+dashboard 發邀請是一段，到手機 App 裡接受邀請是另一段&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Instagram&lt;/strong&gt; : product 頁加 Instagram Tester → 打開 IG App 接受邀請&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Threads&lt;/strong&gt; : App roles → Roles 加 Threads Tester → 打開 Threads App
+( 設定 → 帳號 → 網站權限 → 邀請 ) 接受&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;第二段超容易忘
+忘了的症狀是 : token 拿得到，API 打下去卻一直吐權限錯誤，讓你回頭檢查程式碼半天&lt;/p&gt;
+&lt;h2&gt;Token 生命週期：三個平台三種個性&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;平台&lt;/th&gt;
+&lt;th&gt;效期&lt;/th&gt;
+&lt;th&gt;維護&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Facebook&lt;/td&gt;
+&lt;td&gt;幾乎不過期&lt;/td&gt;
+&lt;td&gt;不用管&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Instagram&lt;/td&gt;
+&lt;td&gt;60 天&lt;/td&gt;
+&lt;td&gt;過期前刷新 ; &lt;strong&gt;過期就不能刷&lt;/strong&gt;，只能重新授權&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Threads&lt;/td&gt;
+&lt;td&gt;60 天&lt;/td&gt;
+&lt;td&gt;同上，而且 token &lt;strong&gt;存在滿 24 小時後才能刷新&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Threads 那條「滿 24 小時才能刷」是文件裡一行小字
+如果你授權完馬上測試刷新流程，會拿到失敗然後開始 debug 一個不存在的 bug ( 我 )&lt;/p&gt;
+&lt;p&gt;60 天的過期週期剛好長到讓人忘記它的存在
+建議直接排一個&lt;strong&gt;每月一次&lt;/strong&gt;的排程把 IG 跟 Threads 一起刷掉，一勞永逸&lt;/p&gt;
+&lt;h2&gt;收尾：dev mode 就是完全體&lt;/h2&gt;
+&lt;p&gt;整趟辦下來，最重要的還是這條共通規則 :&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;App 維持 Development mode 、自己的帳號持有 app role
+對「自己的資產」發文&lt;strong&gt;不需要 App Review，完全免費&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;不用錄影、不用寫使用情境、不用等審核
+兩個 App 、三組憑證、幾封 Tester 邀請，換來三個平台的免費自動發文
+比起隔壁按次計費的 X，這些 dashboard 上的小坑真的只是小坑啦&lt;/p&gt;
+&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/development/create-an-app/threads-use-case/&quot;&gt;Threads Use Case — App Development with Meta&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/threads/get-started/create-an-app/&quot;&gt;Threads API — Create an App&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/threads/get-started/get-access-tokens-and-permissions/&quot;&gt;Threads API — Access Tokens and Permissions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/instagram-platform/create-an-instagram-app/&quot;&gt;Instagram Platform — Create an Instagram App&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login/&quot;&gt;Business Login for Instagram&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://developers.facebook.com/docs/pages-api/getting-started/&quot;&gt;Meta Pages API — Get Started&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
   
   <entry>
     <title>Docker 基礎學習路線：從 Container、Image 到 Dockerfile</title>

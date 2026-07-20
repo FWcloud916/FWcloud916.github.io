@@ -52,6 +52,13 @@
 
   
   <url>
+    <loc>https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/</loc>
+    <lastmod>2026-07-20T00:00:00.000Z</lastmod>
+  </url>
+  
+
+  
+  <url>
     <loc>https://imfw.io/about/</loc>
     
   </url>
@@ -108,6 +115,10 @@
 
   <url>
     <loc>https://imfw.io/tags/docker-learning-path/</loc>
+  </url>
+
+  <url>
+    <loc>https://imfw.io/tags/meta-api/</loc>
   </url>
 
   <url>

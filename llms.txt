@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記
+
+- Published: 2026-07-20T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-20-meta-app-setup-pitfalls/
+- Tags: meta-api, social-media, automation
+
+- Description: 實際到 developers.facebook.com 幫自動發文工具辦 FB / IG / Threads 的 API 權限，結果建了兩個 App、管三組 Secret — dashboard 操作、Tester 邀請、token 生命週期的第一手踩坑記錄。
+
+
 ### Docker 基礎學習路線：從 Container、Image 到 Dockerfile
 
 - Published: 2026-07-13T00:00:00.000Z
@@ -113,6 +123,8 @@ Author: FW (https://imfw.io/about/)
 - automation: https://imfw.io/tags/automation/
 
 - docker-learning-path: https://imfw.io/tags/docker-learning-path/
+
+- meta-api: https://imfw.io/tags/meta-api/
 
 - node: https://imfw.io/tags/node/
 
