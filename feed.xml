@@ -106,7 +106,7 @@ dockerd（由 deployer 擁有，位於 user namespace）
 &lt;li&gt;&lt;strong&gt;Change plan&lt;/strong&gt;：把已正確、必要、可選與不相容項目分開，列出命令、影響與 rollback。&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;Explicit approvals&lt;/strong&gt;：套件、daemon migration、networking、access hardening 分組確認。&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;Target-user installation&lt;/strong&gt;：setup tool 一律由真正的 non-root login session 執行。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;End-to-end validation&lt;/strong&gt;：檢查 context、socket、process owner、Compose、user service、linger、container 與對外 port。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;End-to-end validation&lt;/strong&gt;：檢查 context、socket、process owner、Compose、user service、linger、container 與對外連接埠。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;&lt;picture&gt;&lt;source type=&quot;image/webp&quot; srcset=&quot;https://imfw.io/assets/img/bkTjyuDxlX-300.webp 300w, https://imfw.io/assets/img/bkTjyuDxlX-600.webp 600w, https://imfw.io/assets/img/bkTjyuDxlX-1200.webp 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;img src=&quot;https://imfw.io/assets/img/bkTjyuDxlX-300.jpeg&quot; alt=&quot;Rootless Docker 安全部署流程，從只讀 preflight、變更計畫、明確核准、目標使用者安裝到端對端驗證，失敗時停止診斷或回滾。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; width=&quot;1200&quot; height=&quot;800&quot; srcset=&quot;https://imfw.io/assets/img/bkTjyuDxlX-300.jpeg 300w, https://imfw.io/assets/img/bkTjyuDxlX-600.jpeg 600w, https://imfw.io/assets/img/bkTjyuDxlX-1200.jpeg 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;/picture&gt;&lt;/p&gt;
 &lt;p&gt;可以透過 &lt;code&gt;skills&lt;/code&gt; CLI 安裝：&lt;/p&gt;
@@ -147,7 +147,7 @@ readiness for user deployer. Do not change the host.&lt;/code&gt;&lt;/pre&gt;
 &lt;li&gt;&lt;code&gt;overall=needs-attention&lt;/code&gt;：有缺少套件、subordinate IDs、cgroup 或衝突狀態；&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;overall=unsupported&lt;/code&gt;：host class 不在 skill 支援範圍。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;它會檢查 distribution、systemd、target account、&lt;code&gt;newuidmap&lt;/code&gt;、&lt;code&gt;newgidmap&lt;/code&gt;、subordinate IDs、rootful units 與 socket、rootless context、user socket、linger、cgroup v2、AppArmor/SELinux、firewall tools 與 low-port policy。&lt;/p&gt;
+&lt;p&gt;它會檢查 distribution、systemd、target account、&lt;code&gt;newuidmap&lt;/code&gt;、&lt;code&gt;newgidmap&lt;/code&gt;、subordinate IDs、rootful units 與 socket、rootless context、user socket、linger、cgroup v2、AppArmor/SELinux、firewall tools，以及特權連接埠（1024 以下）的使用政策。&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;needs-attention&lt;/code&gt; 不是「可以加 &lt;code&gt;--force&lt;/code&gt; 跳過」，而是 change plan 的輸入。每個 attention 都要先判斷它是安裝前提、workload-specific 限制，還是刻意保留的 coexistence 狀態。&lt;/p&gt;
 &lt;h3&gt;第三步：準備官方套件與 rootless prerequisites&lt;/h3&gt;
 &lt;p&gt;Ubuntu 通常需要 &lt;code&gt;uidmap&lt;/code&gt;、&lt;code&gt;dbus-user-session&lt;/code&gt;、&lt;code&gt;slirp4netns&lt;/code&gt;、&lt;code&gt;fuse-overlayfs&lt;/code&gt;，以及 Docker 官方套件中的 &lt;code&gt;docker-ce-rootless-extras&lt;/code&gt;。後者提供 &lt;code&gt;dockerd-rootless-setuptool.sh&lt;/code&gt; 與所需整合。&lt;/p&gt;
@@ -208,8 +208,8 @@ dockerd-rootless-setuptool.sh &lt;span class=&quot;token function&quot;&gt;insta
 &lt;p&gt;再由 &lt;code&gt;deployer&lt;/code&gt; 執行：&lt;/p&gt;
 &lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;systemctl &lt;span class=&quot;token parameter variable&quot;&gt;--user&lt;/span&gt; &lt;span class=&quot;token builtin class-name&quot;&gt;enable&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;--now&lt;/span&gt; docker.service&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;這兩個動作分屬 host policy 與 user service lifecycle，不要因為常被寫在同一段教學裡，就當成同一個無須說明的步驟。&lt;/p&gt;
-&lt;h3&gt;第六步：處理 80/443 與 firewall&lt;/h3&gt;
-&lt;p&gt;Rootless process 預設不能直接綁定 1024 以下的 privileged ports。最單純的設計是讓 container 發布 8080/8443，再由 host reverse proxy 或外部 load balancer 接 80/443。&lt;/p&gt;
+&lt;h3&gt;第六步：處理 80/443 特權連接埠與 firewall&lt;/h3&gt;
+&lt;p&gt;Rootless process 預設不能直接綁定特權連接埠。最單純的設計是讓 container 發布 8080/8443，再由 host reverse proxy 或外部 load balancer 接 80/443。&lt;/p&gt;
 &lt;p&gt;如果 rootless daemon 必須直接發布 80/443，Docker 文件提供兩類做法：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;調低 &lt;code&gt;net.ipv4.ip_unprivileged_port_start&lt;/code&gt;：影響 host 上所有 unprivileged processes，範圍較大。&lt;/li&gt;
@@ -237,7 +237,7 @@ pgrep &lt;span class=&quot;token parameter variable&quot;&gt;-u&lt;/span&gt; &lt
 &lt;li&gt;user service 已 enable 且 active；&lt;/li&gt;
 &lt;li&gt;linger 符合 reboot 後啟動需求；&lt;/li&gt;
 &lt;li&gt;實際 container 能執行；&lt;/li&gt;
-&lt;li&gt;對外 port 能通過預期的 firewall path；&lt;/li&gt;
+&lt;li&gt;對外連接埠能通過預期的 firewall path；&lt;/li&gt;
 &lt;li&gt;rootful daemon 是刻意停用，或刻意 coexist。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;最好再做一次真實的 login boundary 或 reboot 驗證。否則你測到的可能只是當前 shell 留下來的環境，不是能在主機重啟後自動恢復的 production service。&lt;/p&gt;
@@ -249,7 +249,7 @@ pgrep &lt;span class=&quot;token parameter variable&quot;&gt;-u&lt;/span&gt; &lt
 &lt;h3&gt;Bind mount 會遇到 UID/GID mapping&lt;/h3&gt;
 &lt;p&gt;Container 內的 UID/GID 映射到 subordinate range 後，既有 host directory 的 ownership 可能不再符合預期。修正時應針對 workload 真正使用的窄路徑處理，不要為了讓 container 寫入，對大範圍目錄遞迴 &lt;code&gt;chown&lt;/code&gt; 或開放權限。&lt;/p&gt;
 &lt;h3&gt;特殊網路、device 與 orchestration 要另外評估&lt;/h3&gt;
-&lt;p&gt;Rootless networking、privileged ports、host firewall、device access 和嚴格 resource controls 都可能需要額外整合。Docker Desktop、沒有適當 systemd user session 的 WSL、non-systemd 或 immutable hosts，也不適合直接照這篇的 service 流程操作。&lt;/p&gt;
+&lt;p&gt;Rootless networking、特權連接埠、host firewall、device access 和嚴格 resource controls 都可能需要額外整合。Docker Desktop、沒有適當 systemd user session 的 WSL、non-systemd 或 immutable hosts，也不適合直接照這篇的 service 流程操作。&lt;/p&gt;
 &lt;p&gt;Kubernetes 與多節點 orchestration 更不是「把每台 host 改成 Rootless Docker」就完成。它們有自己的 runtime、node privilege、networking、storage 與 workload security model，應另做平台層級的設計。&lt;/p&gt;
 &lt;h3&gt;Rootless 也不會阻止 target user 傷害自己的資料&lt;/h3&gt;
 &lt;p&gt;如果 &lt;code&gt;deployer&lt;/code&gt; 本來就能寫入 &lt;code&gt;/srv/my-app/data&lt;/code&gt;，那麼由它擁有的 rootless containers 也可能透過核准的 bind mount 修改這些資料。攻擊者拿到 rootless socket 後，仍能操作這個 daemon 及其可存取資源。&lt;/p&gt;
@@ -272,7 +272,7 @@ pgrep &lt;span class=&quot;token parameter variable&quot;&gt;-u&lt;/span&gt; &lt
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;可由 reverse proxy 接 80/443&lt;/td&gt;
-&lt;td&gt;Rootless 很適合，container 使用高 host port&lt;/td&gt;
+&lt;td&gt;Rootless 很適合，container 使用 host 上的高號連接埠&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;既有 rootful workload 正在服務&lt;/td&gt;

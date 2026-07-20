@@ -266,7 +266,7 @@ dockerd（由 deployer 擁有，位於 user namespace）
 <li><strong>Change plan</strong>：把已正確、必要、可選與不相容項目分開，列出命令、影響與 rollback。</li>
 <li><strong>Explicit approvals</strong>：套件、daemon migration、networking、access hardening 分組確認。</li>
 <li><strong>Target-user installation</strong>：setup tool 一律由真正的 non-root login session 執行。</li>
-<li><strong>End-to-end validation</strong>：檢查 context、socket、process owner、Compose、user service、linger、container 與對外 port。</li>
+<li><strong>End-to-end validation</strong>：檢查 context、socket、process owner、Compose、user service、linger、container 與對外連接埠。</li>
 </ol>
 <p><picture><source type="image/webp" srcset="/assets/img/bkTjyuDxlX-300.webp 300w, /assets/img/bkTjyuDxlX-600.webp 600w, /assets/img/bkTjyuDxlX-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img src="/assets/img/bkTjyuDxlX-300.jpeg" alt="Rootless Docker 安全部署流程，從只讀 preflight、變更計畫、明確核准、目標使用者安裝到端對端驗證，失敗時停止診斷或回滾。" loading="lazy" decoding="async" width="1200" height="800" srcset="/assets/img/bkTjyuDxlX-300.jpeg 300w, /assets/img/bkTjyuDxlX-600.jpeg 600w, /assets/img/bkTjyuDxlX-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
 <p>可以透過 <code>skills</code> CLI 安裝：</p>
@@ -307,7 +307,7 @@ readiness for user deployer. Do not change the host.</code></pre>
 <li><code>overall=needs-attention</code>：有缺少套件、subordinate IDs、cgroup 或衝突狀態；</li>
 <li><code>overall=unsupported</code>：host class 不在 skill 支援範圍。</li>
 </ul>
-<p>它會檢查 distribution、systemd、target account、<code>newuidmap</code>、<code>newgidmap</code>、subordinate IDs、rootful units 與 socket、rootless context、user socket、linger、cgroup v2、AppArmor/SELinux、firewall tools 與 low-port policy。</p>
+<p>它會檢查 distribution、systemd、target account、<code>newuidmap</code>、<code>newgidmap</code>、subordinate IDs、rootful units 與 socket、rootless context、user socket、linger、cgroup v2、AppArmor/SELinux、firewall tools，以及特權連接埠（1024 以下）的使用政策。</p>
 <p><code>needs-attention</code> 不是「可以加 <code>--force</code> 跳過」，而是 change plan 的輸入。每個 attention 都要先判斷它是安裝前提、workload-specific 限制，還是刻意保留的 coexistence 狀態。</p>
 <h3>第三步：準備官方套件與 rootless prerequisites</h3>
 <p>Ubuntu 通常需要 <code>uidmap</code>、<code>dbus-user-session</code>、<code>slirp4netns</code>、<code>fuse-overlayfs</code>，以及 Docker 官方套件中的 <code>docker-ce-rootless-extras</code>。後者提供 <code>dockerd-rootless-setuptool.sh</code> 與所需整合。</p>
@@ -368,8 +368,8 @@ dockerd-rootless-setuptool.sh <span class="token function">install</span></code>
 <p>再由 <code>deployer</code> 執行：</p>
 <pre class="language-bash"><code class="language-bash">systemctl <span class="token parameter variable">--user</span> <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> docker.service</code></pre>
 <p>這兩個動作分屬 host policy 與 user service lifecycle，不要因為常被寫在同一段教學裡，就當成同一個無須說明的步驟。</p>
-<h3>第六步：處理 80/443 與 firewall</h3>
-<p>Rootless process 預設不能直接綁定 1024 以下的 privileged ports。最單純的設計是讓 container 發布 8080/8443，再由 host reverse proxy 或外部 load balancer 接 80/443。</p>
+<h3>第六步：處理 80/443 特權連接埠與 firewall</h3>
+<p>Rootless process 預設不能直接綁定特權連接埠。最單純的設計是讓 container 發布 8080/8443，再由 host reverse proxy 或外部 load balancer 接 80/443。</p>
 <p>如果 rootless daemon 必須直接發布 80/443，Docker 文件提供兩類做法：</p>
 <ul>
 <li>調低 <code>net.ipv4.ip_unprivileged_port_start</code>：影響 host 上所有 unprivileged processes，範圍較大。</li>
@@ -397,7 +397,7 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 <li>user service 已 enable 且 active；</li>
 <li>linger 符合 reboot 後啟動需求；</li>
 <li>實際 container 能執行；</li>
-<li>對外 port 能通過預期的 firewall path；</li>
+<li>對外連接埠能通過預期的 firewall path；</li>
 <li>rootful daemon 是刻意停用，或刻意 coexist。</li>
 </ul>
 <p>最好再做一次真實的 login boundary 或 reboot 驗證。否則你測到的可能只是當前 shell 留下來的環境，不是能在主機重啟後自動恢復的 production service。</p>
@@ -409,7 +409,7 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 <h3>Bind mount 會遇到 UID/GID mapping</h3>
 <p>Container 內的 UID/GID 映射到 subordinate range 後，既有 host directory 的 ownership 可能不再符合預期。修正時應針對 workload 真正使用的窄路徑處理，不要為了讓 container 寫入，對大範圍目錄遞迴 <code>chown</code> 或開放權限。</p>
 <h3>特殊網路、device 與 orchestration 要另外評估</h3>
-<p>Rootless networking、privileged ports、host firewall、device access 和嚴格 resource controls 都可能需要額外整合。Docker Desktop、沒有適當 systemd user session 的 WSL、non-systemd 或 immutable hosts，也不適合直接照這篇的 service 流程操作。</p>
+<p>Rootless networking、特權連接埠、host firewall、device access 和嚴格 resource controls 都可能需要額外整合。Docker Desktop、沒有適當 systemd user session 的 WSL、non-systemd 或 immutable hosts，也不適合直接照這篇的 service 流程操作。</p>
 <p>Kubernetes 與多節點 orchestration 更不是「把每台 host 改成 Rootless Docker」就完成。它們有自己的 runtime、node privilege、networking、storage 與 workload security model，應另做平台層級的設計。</p>
 <h3>Rootless 也不會阻止 target user 傷害自己的資料</h3>
 <p>如果 <code>deployer</code> 本來就能寫入 <code>/srv/my-app/data</code>，那麼由它擁有的 rootless containers 也可能透過核准的 bind mount 修改這些資料。攻擊者拿到 rootless socket 後，仍能操作這個 daemon 及其可存取資源。</p>
@@ -432,7 +432,7 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 </tr>
 <tr>
 <td>可由 reverse proxy 接 80/443</td>
-<td>Rootless 很適合，container 使用高 host port</td>
+<td>Rootless 很適合，container 使用 host 上的高號連接埠</td>
 </tr>
 <tr>
 <td>既有 rootful workload 正在服務</td>
