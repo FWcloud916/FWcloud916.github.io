@@ -2,7 +2,7 @@
 
 > **Type:** Explanation
 > **Audience:** Developers, AI assistants, and any tooling that needs project context
-> **Last updated:** 2026-07-13
+> **Last updated:** 2026-07-21
 >
 > Static personal blog (imfw.io) built with Eleventy 3 and Tailwind CSS v4, deployed to GitHub Pages. Related docs: [README.md](README.md) (how-tos), [../DESIGN.md](../DESIGN.md) (design system), [../AGENTS.md](../AGENTS.md) (agent guide).
 
@@ -106,6 +106,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   └── sample-post.md         # example post showing frontmatter + Markdown features
 ├── src/
 │   ├── _data/site.json        # global site metadata ({{ site.* }} in templates)
+│   ├── _data/build.mjs        # build version ({{ build.version }}): git short hash for CSS cache-busting
 │   ├── _includes/
 │   │   ├── layouts/base.njk   # HTML shell: SEO/social metadata, JSON-LD, nav, footer, optional integrations
 │   │   ├── layouts/post.njk   # article layout: title, date, reading time, tag chips
@@ -171,6 +172,8 @@ No database — the "domain model" is the content model: Markdown files + frontm
 
 **Site metadata** — [src/_data/site.json](../src/_data/site.json): site and author identity, display values, IndexNow key, Google/Bing verification tokens, and analytics ID. Empty optional verification/analytics values keep their snippets disabled.
 
+**Build version** — [src/_data/build.mjs](../src/_data/build.mjs): exposes `{{ build.version }}` (git short hash of HEAD; falls back to a timestamp when git is unavailable). `base.njk` appends it as `?v=` to both CSS links so a deploy bypasses the CDN's 4-hour `max-age` cache; rebuilding the same commit keeps the same URL.
+
 **Index control** — layout-backed pages MAY set `noindex: true`; the base layout emits `noindex, nofollow`, and the sitemap excludes the page. The 404 page uses this setting.
 
 ## 6. API / Interface Structure
@@ -190,8 +193,8 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/sitemap.xml` | src/sitemap.njk | indexable content and every generated tag URL |
 | `/robots.txt` | src/robots.njk | allows crawling and advertises the sitemap |
 | `/<indexNowKey>.txt` | src/indexnow-key.njk | public IndexNow ownership proof |
-| `/assets/css/styles.css` | Tailwind CLI output | compiled site CSS |
-| `/assets/css/prism-one-dark.css` | passthrough from node_modules/prism-themes | code-block theme |
+| `/assets/css/styles.css` | Tailwind CLI output | compiled site CSS; linked with `?v=<git short hash>` for CDN cache-busting |
+| `/assets/css/prism-one-dark.css` | passthrough from node_modules/prism-themes | code-block theme; linked with `?v=<git short hash>` |
 | `/assets/img/…` | eleventy-img output | optimized images (webp + jpeg; 300/600/1200 px) |
 | `/assets/images/…` | passthrough of src/assets/images | raw static images |
 

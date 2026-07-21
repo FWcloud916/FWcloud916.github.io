@@ -140,6 +140,12 @@ describe("build output", () => {
     expect(exists("assets/css/prism-one-dark.css")).toBe(true);
   });
 
+  it("CSS 連結帶版本參數（cache-busting，繞過 CDN 4 小時快取）", () => {
+    const home = read("index.html");
+    expect(home).toMatch(/href="\/assets\/css\/styles\.css\?v=[0-9a-z]+"/);
+    expect(home).toMatch(/href="\/assets\/css\/prism-one-dark\.css\?v=[0-9a-z]+"/);
+  });
+
   it("每個 tag 都有對應的 tag 頁", () => {
     expect(exists("tags/index.html")).toBe(true);
     const tags = new Set(posts.flatMap((p) => p.data.tags ?? []));

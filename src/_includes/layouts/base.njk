@@ -54,9 +54,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css">
-  <link rel="stylesheet" href="/assets/css/styles.css">
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v={{ build.version }}">
+  <link rel="stylesheet" href="/assets/css/styles.css?v={{ build.version }}">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="{{ site.title }}" href="{{ "/feed.xml" | absoluteUrl(site.url) }}">
