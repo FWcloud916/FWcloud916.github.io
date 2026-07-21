@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-21 · commit `586e9f8` · tests: passing (51/51)
+> **Last session:** 2026-07-21 · commit `595c4dd` · tests: passing (51/51)
 
 ## Now (WIP = 1)
 
@@ -24,7 +24,7 @@ _Nothing in progress — pick up the next item from "Next steps" below._
 
 ## Done
 
-- 2026-07-21 — 圖片改純 markdown + 關閉 markdown 的 nunjucks 前處理（`586e9f8`）：`eleventy.config.mjs` 移除 `image` shortcode，改註冊 `eleventyImageTransformPlugin`（widths/formats/urlPath/defaultAttributes 與原 shortcode 相同，輸出 byte-equivalent `<picture>`）；`markdownTemplateEngine: "njk"` → `false`。遷移 2 篇文章的 4 個 shortcode 為 `![alt](/assets/images/…)`，移除 podman 文兩對 `{% raw %}`。新增 2 個 build 斷言（responsive picture 輸出、全站無 nunjucks 殘留）。docs/README.md、QUICKSTART.md、docs/sample-post.md、docs/project-overview.md、README.md 同步。Tests 51/51。
+- 2026-07-21 — 圖片改純 markdown + 關閉 markdown 的 nunjucks 前處理（`595c4dd`）：`eleventy.config.mjs` 移除 `image` shortcode，改註冊 `eleventyImageTransformPlugin`（widths/formats/urlPath/defaultAttributes 與原 shortcode 相同，輸出 byte-equivalent `<picture>`）；`markdownTemplateEngine: "njk"` → `false`。遷移 2 篇文章的 4 個 shortcode 為 `![alt](/assets/images/…)`，移除 podman 文兩對 `{% raw %}`。新增 2 個 build 斷言（responsive picture 輸出、全站無 nunjucks 殘留）。docs/README.md、QUICKSTART.md、docs/sample-post.md、docs/project-overview.md、README.md 同步。Tests 51/51。
 - 2026-07-21 — CSS cache-busting(`247c395`):新增 [src/_data/build.mjs](src/_data/build.mjs) 輸出 `{{ build.version }}`(git short HEAD hash,取不到 git 時退回時間戳),`base.njk` 的 `styles.css` 與 `prism-one-dark.css` 連結加上 `?v=` 版本參數,繞過正式站 CDN 的 4 小時快取(max-age=14400;Huninn 字型部署時實際延遲 4 小時)。同 commit 重建 URL 不變。新增 build smoke 斷言驗證兩個連結帶版本參數。docs/project-overview.md 同步。Tests 48/48。
 - 2026-07-21 — 全站預設字型改為 **Huninn(粉圓體)**(`3abaf07`):`base.njk` 加入 Google Fonts preconnect + `display=swap` stylesheet;`input.css` 以 `@theme` 覆寫 `--font-sans`(Huninn 置頂、系統堆疊 fallback);程式碼區塊等寬字型不受影響。瀏覽器驗證 body computed font 為 Huninn、`document.fonts.check` 通過。DESIGN.md typography 章節同步。注意 Huninn 僅 400 字重,粗體為瀏覽器合成。Tests 47/47。
 - 2026-07-13 — **AISO 基礎建設與內容優化 closed.** Goal: 提升文章在 Google AI features、ChatGPT Search、Bing Copilot 等 AI 搜尋中的可發現性、可引用性與成效可量測性。All scope items complete: author entity／freshness structured data／IndexNow／llms.txt／crawler policy (commit `529eaaf`); Google Search Console, Bing Webmaster Tools and GA4 AI-referral measurement baselines established; social API article rewritten answer-first; Docker cluster refreshed. See entries below for the individual steps and commits.
