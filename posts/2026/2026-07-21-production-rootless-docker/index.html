@@ -55,12 +55,12 @@
 
   <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=9041e12">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=9041e12">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=595c4dd">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=595c4dd">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -98,7 +98,7 @@
 
   <!-- Google Analytics -->
   
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -220,8 +220,8 @@ dockerd（host root）
         ▼
 dockerd（由 deployer 擁有，位於 user namespace）
         │
-        └─ containers（仍受同一個非 root 權限邊界限制）</code></pre>
-<p><picture><source type="image/webp" srcset="/assets/img/bvmubw4_Jg-300.webp 300w, /assets/img/bvmubw4_Jg-600.webp 600w, /assets/img/bvmubw4_Jg-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img src="/assets/img/bvmubw4_Jg-300.jpeg" alt="Rootful Docker 與 Rootless Docker 的權限邊界比較，顯示 socket、daemon 與 container 在 host root 或非 root user namespace 下的差異。" loading="lazy" decoding="async" width="1200" height="800" srcset="/assets/img/bvmubw4_Jg-300.jpeg 300w, /assets/img/bvmubw4_Jg-600.jpeg 600w, /assets/img/bvmubw4_Jg-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+        └─ containers（仍受同一個非 root 權限邊界限制）</uid></code></pre>
+<p><picture><source type="image/webp" srcset="/assets/img/bvmubw4_Jg-300.webp 300w, /assets/img/bvmubw4_Jg-600.webp 600w, /assets/img/bvmubw4_Jg-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/bvmubw4_Jg-300.jpeg" alt="Rootful Docker 與 Rootless Docker 的權限邊界比較，顯示 socket、daemon 與 container 在 host root 或非 root user namespace 下的差異。" width="1200" height="800" srcset="/assets/img/bvmubw4_Jg-300.jpeg 300w, /assets/img/bvmubw4_Jg-600.jpeg 600w, /assets/img/bvmubw4_Jg-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
 <p>user namespace 會把 container 看到的 UID/GID 映射到 host 上的一段 subordinate IDs。Container 裡的 process 可以看起來是 UID 0，但那個 UID 0 不等於 host 的 UID 0。</p>
 <p>Rootless Docker 需要 <code>newuidmap</code>、<code>newgidmap</code>，而且目標使用者在 <code>/etc/subuid</code> 與 <code>/etc/subgid</code> 都要有至少 65,536 個 subordinate IDs。這些 range 不能靠複製教學裡常見的 <code>100000:65536</code> 隨便填；正式主機可能已有其他使用者、container runtime 或集中式身分管理配置，重疊的 range 必須先排除。</p>
 <h3>它和「container 內不用 root」不同</h3>
@@ -273,7 +273,7 @@ dockerd（由 deployer 擁有，位於 user namespace）
 <li><strong>Target-user installation</strong>：setup tool 一律由真正的 non-root login session 執行。</li>
 <li><strong>End-to-end validation</strong>：檢查 context、socket、process owner、Compose、user service、linger、container 與對外連接埠。</li>
 </ol>
-<p><picture><source type="image/webp" srcset="/assets/img/bkTjyuDxlX-300.webp 300w, /assets/img/bkTjyuDxlX-600.webp 600w, /assets/img/bkTjyuDxlX-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img src="/assets/img/bkTjyuDxlX-300.jpeg" alt="Rootless Docker 安全部署流程，從只讀 preflight、變更計畫、明確核准、目標使用者安裝到端對端驗證，失敗時停止診斷或回滾。" loading="lazy" decoding="async" width="1200" height="800" srcset="/assets/img/bkTjyuDxlX-300.jpeg 300w, /assets/img/bkTjyuDxlX-600.jpeg 600w, /assets/img/bkTjyuDxlX-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p><picture><source type="image/webp" srcset="/assets/img/bkTjyuDxlX-300.webp 300w, /assets/img/bkTjyuDxlX-600.webp 600w, /assets/img/bkTjyuDxlX-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/bkTjyuDxlX-300.jpeg" alt="Rootless Docker 安全部署流程，從只讀 preflight、變更計畫、明確核准、目標使用者安裝到端對端驗證，失敗時停止診斷或回滾。" width="1200" height="800" srcset="/assets/img/bkTjyuDxlX-300.jpeg 300w, /assets/img/bkTjyuDxlX-600.jpeg 600w, /assets/img/bkTjyuDxlX-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
 <p>可以透過 <code>skills</code> CLI 安裝：</p>
 <pre class="language-bash"><code class="language-bash">npx skills <span class="token function">add</span> FWcloud916/skill-rootless-docker <span class="token punctuation">\</span>
   <span class="token parameter variable">--skill</span> rootless-docker-setup</code></pre>

@@ -47,7 +47,7 @@ OCI runtime＋user namespace
     │
     ▼
 containers（不超過該使用者的 host 權限）&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;picture&gt;&lt;source type=&quot;image/webp&quot; srcset=&quot;https://imfw.io/assets/img/xgRBWhDq-e-300.webp 300w, https://imfw.io/assets/img/xgRBWhDq-e-600.webp 600w, https://imfw.io/assets/img/xgRBWhDq-e-1200.webp 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;img src=&quot;https://imfw.io/assets/img/xgRBWhDq-e-300.jpeg&quot; alt=&quot;Rootful Docker、Rootless Docker 與 Rootless Podman 的權限路徑比較，顯示 root daemon、user namespace 與 daemonless 本機操作的差異。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; width=&quot;1200&quot; height=&quot;800&quot; srcset=&quot;https://imfw.io/assets/img/xgRBWhDq-e-300.jpeg 300w, https://imfw.io/assets/img/xgRBWhDq-e-600.jpeg 600w, https://imfw.io/assets/img/xgRBWhDq-e-1200.jpeg 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;/picture&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/podman-rootless-production-engine-privilege-paths.png&quot; alt=&quot;Rootful Docker、Rootless Docker 與 Rootless Podman 的權限路徑比較，顯示 root daemon、user namespace 與 daemonless 本機操作的差異。&quot; /&gt;&lt;/p&gt;
 &lt;p&gt;這是實質的安全差異。如果 deployment account 被入侵，攻擊者不會因為該帳號能執行 rootless Podman，就自動取得 host root。&lt;/p&gt;
 &lt;p&gt;不過 daemonless 解決的是控制面架構，不是移除 Linux kernel 對非 root process 的限制。Rootless Podman 仍然是 rootless process，不能憑空取得 host 上原本沒有的權限。&lt;/p&gt;
 &lt;h2&gt;Rootless Podman 仍然有的六個限制&lt;/h2&gt;
@@ -162,7 +162,7 @@ loginctl show-user &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span cla
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;p&gt;&lt;picture&gt;&lt;source type=&quot;image/webp&quot; srcset=&quot;https://imfw.io/assets/img/R30bcZ3VHL-300.webp 300w, https://imfw.io/assets/img/R30bcZ3VHL-600.webp 600w, https://imfw.io/assets/img/R30bcZ3VHL-1200.webp 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;img src=&quot;https://imfw.io/assets/img/R30bcZ3VHL-300.jpeg&quot; alt=&quot;Rootless Podman 正式環境驗證流程，從 workload 盤點與 host privilege 判斷，依序檢查 UID/GID、網路、cgroup、storage、service lifecycle 與外部驗證。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; width=&quot;1200&quot; height=&quot;800&quot; srcset=&quot;https://imfw.io/assets/img/R30bcZ3VHL-300.jpeg 300w, https://imfw.io/assets/img/R30bcZ3VHL-600.jpeg 600w, https://imfw.io/assets/img/R30bcZ3VHL-1200.jpeg 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;/picture&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/podman-rootless-production-production-verification-v2.png&quot; alt=&quot;Rootless Podman 正式環境驗證流程，從 workload 盤點與 host privilege 判斷，依序檢查 UID/GID、網路、cgroup、storage、service lifecycle 與外部驗證。&quot; /&gt;&lt;/p&gt;
 &lt;h2&gt;上線前的驗證清單&lt;/h2&gt;
 &lt;p&gt;安裝成功不是完成。至少用 target user 的真實 login session 驗證：&lt;/p&gt;
 &lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; info
@@ -246,7 +246,7 @@ dockerd（host root）
 dockerd（由 deployer 擁有，位於 user namespace）
         │
         └─ containers（仍受同一個非 root 權限邊界限制）&lt;/uid&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;picture&gt;&lt;source type=&quot;image/webp&quot; srcset=&quot;https://imfw.io/assets/img/bvmubw4_Jg-300.webp 300w, https://imfw.io/assets/img/bvmubw4_Jg-600.webp 600w, https://imfw.io/assets/img/bvmubw4_Jg-1200.webp 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;img src=&quot;https://imfw.io/assets/img/bvmubw4_Jg-300.jpeg&quot; alt=&quot;Rootful Docker 與 Rootless Docker 的權限邊界比較，顯示 socket、daemon 與 container 在 host root 或非 root user namespace 下的差異。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; width=&quot;1200&quot; height=&quot;800&quot; srcset=&quot;https://imfw.io/assets/img/bvmubw4_Jg-300.jpeg 300w, https://imfw.io/assets/img/bvmubw4_Jg-600.jpeg 600w, https://imfw.io/assets/img/bvmubw4_Jg-1200.jpeg 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;/picture&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/production-rootless-docker-privilege-model.png&quot; alt=&quot;Rootful Docker 與 Rootless Docker 的權限邊界比較，顯示 socket、daemon 與 container 在 host root 或非 root user namespace 下的差異。&quot; /&gt;&lt;/p&gt;
 &lt;p&gt;user namespace 會把 container 看到的 UID/GID 映射到 host 上的一段 subordinate IDs。Container 裡的 process 可以看起來是 UID 0，但那個 UID 0 不等於 host 的 UID 0。&lt;/p&gt;
 &lt;p&gt;Rootless Docker 需要 &lt;code&gt;newuidmap&lt;/code&gt;、&lt;code&gt;newgidmap&lt;/code&gt;，而且目標使用者在 &lt;code&gt;/etc/subuid&lt;/code&gt; 與 &lt;code&gt;/etc/subgid&lt;/code&gt; 都要有至少 65,536 個 subordinate IDs。這些 range 不能靠複製教學裡常見的 &lt;code&gt;100000:65536&lt;/code&gt; 隨便填；正式主機可能已有其他使用者、container runtime 或集中式身分管理配置，重疊的 range 必須先排除。&lt;/p&gt;
 &lt;h3&gt;它和「container 內不用 root」不同&lt;/h3&gt;
@@ -298,7 +298,7 @@ dockerd（由 deployer 擁有，位於 user namespace）
 &lt;li&gt;&lt;strong&gt;Target-user installation&lt;/strong&gt;：setup tool 一律由真正的 non-root login session 執行。&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;End-to-end validation&lt;/strong&gt;：檢查 context、socket、process owner、Compose、user service、linger、container 與對外連接埠。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;picture&gt;&lt;source type=&quot;image/webp&quot; srcset=&quot;https://imfw.io/assets/img/bkTjyuDxlX-300.webp 300w, https://imfw.io/assets/img/bkTjyuDxlX-600.webp 600w, https://imfw.io/assets/img/bkTjyuDxlX-1200.webp 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;img src=&quot;https://imfw.io/assets/img/bkTjyuDxlX-300.jpeg&quot; alt=&quot;Rootless Docker 安全部署流程，從只讀 preflight、變更計畫、明確核准、目標使用者安裝到端對端驗證，失敗時停止診斷或回滾。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; width=&quot;1200&quot; height=&quot;800&quot; srcset=&quot;https://imfw.io/assets/img/bkTjyuDxlX-300.jpeg 300w, https://imfw.io/assets/img/bkTjyuDxlX-600.jpeg 600w, https://imfw.io/assets/img/bkTjyuDxlX-1200.jpeg 1200w&quot; sizes=&quot;(min-width: 30em) 50vw, 100vw&quot; /&gt;&lt;/picture&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/production-rootless-docker-deployment-workflow.png&quot; alt=&quot;Rootless Docker 安全部署流程，從只讀 preflight、變更計畫、明確核准、目標使用者安裝到端對端驗證，失敗時停止診斷或回滾。&quot; /&gt;&lt;/p&gt;
 &lt;p&gt;可以透過 &lt;code&gt;skills&lt;/code&gt; CLI 安裝：&lt;/p&gt;
 &lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;npx skills &lt;span class=&quot;token function&quot;&gt;add&lt;/span&gt; FWcloud916/skill-rootless-docker &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
   &lt;span class=&quot;token parameter variable&quot;&gt;--skill&lt;/span&gt; rootless-docker-setup&lt;/code&gt;&lt;/pre&gt;

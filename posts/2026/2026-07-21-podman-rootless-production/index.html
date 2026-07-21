@@ -53,12 +53,12 @@
 
   <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=9041e12">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=9041e12">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=595c4dd">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=595c4dd">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -96,7 +96,7 @@
 
   <!-- Google Analytics -->
   
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -204,7 +204,7 @@ OCI runtime＋user namespace
     │
     ▼
 containers（不超過該使用者的 host 權限）</code></pre>
-<p><picture><source type="image/webp" srcset="/assets/img/xgRBWhDq-e-300.webp 300w, /assets/img/xgRBWhDq-e-600.webp 600w, /assets/img/xgRBWhDq-e-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img src="/assets/img/xgRBWhDq-e-300.jpeg" alt="Rootful Docker、Rootless Docker 與 Rootless Podman 的權限路徑比較，顯示 root daemon、user namespace 與 daemonless 本機操作的差異。" loading="lazy" decoding="async" width="1200" height="800" srcset="/assets/img/xgRBWhDq-e-300.jpeg 300w, /assets/img/xgRBWhDq-e-600.jpeg 600w, /assets/img/xgRBWhDq-e-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p><picture><source type="image/webp" srcset="/assets/img/xgRBWhDq-e-300.webp 300w, /assets/img/xgRBWhDq-e-600.webp 600w, /assets/img/xgRBWhDq-e-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/xgRBWhDq-e-300.jpeg" alt="Rootful Docker、Rootless Docker 與 Rootless Podman 的權限路徑比較，顯示 root daemon、user namespace 與 daemonless 本機操作的差異。" width="1200" height="800" srcset="/assets/img/xgRBWhDq-e-300.jpeg 300w, /assets/img/xgRBWhDq-e-600.jpeg 600w, /assets/img/xgRBWhDq-e-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
 <p>這是實質的安全差異。如果 deployment account 被入侵，攻擊者不會因為該帳號能執行 rootless Podman，就自動取得 host root。</p>
 <p>不過 daemonless 解決的是控制面架構，不是移除 Linux kernel 對非 root process 的限制。Rootless Podman 仍然是 rootless process，不能憑空取得 host 上原本沒有的權限。</p>
 <h2>Rootless Podman 仍然有的六個限制</h2>
@@ -273,7 +273,7 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 <h2><code>podman.socket</code> 會把熟悉的 socket 風險帶回來</h2>
 <p>Podman 本機 CLI 是 daemonless，但 Podman 仍提供 API service，讓 Docker API 工具、remote client、CI 或 dashboard 透過 socket 操作它。</p>
 <p>Rootless socket 通常位於：</p>
-<pre class="language-text"><code class="language-text">/run/user/<uid>/podman/podman.sock</code></pre>
+<pre class="language-text"><code class="language-text">/run/user/<uid>/podman/podman.sock</uid></code></pre>
 <p>Rootful socket 則通常位於：</p>
 <pre class="language-text"><code class="language-text">/run/podman/podman.sock</code></pre>
 <p><a href="https://docs.podman.io/en/latest/markdown/podman-system-service.1.html#security">Podman system service 的 security 文件</a>直接指出，API 會授予完整 Podman 功能，可以用 service 執行身分任意執行程式，且 API 本身沒有細粒度限制或稽核能力。</p>
@@ -319,7 +319,7 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 </tr>
 </tbody>
 </table>
-<p><picture><source type="image/webp" srcset="/assets/img/R30bcZ3VHL-300.webp 300w, /assets/img/R30bcZ3VHL-600.webp 600w, /assets/img/R30bcZ3VHL-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img src="/assets/img/R30bcZ3VHL-300.jpeg" alt="Rootless Podman 正式環境驗證流程，從 workload 盤點與 host privilege 判斷，依序檢查 UID/GID、網路、cgroup、storage、service lifecycle 與外部驗證。" loading="lazy" decoding="async" width="1200" height="800" srcset="/assets/img/R30bcZ3VHL-300.jpeg 300w, /assets/img/R30bcZ3VHL-600.jpeg 600w, /assets/img/R30bcZ3VHL-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p><picture><source type="image/webp" srcset="/assets/img/R30bcZ3VHL-300.webp 300w, /assets/img/R30bcZ3VHL-600.webp 600w, /assets/img/R30bcZ3VHL-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/R30bcZ3VHL-300.jpeg" alt="Rootless Podman 正式環境驗證流程，從 workload 盤點與 host privilege 判斷，依序檢查 UID/GID、網路、cgroup、storage、service lifecycle 與外部驗證。" width="1200" height="800" srcset="/assets/img/R30bcZ3VHL-300.jpeg 300w, /assets/img/R30bcZ3VHL-600.jpeg 600w, /assets/img/R30bcZ3VHL-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
 <h2>上線前的驗證清單</h2>
 <p>安裝成功不是完成。至少用 target user 的真實 login session 驗證：</p>
 <pre class="language-bash"><code class="language-bash"><span class="token function">podman</span> info
