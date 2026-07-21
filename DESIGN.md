@@ -16,12 +16,12 @@ colors:
   warning: "TODO — not found in code"
   error: "TODO — not found in code"
 typography:
-  heading-1: { fontFamily: "Tailwind default font-sans stack (ui-sans-serif, system-ui, …)", fontSize: "2.25rem", fontWeight: 700, lineHeight: "2.5rem" }
-  heading-2: { fontFamily: "Tailwind default font-sans stack", fontSize: "1.875rem", fontWeight: 700, lineHeight: "2.25rem" }
-  heading-3: { fontFamily: "Tailwind default font-sans stack", fontSize: "1.5rem", fontWeight: 700, lineHeight: "2rem" }
-  body: { fontFamily: "Tailwind default font-sans stack", fontSize: "1rem", fontWeight: 400, lineHeight: "1.5rem" }
-  post-body: { fontFamily: "Tailwind default font-sans stack", fontSize: "1.125rem", fontWeight: 400, lineHeight: "prose-lg defaults (@tailwindcss/typography)" }
-  caption: { fontFamily: "Tailwind default font-sans stack", fontSize: "0.875rem", fontWeight: 400, lineHeight: "1.25rem" }
+  heading-1: { fontFamily: "Huninn + system font-sans fallback stack (ui-sans-serif, system-ui, …)", fontSize: "2.25rem", fontWeight: 700, lineHeight: "2.5rem" }
+  heading-2: { fontFamily: "Huninn + system fallback stack", fontSize: "1.875rem", fontWeight: 700, lineHeight: "2.25rem" }
+  heading-3: { fontFamily: "Huninn + system fallback stack", fontSize: "1.5rem", fontWeight: 700, lineHeight: "2rem" }
+  body: { fontFamily: "Huninn + system fallback stack", fontSize: "1rem", fontWeight: 400, lineHeight: "1.5rem" }
+  post-body: { fontFamily: "Huninn + system fallback stack", fontSize: "1.125rem", fontWeight: 400, lineHeight: "prose-lg defaults (@tailwindcss/typography)" }
+  caption: { fontFamily: "Huninn + system fallback stack", fontSize: "0.875rem", fontWeight: 400, lineHeight: "1.25rem" }
 rounded: { none: "0", sm: "0.25rem", lg: "0.5rem", full: "9999px" }
 spacing: { xs: "0.25rem", sm: "0.5rem", md: "1rem", lg: "1.5rem", xl: "2rem", xxl: "3rem" }
 components:
@@ -38,7 +38,7 @@ components:
 
 ## Overview
 
-A clean, content-first blog look: near-white gray page background, white cards and nav, dark gray text, and a single blue accent used for hovers and tag chips. The one deliberate dark element is the Prism **One Dark** code block sitting on the light page. There is no bespoke theme layer — the design language IS Tailwind CSS v4 defaults plus utility classes in the Nunjucks templates; the only custom CSS is the prose/Prism reconciliation in [src/assets/css/input.css](src/assets/css/input.css).
+A clean, content-first blog look: near-white gray page background, white cards and nav, dark gray text, and a single blue accent used for hovers and tag chips. The one deliberate dark element is the Prism **One Dark** code block sitting on the light page. There is no bespoke theme layer — the design language IS Tailwind CSS v4 defaults plus utility classes in the Nunjucks templates; the only custom CSS in [src/assets/css/input.css](src/assets/css/input.css) is the prose/Prism reconciliation and a `@theme` override putting Huninn at the front of `--font-sans`.
 
 All hex values above are sRGB conversions of the Tailwind v4 oklch palette tokens named in the comments (`node_modules/tailwindcss/theme.css`); in code, always write the **Tailwind class**, never the hex.
 
@@ -52,7 +52,8 @@ All hex values above are sRGB conversions of the Tailwind v4 oklch palette token
 
 ## Typography
 
-- No custom fonts — Tailwind's default `font-sans` system stack everywhere. Content is Traditional Chinese (`<html lang="zh-TW">`), so the system stack must not be replaced with a Latin-only webfont.
+- Default font is **Huninn**(粉圓體,justfont 開源字型), loaded from Google Fonts with `display=swap` in [src/_includes/layouts/base.njk](src/_includes/layouts/base.njk) and set as the first entry of `--font-sans` via `@theme` in `input.css`; the full system stack remains as fallback. Content is Traditional Chinese (`<html lang="zh-TW">`) — any replacement webfont must support CJK, which Huninn does.
+- Huninn ships only weight 400; bold text (`font-bold`, `<strong>`) is browser-synthesized. This is expected — do not add other weights to the Google Fonts request.
 - Scale in use: `text-4xl font-bold` post/home titles → `text-3xl font-bold` section pages (tags) → `text-2xl font-bold` card titles → `text-sm` metadata and chips.
 - Post bodies use `prose prose-lg max-w-none` (@tailwindcss/typography); don't hand-style Markdown output — extend the `.prose` overrides in `input.css` instead.
 

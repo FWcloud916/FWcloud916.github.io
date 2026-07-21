@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@theme {
+  /* 預設字型:Huninn(粉圓體,支援繁中),後備為系統字型堆疊 */
+  --font-sans: "Huninn", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
 @layer components {
   /* 覆寫 prose 樣式以避免與 Prism.js 衝突 */
   .prose pre {
