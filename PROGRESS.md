@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-13 · commit `85da9e5` · tests: passing (45/45)
+> **Last session:** 2026-07-21 · commit `3abaf07` · tests: passing (47/47)
 
 ## Now (WIP = 1)
 
@@ -23,6 +23,7 @@ _Nothing in progress — pick up the next item from "Next steps" below._
 
 ## Done
 
+- 2026-07-21 — 全站預設字型改為 **Huninn(粉圓體)**(`3abaf07`):`base.njk` 加入 Google Fonts preconnect + `display=swap` stylesheet;`input.css` 以 `@theme` 覆寫 `--font-sans`(Huninn 置頂、系統堆疊 fallback);程式碼區塊等寬字型不受影響。瀏覽器驗證 body computed font 為 Huninn、`document.fonts.check` 通過。DESIGN.md typography 章節同步。注意 Huninn 僅 400 字重,粗體為瀏覽器合成。Tests 47/47。
 - 2026-07-13 — **AISO 基礎建設與內容優化 closed.** Goal: 提升文章在 Google AI features、ChatGPT Search、Bing Copilot 等 AI 搜尋中的可發現性、可引用性與成效可量測性。All scope items complete: author entity／freshness structured data／IndexNow／llms.txt／crawler policy (commit `529eaaf`); Google Search Console, Bing Webmaster Tools and GA4 AI-referral measurement baselines established; social API article rewritten answer-first; Docker cluster refreshed. See entries below for the individual steps and commits.
 - 2026-07-13 — GA4 AI referral Exploration built via browser automation: free-form Exploration `AI referral sessions` on the imfw.io property, rows Session source → Landing page + query string, values Sessions + Engaged sessions, regex filter over 7 AI-search hosts, Last 28 days. Auto-saved in GA4 Explore; no matching sessions yet (expected on a low-traffic site). Synced docs/aiso.md.
 - 2026-07-13 — Bing Webmaster Tools ownership verified and `https://imfw.io/sitemap.xml` submitted; synced docs/aiso.md and docs/project-overview.md.
