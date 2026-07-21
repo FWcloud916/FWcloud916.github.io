@@ -115,11 +115,7 @@ greet('World');
 
 ![範例圖片](/assets/images/ball.jpg)
 
-### 使用圖片短碼（最佳化）
-
-{% image "src/assets/images/ball.jpg", "範例圖片", "(min-width: 30em) 50vw, 100vw" %}
-
-這張圖片會自動生成多種尺寸（300px、600px、1200px）和 WebP 格式，並且支援延遲加載和響應式設計。
+build 時 image transform 會自動把圖片生成多種尺寸（300px、600px、1200px）和 WebP 格式，並且支援延遲加載和響應式設計。
 
 ## 表格
 

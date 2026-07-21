@@ -14,7 +14,7 @@
 
 - Publish blog posts written in Markdown (Traditional Chinese content about web development and technology) at https://imfw.io.
 - Generate per-tag pages, an all-tags index, an Atom feed (`/feed.xml`), a sitemap (`/sitemap.xml`), crawler rules (`/robots.txt`), and an `llms.txt` (`/llms.txt`) for LLM crawlers.
-- Optimize images at build time (responsive sizes, WebP) via the `image` shortcode.
+- Optimize images at build time (responsive sizes, WebP) via `eleventyImageTransformPlugin` — posts use plain markdown `![alt](/assets/images/…)`.
 
 ### 1.2 Relationship with Other Systems
 
@@ -38,7 +38,7 @@
 | @11ty/eleventy | 3.1.6 | static site generator (ESM config: [eleventy.config.mjs](../eleventy.config.mjs)) |
 | tailwindcss + @tailwindcss/cli | 4.3.2 | CSS framework; v4 CSS-based config, compiled by the standalone CLI |
 | @tailwindcss/typography | 0.5.20 | `prose` classes for Markdown post bodies |
-| @11ty/eleventy-img | 6.0.4 | build-time image optimization (`image` shortcode) |
+| @11ty/eleventy-img | 6.0.4 | build-time image optimization (`eleventyImageTransformPlugin`) |
 | @11ty/eleventy-plugin-rss | 3.0.0 | Atom feed filters (`dateToRfc3339`, `absoluteUrl`, …) |
 | @11ty/eleventy-plugin-syntaxhighlight | 5.0.2 | Prism.js syntax highlighting at build time |
 | prism-themes | 1.9.0 | Prism One Dark CSS (passthrough-copied from node_modules) |
@@ -49,7 +49,7 @@
 | gray-matter | 4.0.3 | frontmatter parsing in tests (tests/helpers.mjs) |
 
 Notes:
-- Templates are **Nunjucks** (`.njk`); Markdown files are also pre-processed as Nunjucks (`markdownTemplateEngine: "njk"`).
+- Templates are **Nunjucks** (`.njk`); Markdown files are NOT pre-processed by any template engine (`markdownTemplateEngine: false`), so `{{ }}` inside code fences renders literally — no `{% raw %}` wrappers needed.
 - `package.json` pins `js-yaml@^3.15.0` via `overrides` for `gray-matter`.
 - There is **no linter**. Tests run via vitest (`npm test`, see §10).
 
@@ -85,7 +85,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 
 ```
 .
-├── eleventy.config.mjs        # Eleventy config: plugins, passthroughs, collections, filters, image shortcode
+├── eleventy.config.mjs        # Eleventy config: plugins (incl. image transform), passthroughs, collections, filters
 ├── lib/filters.mjs            # testable slug, reading-time, SEO-summary/tag, and safe-JSON logic
 ├── tests/                     # vitest: filters.test (units), content.test (frontmatter rules), build.test (_site smoke)
 ├── vitest.config.mjs          # excludes nested .claude worktrees from the active test run
@@ -198,7 +198,7 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/assets/img/…` | eleventy-img output | optimized images (webp + jpeg; 300/600/1200 px) |
 | `/assets/images/…` | passthrough of src/assets/images | raw static images |
 
-Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription` (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD serialization), `filterByTag`, `limit`, `slug` (pinyin override); shortcode `image(src, alt, sizes)`. Filter logic lives in [lib/filters.mjs](../lib/filters.mjs).
+Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription` (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD serialization), `filterByTag`, `limit`, `slug` (pinyin override); plugin `eleventyImageTransformPlugin` (responsive images from plain `<img>`/markdown). Filter logic lives in [lib/filters.mjs](../lib/filters.mjs).
 
 ## 7. Background Jobs & Scheduled Tasks
 

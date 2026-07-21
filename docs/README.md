@@ -2,7 +2,7 @@
 
 > **Type:** How-to guides
 > **Audience:** Developers and AI assistants working on the blog
-> **Last updated:** 2026-07-13
+> **Last updated:** 2026-07-21
 
 Complete documentation for the FW Blog.
 
@@ -65,9 +65,9 @@ The `eleventy.config.mjs` file (ESM) contains all 11ty-specific configuration:
 - **limit**: Limits array to specified number of items
 - **slug**: Overrides the built-in slugifier — transliterates Chinese to pinyin (via pinyin-pro) so CJK tags get valid URLs (e.g. 工具 → `gong-ju`)
 
-#### Shortcodes
+#### Image Transform
 
-- **image**: Generates responsive images with multiple sizes and WebP format
+- **eleventyImageTransformPlugin**: Upgrades every `<img>` in output HTML to a responsive `<picture>` with multiple sizes and WebP format — posts use plain markdown `![alt](/assets/images/…)`
 
 ### Tailwind Configuration
 
@@ -229,30 +229,36 @@ Edit the Prism CSS in `src/assets/css/input.css`:
 
 ### Images
 
-#### Using the Image Shortcode
+#### Using Markdown Syntax
+
+Place your image in `src/assets/images/` and reference it with plain markdown:
 
 ```markdown
-{% image "src/assets/images/photo.jpg", "Alt text", "(min-width: 30em) 50vw, 100vw" %}
+![Alt text](/assets/images/photo.jpg)
 ```
 
-Parameters:
-1. **src**: Path to source image
-2. **alt**: Alt text for accessibility
-3. **sizes**: Responsive sizes attribute
+At build time `eleventyImageTransformPlugin` upgrades every `<img>` in the output
+HTML to a responsive `<picture>` (widths 300/600/1200, WebP + JPEG, lazy loading,
+default `sizes="(min-width: 30em) 50vw, 100vw"`). Notes:
+
+- To override attributes per image (e.g. `sizes`), write a raw HTML `<img src alt sizes>`
+  tag — per-tag attributes win over the plugin defaults.
+- Remote `http(s)` images are downloaded and self-hosted by the transform; use
+  `<img eleventy:ignore src="…">` to keep one untouched.
+- Markdown files are NOT processed by Nunjucks (`markdownTemplateEngine: false`),
+  so `{{ }}` inside code fences is safe as-is — no `{% raw %}` wrappers needed.
 
 #### Configuration
 
 Modify image settings in `eleventy.config.mjs`:
 
 ```javascript
-eleventyConfig.addShortcode("image", async function(src, alt, sizes) {
-  let metadata = await Image(src, {
-    widths: [300, 600, 1200],    // Generated sizes
-    formats: ["webp", "jpeg"],    // Output formats
-    outputDir: "./_site/assets/img/",
-    urlPath: "/assets/img/",
-  });
-  // ...
+eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
+  widths: [300, 600, 1200],    // Generated sizes
+  formats: ["webp", "jpeg"],    // Output formats
+  outputDir: "./_site/assets/img/",
+  urlPath: "/assets/img/",
+  defaultAttributes: { loading: "lazy", decoding: "async", sizes: "…" },
 });
 ```
 

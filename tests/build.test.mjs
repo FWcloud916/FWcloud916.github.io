@@ -178,6 +178,33 @@ describe("build output", () => {
     expect(image.readUInt32BE(20)).toBe(630);
   });
 
+  it("markdown 圖片經 transform 輸出 responsive picture", () => {
+    const migrated = [
+      "posts/2026/2026-07-21-production-rootless-docker/index.html",
+      "posts/2026/2026-07-21-podman-rootless-production/index.html",
+    ];
+    for (const file of migrated) {
+      const html = read(file);
+      expect(html, `${file} 缺 <picture>`).toContain("<picture>");
+      expect(html).toMatch(/<source type="image\/webp" srcset="\/assets\/img\/[^"]+-300\.webp 300w, [^"]+-600\.webp 600w/);
+      expect(html).toMatch(/<img [^>]*loading="lazy"/);
+      expect(html).toMatch(/<img [^>]*decoding="async"/);
+      expect(html).toContain('sizes="(min-width: 30em) 50vw, 100vw"');
+    }
+    // code fence 裡的 Go template 必須字面存活（markdownTemplateEngine: false 的回歸防線）
+    expect(read(migrated[1])).toContain("CgroupsVersion");
+  });
+
+  it("輸出 HTML 沒有殘留的 nunjucks 標記", () => {
+    const htmlFiles = fs.readdirSync(SITE_DIR, { recursive: true }).filter((file) => file.endsWith(".html"));
+    for (const file of htmlFiles) {
+      const html = read(file);
+      expect(html, `${file} 殘留 {% image`).not.toContain("{% image");
+      expect(html, `${file} 殘留 {% raw`).not.toContain("{% raw");
+      expect(html, `${file} 殘留 {% endraw`).not.toContain("{% endraw");
+    }
+  });
+
   it("發布 IndexNow 驗證 key", () => {
     expect(read("39245e75ee9fd5fa1be891668b72c3d0.txt").trim()).toBe("39245e75ee9fd5fa1be891668b72c3d0");
   });

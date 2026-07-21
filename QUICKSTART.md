@@ -131,25 +131,17 @@ The post will automatically appear on your homepage and be accessible at a URL m
 
 ## Adding Images
 
-### Method 1: Using the Image Shortcode (Recommended)
-
-Place your image in `src/assets/images/`:
-
-```markdown
-{% image "src/assets/images/my-photo.jpg", "Alt text", "(min-width: 30em) 50vw, 100vw" %}
-```
-
-This automatically:
-- Generates multiple sizes (300px, 600px, 1200px)
-- Creates WebP format
-- Adds lazy loading
-- Makes images responsive
-
-### Method 2: Standard Markdown
+Place your image in `src/assets/images/` and use standard markdown:
 
 ```markdown
 ![Alt text](/assets/images/my-photo.jpg)
 ```
+
+The build-time image transform automatically:
+- Generates multiple sizes (300px, 600px, 1200px)
+- Creates WebP format
+- Adds lazy loading
+- Makes images responsive
 
 ## Customizing Styles
 

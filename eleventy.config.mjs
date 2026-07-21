@@ -1,6 +1,6 @@
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import pluginRss from "@11ty/eleventy-plugin-rss";
-import Image from "@11ty/eleventy-img";
+import { eleventyImageTransformPlugin } from "@11ty/eleventy-img";
 import { DateTime } from "luxon";
 import {
   toSlug,
@@ -15,6 +15,27 @@ export default function(eleventyConfig) {
   // 外掛
   eleventyConfig.addPlugin(syntaxHighlight);
   eleventyConfig.addPlugin(pluginRss);
+
+  // 圖片：文章用純 markdown ![alt](/assets/images/...) 插圖，
+  // build 時由 transform 把輸出 HTML 的 <img> 升級成 responsive <picture>。
+  // 遠端 http(s) 圖片不會被跳過而是下載自託管；要原樣保留改用 <img eleventy:ignore>。
+  eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
+    extensions: "html",
+    widths: [300, 600, 1200],
+    formats: ["webp", "jpeg"],
+    outputDir: "./_site/assets/img/",
+    urlPath: "/assets/img/",
+    cacheOptions: {
+      duration: "1d",
+      directory: ".cache",
+    },
+    defaultAttributes: {
+      loading: "lazy",
+      decoding: "async",
+      sizes: "(min-width: 30em) 50vw, 100vw",
+    },
+    // failOnError 預設 true：圖片路徑錯誤直接讓 build 失敗
+  });
 
   // Passthrough Copy
   eleventyConfig.addPassthroughCopy("CNAME");
@@ -74,29 +95,6 @@ export default function(eleventyConfig) {
   // 覆寫內建的 slug filter，讓中文標籤（例如「工具」）也能轉出有效網址
   eleventyConfig.addFilter("slug", toSlug);
 
-  // 圖片 Shortcode
-  eleventyConfig.addShortcode("image", async function(src, alt, sizes = "100vw") {
-    let metadata = await Image(src, {
-      widths: [300, 600, 1200],
-      formats: ["webp", "jpeg"],
-      outputDir: "./_site/assets/img/",
-      urlPath: "/assets/img/",
-      cacheOptions: {
-        duration: "1d",
-        directory: ".cache",
-      },
-    });
-
-    let imageAttributes = {
-      alt,
-      sizes,
-      loading: "lazy",
-      decoding: "async",
-    };
-
-    return Image.generateHTML(metadata, imageAttributes);
-  });
-
   // 確保 UTF-8 編碼
   eleventyConfig.setServerOptions({
     encoding: "utf-8"
@@ -109,7 +107,8 @@ export default function(eleventyConfig) {
       includes: "_includes",
       data: "_data"
     },
-    markdownTemplateEngine: "njk",
+    // markdown 不經模板引擎前處理：code fence 裡的 {{ }}（Go template 等）不會再被 nunjucks 誤解析
+    markdownTemplateEngine: false,
     htmlTemplateEngine: "njk"
   };
 };

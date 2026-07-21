@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-21 · commit `247c395` · tests: passing (48/48)
+> **Last session:** 2026-07-21 · commit `586e9f8` · tests: passing (51/51)
 
 ## Now (WIP = 1)
 
@@ -20,9 +20,11 @@ _Nothing in progress — pick up the next item from "Next steps" below._
 | 8 | Technical SEO: canonical, social cards, JSON-LD, sitemap/robots, noindex controls, Search Console hook | `npm test` (SEO build assertions) | passing |
 | 9 | AISO foundation: author entity, honest freshness, all-post llms.txt, AI crawler policy, Bing verification, IndexNow, answer-first content clusters | `npm test` + `node scripts/submit-indexnow.mjs HEAD HEAD` | deployed; all external setup steps complete |
 | 10 | Bing SEO/GEO scan hygiene: descriptive homepage title/description; every sitemap HTML page has exactly one H1 and `html[lang=zh-TW]` | `npm test` + production sitemap audit | local passing; rescan after deploy |
+| 11 | 文章用純 markdown 插圖（image transform plugin），markdown 不經 nunjucks，code fence 裡的 `{{ }}` 不再需要 `{% raw %}` | `npm test`（picture 輸出 + 無 nunjucks 殘留斷言） | passing |
 
 ## Done
 
+- 2026-07-21 — 圖片改純 markdown + 關閉 markdown 的 nunjucks 前處理（`586e9f8`）：`eleventy.config.mjs` 移除 `image` shortcode，改註冊 `eleventyImageTransformPlugin`（widths/formats/urlPath/defaultAttributes 與原 shortcode 相同，輸出 byte-equivalent `<picture>`）；`markdownTemplateEngine: "njk"` → `false`。遷移 2 篇文章的 4 個 shortcode 為 `![alt](/assets/images/…)`，移除 podman 文兩對 `{% raw %}`。新增 2 個 build 斷言（responsive picture 輸出、全站無 nunjucks 殘留）。docs/README.md、QUICKSTART.md、docs/sample-post.md、docs/project-overview.md、README.md 同步。Tests 51/51。
 - 2026-07-21 — CSS cache-busting(`247c395`):新增 [src/_data/build.mjs](src/_data/build.mjs) 輸出 `{{ build.version }}`(git short HEAD hash,取不到 git 時退回時間戳),`base.njk` 的 `styles.css` 與 `prism-one-dark.css` 連結加上 `?v=` 版本參數,繞過正式站 CDN 的 4 小時快取(max-age=14400;Huninn 字型部署時實際延遲 4 小時)。同 commit 重建 URL 不變。新增 build smoke 斷言驗證兩個連結帶版本參數。docs/project-overview.md 同步。Tests 48/48。
 - 2026-07-21 — 全站預設字型改為 **Huninn(粉圓體)**(`3abaf07`):`base.njk` 加入 Google Fonts preconnect + `display=swap` stylesheet;`input.css` 以 `@theme` 覆寫 `--font-sans`(Huninn 置頂、系統堆疊 fallback);程式碼區塊等寬字型不受影響。瀏覽器驗證 body computed font 為 Huninn、`document.fonts.check` 通過。DESIGN.md typography 章節同步。注意 Huninn 僅 400 字重,粗體為瀏覽器合成。Tests 47/47。
 - 2026-07-13 — **AISO 基礎建設與內容優化 closed.** Goal: 提升文章在 Google AI features、ChatGPT Search、Bing Copilot 等 AI 搜尋中的可發現性、可引用性與成效可量測性。All scope items complete: author entity／freshness structured data／IndexNow／llms.txt／crawler policy (commit `529eaaf`); Google Search Console, Bing Webmaster Tools and GA4 AI-referral measurement baselines established; social API article rewritten answer-first; Docker cluster refreshed. See entries below for the individual steps and commits.
@@ -77,6 +79,7 @@ Test constraint: `tests/build.test.mjs` asserts exact robots.txt bytes, JSON-LD 
 
 ## Decision log
 
+- 2026-07-21 — 圖片插入方式定為純 markdown `![alt](/assets/images/<file>)`（root-relative 同時是 transform 的來源路徑與 passthrough fallback URL）。注意：transform 對遠端 `http(s)` 圖片會下載自託管，要原樣保留需寫 raw HTML `<img eleventy:ignore>`；逐圖覆寫 `sizes` 等屬性也用 raw HTML `<img>`（per-tag 屬性優先於 `defaultAttributes`）。feed.xml 內嵌 pre-transform 的 `<img>` 絕對 URL，依賴 `src/assets/images` passthrough 存活。
 - 2026-07-13 — Bing scan's “Meta Language tag missing” is not remediated with `meta http-equiv="content-language"`: HTML Living Standard marks that pragma non-conforming and recommends the existing root `<html lang="zh-TW">`. Production audit found one H1 and the correct `lang` on every sitemap HTML page; stale scan results should be rerun after deployment.
 - 2026-07-13 — Tag slug collisions (case variants, Chinese homophones) and empty slugs **fail the build** with a named-tag error, rather than auto-merging tags — user decision.
 - 2026-07-13 — Feed takes `collections.posts | limit(10)` (newest first); reading speed constants: 400 CJK chars/min + 200 words/min (lib/filters.mjs).

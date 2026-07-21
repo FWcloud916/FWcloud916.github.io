@@ -37,7 +37,7 @@ npm run build
 
 ```
 .
-├── eleventy.config.mjs       # 11ty configuration (collections, filters, shortcodes)
+├── eleventy.config.mjs       # 11ty configuration (collections, filters, image transform)
 ├── lib/                      # testable filter logic (pinyin slug, reading time, slug guard)
 ├── tests/                    # vitest suites (npm test)
 ├── .github/
