@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制
+
+- Published: 2026-07-21T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/
+- Tags: Podman, Docker, security, devops
+
+- Description: 從 daemon、API socket、user namespace、網路、cgroup、storage 與 systemd，比較 Rootless Podman 和 Rootless Docker 在正式環境的共同限制與關鍵差異。
+
+
 ### 正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署
 
 - Published: 2026-07-21T00:00:00.000Z
@@ -127,6 +137,8 @@ Author: FW (https://imfw.io/about/)
 - Dockerfile: https://imfw.io/tags/dockerfile/
 
 - Image: https://imfw.io/tags/image/
+
+- Podman: https://imfw.io/tags/podman/
 
 - agent-skills: https://imfw.io/tags/agent-skills/
 
