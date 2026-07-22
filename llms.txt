@@ -38,6 +38,16 @@ Author: FW (https://imfw.io/about/)
 - Description: 從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。
 
 
+### Docker 與 Podman 要達成的是同一件事：什麼是容器化
+
+- Published: 2026-07-21T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-21-what-is-containerization/
+- Tags: Docker, Podman, devops
+
+- Description: 容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootfs 限制的普通 Linux process。本文用原生 Linux 命令手工做出一個容器，再回頭解釋 Docker 與 Podman 各自用什麼架構達成同一個 OCI 目標。
+
+
 ### 一個 Meta App 搞不定三平台：FB / IG / Threads 申請實戰踩坑記
 
 - Published: 2026-07-20T00:00:00.000Z

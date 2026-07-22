@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker 與 Podman 要達成的是同一件事：什麼是容器化 - FW Blog</title>
+  <meta name="description" content="容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootfs 限制的普通 Linux process。本文用原生 Linux 命令手工做出一個容器，再回頭解釋 Docker 與 Podman 各自用什麼架構達成同一個 OCI 目標。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-07-21-what-is-containerization/">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="Docker 與 Podman 要達成的是同一件事：什麼是容器化 - FW Blog">
+  <meta property="og:description" content="容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootfs 限制的普通 Linux process。本文用原生 Linux 命令手工做出一個容器，再回頭解釋 Docker 與 Podman 各自用什麼架構達成同一個 OCI 目標。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-07-21-what-is-containerization/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="Docker 與 Podman 要達成的是同一件事：什麼是容器化 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-07-21T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="Docker">
+  
+  <meta property="article:tag" content="Podman">
+  
+  <meta property="article:tag" content="devops">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Docker 與 Podman 要達成的是同一件事：什麼是容器化 - FW Blog">
+  <meta name="twitter:description" content="容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootfs 限制的普通 Linux process。本文用原生 Linux 命令手工做出一個容器，再回頭解釋 Docker 與 Podman 各自用什麼架構達成同一個 OCI 目標。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="Docker 與 Podman 要達成的是同一件事：什麼是容器化 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=9fd8134">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=9fd8134">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Docker 與 Podman 要達成的是同一件事：什麼是容器化",
+    "description": "容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootfs 限制的普通 Linux process。本文用原生 Linux 命令手工做出一個容器，再回頭解釋 Docker 與 Podman 各自用什麼架構達成同一個 OCI 目標。",
+    "url": "https://imfw.io/posts/2026/2026-07-21-what-is-containerization/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-07-21-what-is-containerization/",
+    "datePublished": "2026-07-21T00:00:00.000Z",
+    "dateModified": "2026-07-21T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["Docker","Podman","devops"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-6">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/tags/" class="text-gray-600 hover:text-gray-900 transition">標籤</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">Docker 與 Podman 要達成的是同一件事：什麼是容器化</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time></span>
+      
+      <span>13 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/docker/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Docker
+        </a>
+        
+      
+        
+        <a href="/tags/podman/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Podman
+        </a>
+        
+      
+        
+        <a href="/tags/devops/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #devops
+        </a>
+        
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-07-21 依 Linux man pages（namespaces(7)、cgroups(7)、unshare(1)）、OCI 規格 repo 與 Docker／Podman 官方文件查核。文中版本資訊（Docker Engine 29.x、Podman 6.0.x、OCI runtime-spec v1.3.0、image-spec v1.1.1）與各工具預設行為可能隨新版本變動；示範命令以使用 cgroups v2 的 Linux 環境為準。</p>
+</blockquote>
+<p>每天 <code>docker run</code> 或 <code>podman run</code>，卻說不清楚容器跟 VM 差在哪、image 的 layer 是什麼、namespace 又隔離了什麼——這是很多工程師的共同狀態。工具太好用，把底層藏得太乾淨。</p>
+<p>這篇文章要補的就是那個心智模型。我們會用原生 Linux 命令手工做出一個「容器」，親眼看到容器其實只是一個被限制的普通 process；再回頭看 Docker 與 Podman 這兩套工具，各自用什麼架構達成同一個目標。懂了這一層，日常那些「進不去、砍不掉、限制沒生效」的除錯會突然變簡單。</p>
+<h2>容器化到底在解決什麼</h2>
+<p>先把目標說清楚。容器化（containerization）要解決的是三個綁在一起的老問題：</p>
+<ol>
+<li><strong>打包（image）</strong>：應用程式連同它依賴的 library、設定與工具，包成一份可以帶著走的檔案系統快照。解決「在我機器上可以跑」的環境飄移問題。</li>
+<li><strong>隔離（runtime）</strong>：讓同一台主機上的多個應用互不干擾——看不到彼此的 process、檔案與網路，也搶不走彼此的記憶體與 CPU。</li>
+<li><strong>分發（registry）</strong>：打包好的東西要能推上去、拉下來、驗證內容沒被動過，部署才能自動化。</li>
+</ol>
+<p>這三件事在容器出現前都有各自的解法：打包靠 deb／rpm 或 VM image，隔離靠 VM 或乖乖約定，分發靠套件庫或檔案伺服器。2013 年 Docker 開源後真正的貢獻，是把三件事整合成一組順手的工作流程：<code>docker build</code>、<code>docker run</code>、<code>docker push</code>。Podman 後來走進同一個戰場，目標完全相同，只是架構選擇不同——這是文章後半段的主題。</p>
+<p>但不管哪套工具，底下做隔離的機制都不是它們發明的，而是 Linux kernel 本來就有的功能。所以先把工具放一邊，直接跟 kernel 打交道。</p>
+<h2>容器不是 VM：它是一個被限制的 process</h2>
+<p>最常見的誤解是把容器當成「輕量 VM」。這個比喻在架構圖上看起來成立，在機制上完全不成立。</p>
+<p>VM 虛擬的是硬體：hypervisor 模擬出 CPU、記憶體與磁碟，上面跑一個完整的 guest OS，有自己的 kernel。容器沒有這些——容器裡的 process 就直接跑在 host 的 kernel 上，只是 kernel 限制了它「看得到什麼」與「用得了多少」。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>VM</th>
+<th>容器</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>隔離單位</td>
+<td>整台虛擬機器（虛擬硬體 + guest OS）</td>
+<td>process（或一組 process）</td>
+</tr>
+<tr>
+<td>kernel</td>
+<td>每台 VM 自己一份</td>
+<td>全部共用 host kernel</td>
+</tr>
+<tr>
+<td>啟動時間</td>
+<td>秒到分鐘（要開機）</td>
+<td>毫秒到秒（只是 fork process）</td>
+</tr>
+<tr>
+<td>資源開銷</td>
+<td>每台 VM 固定吃掉一份 OS 的記憶體</td>
+<td>接近原生 process</td>
+</tr>
+<tr>
+<td>隔離強度</td>
+<td>硬體層邊界，較強</td>
+<td>kernel 層邊界，取決於設定</td>
+</tr>
+</tbody>
+</table>
+<p><picture><source type="image/webp" srcset="/assets/img/AZzVjYBwmh-300.webp 300w, /assets/img/AZzVjYBwmh-600.webp 600w, /assets/img/AZzVjYBwmh-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/AZzVjYBwmh-300.jpeg" alt="VM 與容器的分層比較：VM 在 Hypervisor 上各自帶一份 Guest OS kernel；容器全部共用 host 的 Linux kernel，以 namespaces 與 cgroups 隔離" width="1200" height="800" srcset="/assets/img/AZzVjYBwmh-300.jpeg 300w, /assets/img/AZzVjYBwmh-600.jpeg 600w, /assets/img/AZzVjYBwmh-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>不用背這張表，host 上直接驗證就好。起一個容器，然後在 <strong>host</strong> 上找它：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web nginx
+<span class="token function">ps</span> aux <span class="token operator">|</span> <span class="token function">grep</span> nginx</code></pre>
+<p>host 的 <code>ps</code> 看得到容器裡的 nginx process——因為它本來就是 host 上的一個 process，只是被貼上了各種限制。再從容器裡面看 kernel 版本：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> <span class="token builtin class-name">exec</span> web <span class="token function">uname</span> <span class="token parameter variable">-r</span>
+<span class="token function">uname</span> <span class="token parameter variable">-r</span></code></pre>
+<p>兩個輸出一模一樣。容器裡沒有另一個 kernel，<code>uname</code> 問到的是同一個。</p>
+<p>所以正確的心智模型是：<strong>容器 = 被 kernel 限制了視野與資源的普通 process</strong>。接下來我們手工把這些限制一項一項加上去。</p>
+<h2>手工做出一個容器</h2>
+<p>以下示範需要一台 Linux 主機（VM 也行）、root 權限，以及 cgroups v2（近年主流發行版預設）。我們只用三樣原生工具：<code>chroot</code>、<code>unshare</code>、以及 <code>/sys/fs/cgroup</code> 底下的檔案。</p>
+<h3>第一步：換一個 root filesystem</h3>
+<p>容器給人的第一個「獨立世界」錯覺來自檔案系統：Alpine 容器裡看到的 <code>/</code> 是 Alpine 的目錄樹，不是 host 的。這件事 1979 年就有的 <code>chroot</code> 就能做到。</p>
+<p>先弄到一份 Alpine 的根目錄。最省事的做法是請容器工具吐一份出來（這裡只是拿它當 tarball 下載器，還沒用到任何隔離功能）：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">mkdir</span> rootfs
+<span class="token function">podman</span> <span class="token builtin class-name">export</span> <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token function">podman</span> create alpine<span class="token variable">)</span></span>"</span> <span class="token operator">|</span> <span class="token function">tar</span> <span class="token parameter variable">-C</span> rootfs <span class="token parameter variable">-x</span>
+<span class="token function">ls</span> rootfs
+<span class="token comment"># bin  dev  etc  home  lib  ... 一棵完整的 Alpine 目錄樹</span></code></pre>
+<p>然後把一個 shell 關進去：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">chroot</span> rootfs /bin/sh</code></pre>
+<p>在這個 shell 裡 <code>ls /</code> 看到的是 Alpine 的世界，<code>cat /etc/os-release</code> 會告訴你這是 Alpine Linux。但注意：這只是「換了視角」，process 清單、網路、hostname 全都還是 host 的。隔離要靠下一步。</p>
+<p>（實際的 container runtime 用的是更嚴謹的 <code>pivot_root</code> 而非 <code>chroot</code>，因為 <code>chroot</code> 在持有特權時有已知的逃逸手法；概念上兩者做的是同一件事——換掉 process 眼中的 <code>/</code>。）</p>
+<h3>第二步：用 namespaces 縮小視野</h3>
+<p>namespace 是 kernel 提供的機制：把某種全域資源包一層，讓 namespace 裡的 process 以為自己擁有獨立的一份。namespaces(7) man page 直接寫明「namespace 的用途之一就是實作容器」。目前共有 8 種：</p>
+<table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>隔離什麼</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mount</td>
+<td>掛載點（每個容器看到不同的檔案系統結構）</td>
+</tr>
+<tr>
+<td>PID</td>
+<td>process ID（容器裡的 PID 1 不是 host 的 PID 1）</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>網路裝置、協定堆疊、連接埠</td>
+</tr>
+<tr>
+<td>UTS</td>
+<td>hostname 與 domain name</td>
+</tr>
+<tr>
+<td>IPC</td>
+<td>System V IPC 與 POSIX message queue</td>
+</tr>
+<tr>
+<td>User</td>
+<td>user ID 與 group ID 的對應</td>
+</tr>
+<tr>
+<td>Cgroup</td>
+<td>cgroup 目錄樹的可見範圍</td>
+</tr>
+<tr>
+<td>Time</td>
+<td>系統時鐘的偏移</td>
+</tr>
+</tbody>
+</table>
+<p><code>unshare(1)</code> 命令可以讓你逐項體驗。先從最直觀的 UTS 開始：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> unshare <span class="token parameter variable">--uts</span> <span class="token function">sh</span>
+<span class="token function">hostname</span> demo-container   <span class="token comment"># 在新的 UTS namespace 裡改 hostname</span>
+<span class="token function">hostname</span>                  <span class="token comment"># → demo-container</span>
+<span class="token builtin class-name">exit</span>
+<span class="token function">hostname</span>                  <span class="token comment"># host 的 hostname 完全沒變</span></code></pre>
+<p>再看 PID namespace——這就是「容器裡的 ps 只看得到自己」的來源：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> unshare <span class="token parameter variable">--pid</span> <span class="token parameter variable">--fork</span> --mount-proc <span class="token function">sh</span>
+<span class="token builtin class-name">echo</span> <span class="token variable">$$</span>    <span class="token comment"># → 1，這個 shell 以為自己是整台機器的第一個 process</span>
+<span class="token function">ps</span> aux     <span class="token comment"># 只看得到 sh 和 ps 自己</span></code></pre>
+<p><code>--fork</code> 是必要的，因為 PID namespace 只對「之後 fork 出來的子 process」生效；<code>--mount-proc</code> 重新掛一份 <code>/proc</code>，<code>ps</code> 才會讀到新 namespace 的視野而不是 host 的。</p>
+<p>Network namespace 則解釋了為什麼容器預設連不到外面、而連接埠又可以彼此重複：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> unshare <span class="token parameter variable">--net</span> <span class="token function">sh</span>
+<span class="token function">ip</span> <span class="token function">link</span>    <span class="token comment"># 只剩一張還沒啟用的 lo，其他網路介面全部消失</span></code></pre>
+<p>新的 network namespace 是一片空白——真正的 runtime 會在這裡建一對 veth 虛擬網路介面，一端留在容器、一端接到 host 的 bridge，網路才通。每個容器有自己的一套連接埠空間，所以十個容器都可以各自監聽 80，<code>-p 8080:80</code> 做的就是把 host 的連接埠轉進某個 namespace。</p>
+<p>最後是 user namespace，rootless 容器的地基：</p>
+<pre class="language-bash"><code class="language-bash">unshare <span class="token parameter variable">--user</span> --map-root-user <span class="token function">sh</span>   <span class="token comment"># 注意：不用 sudo</span>
+<span class="token function">id</span>    <span class="token comment"># → uid=0(root)</span></code></pre>
+<p>沒有 sudo 也能「變成 root」——但這個 root 只在 namespace 裡有效，對應回 host 只是你原本的普通帳號。這個「容器裡是 root、host 上不是」的對應機制，就是我在 <a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">rootless Docker</a> 與 <a href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">rootless Podman</a> 兩篇文章裡反覆處理的主角。</p>
+<h3>第三步：組合起來</h3>
+<p>把 rootfs 和 namespaces 疊在一起，一個看起來很像容器的東西就出現了：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> unshare <span class="token parameter variable">--mount</span> <span class="token parameter variable">--uts</span> <span class="token parameter variable">--ipc</span> <span class="token parameter variable">--net</span> <span class="token parameter variable">--pid</span> <span class="token parameter variable">--fork</span> <span class="token function">chroot</span> rootfs /bin/sh
+<span class="token comment"># 進到 Alpine 的世界之後：</span>
+<span class="token function">mount</span> <span class="token parameter variable">-t</span> proc proc /proc
+<span class="token function">ps</span> aux          <span class="token comment"># 只有 sh 和 ps</span>
+<span class="token function">hostname</span> box<span class="token punctuation">;</span> <span class="token function">hostname</span>   <span class="token comment"># 改 hostname 不影響 host</span></code></pre>
+<p>一行命令，五種 namespace 加一個 chroot。這大概就是 <code>docker run -it alpine sh</code> 做的事情的骨架。</p>
+<h3>第四步：用 cgroups 限制資源</h3>
+<p>namespaces 管「看不看得到」，cgroups 管「用得了多少」。cgroup 讓 process 被組織成階層式的群組，對整個群組限制與監控資源用量。操作介面就是檔案系統——在 cgroups v2 下建一個目錄、寫幾個檔案：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mkdir</span> /sys/fs/cgroup/demo
+<span class="token builtin class-name">echo</span> 100M <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">tee</span> /sys/fs/cgroup/demo/memory.max      <span class="token comment"># 記憶體上限 100 MiB</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"50000 100000"</span> <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">tee</span> /sys/fs/cgroup/demo/cpu.max  <span class="token comment"># 每 100ms 最多用 50ms CPU（= 0.5 顆）</span>
+<span class="token builtin class-name">echo</span> <span class="token variable">$$</span> <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">tee</span> /sys/fs/cgroup/demo/cgroup.procs      <span class="token comment"># 把目前的 shell 放進這個 cgroup</span></code></pre>
+<p>從此這個 shell 與它的所有子 process 加起來最多用 100 MiB 記憶體、半顆 CPU。超過 <code>memory.max</code> 會發生什麼？kernel 的 OOM killer 會把群組裡的 process 砍掉——這正是容器「Exit Code 137（OOMKilled）」的真身。你設定的 <code>docker run --memory=100m</code>，落到 kernel 就是這一行 <code>memory.max</code>。</p>
+<h3>收斂：容器 = namespaces + cgroups + rootfs</h3>
+<p>到這裡可以收斂出容器的完整定義：</p>
+<blockquote>
+<p><strong>容器 = 一個（或一組）普通 Linux process + namespaces（縮小視野）+ cgroups（限制資源）+ 獨立 rootfs（換一個世界）</strong>，再加上幾層安全機制——capabilities 拿掉大部分 root 特權、seccomp 過濾可用的 system call、SELinux／AppArmor 限制存取範圍。</p>
+</blockquote>
+<p><picture><source type="image/webp" srcset="/assets/img/XoRx3TTcv8-300.webp 300w, /assets/img/XoRx3TTcv8-600.webp 600w, /assets/img/XoRx3TTcv8-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/XoRx3TTcv8-300.jpeg" alt="容器的組成：一個普通 Linux process 被 namespaces（縮小視野）、cgroups（限制資源）與 rootfs（換一個世界）層層包住，全部跑在共用的 Linux kernel 上" width="1200" height="800" srcset="/assets/img/XoRx3TTcv8-300.jpeg 300w, /assets/img/XoRx3TTcv8-600.jpeg 600w, /assets/img/XoRx3TTcv8-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>我們手工版少做了很多事：pivot_root、veth 網路、capabilities 與 seccomp、把這一切在 process 結束後清乾淨。這些「把 kernel 功能組裝成完整容器」的苦工，正是 container runtime 存在的理由。但機制上沒有任何魔法——全部都是 kernel 內建功能的組合。</p>
+<h2>Image 與 layer：那個 rootfs 從哪來</h2>
+<p>手工示範裡我們用 <code>tar</code> 解出一份 rootfs。實務上這份 rootfs 來自 image，而 image 的核心設計是<strong>分層（layer）</strong>。</p>
+<p>一份 image 是一疊唯讀的 layer，每層本質上就是一個 tarball，記錄「相對於下面那層，多了、改了、刪了哪些檔案」。<code>Containerfile</code>／<code>Dockerfile</code> 裡每個會改動檔案系統的指令（<code>RUN</code>、<code>COPY</code>、<code>ADD</code>）各產生一層。容器啟動時，runtime 用 union filesystem（Linux 上主要是 OverlayFS）把這疊唯讀 layer 合併成一個掛載點，再疊上一層屬於這個容器的可寫層——這就是容器看到的 <code>/</code>。</p>
+<p>這個設計一次解決三個問題：</p>
+<ul>
+<li><strong>共用</strong>：十個容器共用同一份 image 時，唯讀 layer 在磁碟上只存一份，每個容器只多一層薄薄的可寫層。</li>
+<li><strong>快取</strong>：build 時每層有快取，<code>Dockerfile</code> 沒改到的前幾層直接重用，這就是把「少變動的指令放前面」能加速 build 的原因。</li>
+<li><strong>可驗證</strong>：每層與整份 image 都以內容的 SHA-256 digest 定址（content-addressable）。<code>pull</code> 下來的東西跟 registry 上的位元組相同，改一個 byte 的 digest 就對不上。</li>
+</ul>
+<p>順帶一提實作細節：傳統上 Docker 在 Linux 的預設 storage driver 是 <code>overlay2</code>，而 Docker Engine 29 起新安裝預設改用 containerd image store（以 snapshotter 管理 layer）；Podman 則透過 containers/storage 使用 overlay。名字不同，做的都是同一件事——把一疊唯讀 tarball 合成容器的 rootfs。</p>
+<p>也因為「layer 唯讀、可寫層屬於容器」，你在容器裡改的任何檔案，容器刪掉就消失，永遠不會寫回 image。需要留下來的資料要用 volume 掛出去——這不是慣例問題，是機制決定的。</p>
+<h2>OCI：讓 Docker 與 Podman 可以互換的標準</h2>
+<p>上面講的 image 格式、rootfs bundle、怎麼把 bundle 跑起來，如果每家工具各做各的，生態系就會分裂成「Docker 的容器」與「別家的容器」。2015 年 6 月 22 日，Docker、CoreOS 等廠商在 Linux Foundation 底下成立 Open Container Initiative（OCI），Docker 並把自家的容器格式與 runtime <code>runc</code> 捐出來當基礎。</p>
+<p>OCI 維護三份規格，正好對應容器化的三個環節：</p>
+<table>
+<thead>
+<tr>
+<th>規格</th>
+<th>管什麼</th>
+<th>目前版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>image-spec</td>
+<td>image 的格式：layer、manifest、config 長什麼樣</td>
+<td>v1.1.1</td>
+</tr>
+<tr>
+<td>distribution-spec</td>
+<td>registry 的 API：怎麼 push、pull、列 tag</td>
+<td>v1.1.0</td>
+</tr>
+<tr>
+<td>runtime-spec</td>
+<td>拿到解開的 filesystem bundle 之後，怎麼把它跑成容器</td>
+<td>v1.3.0</td>
+</tr>
+</tbody>
+</table>
+<p>分工是一條清楚的 pipeline：distribution-spec 定義怎麼從 registry 搬 image，image-spec 定義搬下來的東西怎麼解讀、怎麼組成 rootfs，runtime-spec 定義最後怎麼用 namespaces 與 cgroups 把它跑起來。實際執行最後一步的程式叫 OCI runtime——<code>runc</code>（Go 寫的參考實作）與 <code>crun</code>（C 寫的，更快更省記憶體）是最常見的兩個。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/xkw2r6WcBW-300.webp 300w, /assets/img/xkw2r6WcBW-600.webp 600w, /assets/img/xkw2r6WcBW-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/xkw2r6WcBW-300.jpeg" alt="OCI 三規格的分工：distribution-spec 定義從 registry 搬 image，image-spec 定義 image 如何組成 filesystem bundle，runtime-spec 定義 runc 或 crun 如何把 bundle 跑成容器" width="1200" height="800" srcset="/assets/img/xkw2r6WcBW-300.jpeg 300w, /assets/img/xkw2r6WcBW-600.jpeg 600w, /assets/img/xkw2r6WcBW-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>這就是為什麼 <code>podman run docker.io/library/nginx</code> 理所當然能跑：所謂「Docker image」其實是 OCI image，任何符合規格的工具都拉得下來、跑得起來。Docker 與 Podman 不是兩種容器技術，而是同一套標準的兩個實作。</p>
+<h2>Docker 與 Podman 各自的答案</h2>
+<p>既然目標與標準都相同，兩者差在哪？差在<strong>架構</strong>——同一件事，兩種組裝方式。</p>
+<p><strong>Docker 選擇 client-server。</strong> 你敲的 <code>docker</code> 命令只是 client，透過 UNIX socket 把請求送給常駐的 <code>dockerd</code> daemon；daemon 負責管理 image、容器、網路與 volume 等所有物件，再往下交給 containerd 管容器生命週期，最後由 <code>runc</code> 真正建出 namespaces 與 cgroups。好處是有一個中心化的 API 服務：遠端管理、事件串流、外部系統整合都很自然。代價是這個 daemon 傳統上以 root 常駐，所有容器都是它的子孫——daemon 出事影響全部容器，而且能碰到 docker socket 的人形同拿到 root。這條風險線與它的解法，我在 <a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">rootless Docker 那篇</a> 有完整展開。</p>
+<p><strong>Podman 選擇 daemonless。</strong> 沒有常駐 daemon：<code>podman run</code> 直接以你的身分 fork-exec 出容器 process（透過 libpod library 管理，預設優先使用 <code>crun</code>）。CLI 刻意做到與 Docker 相容，官方文件甚至直接建議 <code>alias docker=podman</code>。沒有 daemon，就沒有「root 常駐服務」這個攻擊面，rootless 是它的自然型態；容器 process 掛在你的 session 或 systemd 之下，生命週期交給 systemd（Quadlet）管理也順理成章。代價是失去中心服務：需要 API 時得另外啟用 <code>podman.socket</code>（風險也跟著回來），跨主機管理與部分生態整合要自己補。細節在 <a href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">rootless Podman 那篇</a>。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Docker</th>
+<th>Podman</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>架構</td>
+<td>client + 常駐 daemon（dockerd → containerd → runc）</td>
+<td>daemonless，直接 fork-exec（libpod → crun／runc）</td>
+</tr>
+<tr>
+<td>預設權限模型</td>
+<td>傳統上 root daemon（另有 rootless mode）</td>
+<td>root 與 rootless 皆為原生支援</td>
+</tr>
+<tr>
+<td>API 服務</td>
+<td>內建（daemon 即 API server）</td>
+<td>選配（<code>podman.socket</code>，Linux 限定）</td>
+</tr>
+<tr>
+<td>服務化</td>
+<td>daemon 自帶 restart policy</td>
+<td>交給 systemd／Quadlet</td>
+</tr>
+<tr>
+<td>容器的父 process</td>
+<td>dockerd 這一系</td>
+<td>你的 shell 或 systemd</td>
+</tr>
+</tbody>
+</table>
+<p>注意這張表裡沒有「誰的容器比較快、比較輕」——因為跑起來的東西是同一種：同樣的 OCI image、同樣的 kernel 機制。選擇 Docker 或 Podman，選的是<strong>管理容器的方式</strong>，不是容器本身。</p>
+<h2>收尾：懂了 process，除錯就變簡單</h2>
+<p>回到開頭的心智模型：容器是被 namespaces、cgroups 與 rootfs 限制的普通 process。這句話能直接翻譯成除錯直覺：</p>
+<ul>
+<li><strong>容器裡看不到某個東西</strong>（process、網路介面、檔案）？那是某個 namespace 擋掉的，去 host 上看 <code>/proc/&lt;pid&gt;/ns/</code> 就知道它活在哪些 namespace 裡。</li>
+<li><strong>容器被莫名砍掉、Exit 137</strong>？那是 cgroup 的 <code>memory.max</code> 加 OOM killer，去 <code>/sys/fs/cgroup/</code> 對應目錄看 <code>memory.events</code> 有沒有 oom_kill。</li>
+<li><strong>在容器裡改的設定重啟後消失</strong>？layer 唯讀、可寫層跟著容器走，機制如此，該用 volume 就用 volume。</li>
+<li><strong><code>docker</code> 與 <code>podman</code> 之間遷移</strong>？image 與 registry 都是 OCI 標準，真正要遷的是 daemon 與 systemd 之間的管理方式差異。</li>
+</ul>
+<p>工具會一直換版本，kernel 機制十年來大致就是這一套。把這一層弄懂，上層不管是 Docker、Podman，還是 Kubernetes 底下的 containerd 與 CRI-O，看起來都是同一件事的不同包裝。</p>
+<p>下一步如果你關心的是「這些東西怎麼安全地上 production」，rootless 與權限邊界就是主戰場——歡迎接著讀 <a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">正式環境為什麼需要 Rootless Docker</a> 與 <a href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">Podman 也有 Rootless 問題嗎</a>。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://man7.org/linux/man-pages/man7/namespaces.7.html">namespaces(7) — Linux manual page</a></li>
+<li><a href="https://man7.org/linux/man-pages/man7/cgroups.7.html">cgroups(7) — Linux manual page</a></li>
+<li><a href="https://man7.org/linux/man-pages/man1/unshare.1.html">unshare(1) — Linux manual page</a></li>
+<li><a href="https://opencontainers.org/about/overview/">Open Container Initiative — About</a></li>
+<li><a href="https://github.com/opencontainers/runtime-spec/releases">OCI runtime-spec releases</a></li>
+<li><a href="https://github.com/opencontainers/image-spec/releases">OCI image-spec releases</a></li>
+<li><a href="https://github.com/opencontainers/distribution-spec">OCI distribution-spec</a></li>
+<li><a href="https://docs.docker.com/get-started/docker-overview/">Docker overview — Docker Docs</a></li>
+<li><a href="https://docs.docker.com/engine/storage/drivers/select-storage-driver/">Select a storage driver — Docker Docs</a></li>
+<li><a href="https://docs.docker.com/engine/release-notes/29/">Docker Engine 29 release notes</a></li>
+<li><a href="https://docs.podman.io/">What is Podman? — Podman documentation</a></li>
+<li><a href="https://github.com/containers/crun">crun — GitHub</a></li>
+</ul>
+
+  </div>
+</article>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>
