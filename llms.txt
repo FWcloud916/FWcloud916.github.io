@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 如何與 AI 合作，我勸你善良：文件是 Agent 不走偏的起點
+
+- Published: 2026-07-22T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-22-documentation-for-ai-agents/
+- Tags: ai, agent-skills, automation
+
+- Description: AI 能把迭代速度拉高，卻不會自動知道專案的目標、限制與歷史；本文拆解文件如何成為人與 agent 共用的邊界、共享記憶與驗證介面，並介紹 doc-architect skill 的實務工作流。
+
+
 ### Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制
 
 - Published: 2026-07-21T00:00:00.000Z
