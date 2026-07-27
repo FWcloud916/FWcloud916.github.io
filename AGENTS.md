@@ -36,9 +36,11 @@ There is no linter yet.
 
 ## Session routine
 
-- **Clock-in:** read [PROGRESS.md](PROGRESS.md) → `git log -3` + `git status` → run
-  `npm test` → pick up the single active item (WIP = 1).
-- **Clock-out:** `npm test` passes → update PROGRESS.md (state, commit hash,
+- **Clock-in:** read [progress/INDEX.md](progress/INDEX.md), then the selected
+  item's `PROGRESS.md` → `git log -3` + `git status` → run `npm test` → pick
+  up the single active item (WIP = 1).
+- **Clock-out:** `npm test` passes → update the item `PROGRESS.md` and
+  `progress/INDEX.md` together (state, commit hash,
   test status) → remove stale artifacts (debug logs, commented-out code) → commit.
   Session complete = task verified AND clean state — not before.
 

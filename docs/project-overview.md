@@ -95,7 +95,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 ├── QUICKSTART.md              # setup + first-post walkthrough
 ├── DESIGN.md                  # design tokens & visual conventions
 ├── AGENTS.md / CLAUDE.md      # agent guide (CLAUDE.md is a symlink)
-├── PROGRESS.md                # agent-harness state (session log, feature list)
+├── progress/                  # canonical progress tracker: INDEX, item records, plans, migrations
 ├── .github/
 │   ├── workflows/deploy.yml   # build on push to main → deploy _site/ to gh-pages
 │   └── prompts/               # original project-plan prompt (historical)
