@@ -4,12 +4,201 @@
   <subtitle>FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。</subtitle>
   <link href="https://imfw.io/feed.xml" rel="self"/>
   <link href="https://imfw.io/"/>
-  <updated>2026-07-22T00:00:00Z</updated>
+  <updated>2026-07-24T00:00:00Z</updated>
   <id>https://imfw.io/</id>
   <author>
     <name>FW</name>
   </author>
   
+  
+  <entry>
+    <title>Agent Skill 不是 Prompt：從撰寫、評測到自我提煉的工程化方法</title>
+    <link href="https://imfw.io/posts/2026/2026-07-24-agent-skill-evolution/"/>
+    <updated>2026-07-24T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-07-24-agent-skill-evolution/</id>
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-07-24 依 Agent Skills 開放規格、OpenAI Codex 官方文件與 Anthropic 官方工程文章查核。各 agent 對安裝位置、選用欄位、觸發政策與工具權限的支援可能不同，實作前仍應確認所用 client 的最新文件。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;把一段成功的 prompt 存成 &lt;code&gt;SKILL.md&lt;/code&gt;，不會自動得到一個好用的 Agent Skill。你得到的通常只是一段下次也許還能用的文字。&lt;/p&gt;
+&lt;p&gt;一個真正可用的 Skill，更接近可執行的操作規約：它知道什麼時候該出場、需要讀哪些資料、哪些步驟可以自行判斷、哪些動作必須照順序、最後又要拿什麼證據證明工作完成。&lt;/p&gt;
+&lt;p&gt;這個差異很重要。Prompt 解決單次溝通，Skill 要承受不同使用者、不同輸入、不同模型版本與不同執行環境。要讓它越用越準，靠的不是繼續堆規則，而是把真實失敗變成可重播的測試，再用受控流程升版。&lt;/p&gt;
+&lt;h2&gt;先看懂 Skill 真正執行的三個階段&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://agentskills.io/specification&quot;&gt;Agent Skills 規格&lt;/a&gt;採漸進式揭露（progressive disclosure）：agent 啟動時只看所有 skills 的 &lt;code&gt;name&lt;/code&gt; 與 &lt;code&gt;description&lt;/code&gt;；判斷任務相關後，才載入完整 &lt;code&gt;SKILL.md&lt;/code&gt;；scripts、references 與 assets 則在需要時取用。&lt;/p&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;使用者任務
+    │
+    ▼
+name + description ── 是否觸發？
+    │ yes
+    ▼
+SKILL.md ──────────── 怎麼做、何時停、如何驗證？
+    │ as needed
+    ├─ references/ ── domain knowledge、schema、policy
+    ├─ scripts/ ───── deterministic checks、重複操作
+    └─ assets/ ────── template、字型、輸出素材&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/agent-skill-evolution-progressive-disclosure.png&quot; alt=&quot;Agent Skill 三層載入架構，從 name 與 description 判斷觸發，載入 SKILL.md，再依需要取用 references、scripts 與 assets。&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;所以 Skill 有三個不同問題，不能混成一句「它有沒有用」：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;找不找得到&lt;/strong&gt;：該觸發時有沒有觸發，不該觸發時有沒有安靜。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;走不走得對&lt;/strong&gt;：載入後是否選對資料、工具、順序與停止條件。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;結果能不能證明&lt;/strong&gt;：產物是否符合 observable outcome，而不是 agent 自己說完成。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;很多 Skill 失敗在第一關。&lt;code&gt;description: Helps with documents&lt;/code&gt; 看起來簡潔，卻沒有任務意圖、檔案類型、觸發語句與排除邊界。後面的流程寫得再完整，沒被載入也是零。&lt;/p&gt;
+&lt;h2&gt;撰寫 Skill，從真實工作倒推&lt;/h2&gt;
+&lt;p&gt;最容易犯的錯，是開啟空白檔案就叫模型「幫我生成一個最佳實務 Skill」。&lt;a href=&quot;https://agentskills.io/skill-creation/best-practices&quot;&gt;Agent Skills 的撰寫建議&lt;/a&gt;指出，有效內容應來自實際任務、人工修正、runbook、API spec、review comment、版本歷史與已解決的 failure case。否則很容易只剩「妥善處理錯誤」這種誰都同意、誰都無法執行的句子。&lt;/p&gt;
+&lt;h3&gt;第一步：先定義 Skill 的合約&lt;/h3&gt;
+&lt;p&gt;動筆前先回答六個問題：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;問題&lt;/th&gt;
+&lt;th&gt;要留下的內容&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;誰會叫它？&lt;/td&gt;
+&lt;td&gt;3–5 個真實 user prompts&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;哪些任務不屬於它？&lt;/td&gt;
+&lt;td&gt;容易誤觸發的 near-miss&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;輸入是什麼？&lt;/td&gt;
+&lt;td&gt;檔案、URL、參數、必要狀態&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;產出是什麼？&lt;/td&gt;
+&lt;td&gt;可觀察的檔案、diff、報告或外部狀態&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;哪裡最脆弱？&lt;/td&gt;
+&lt;td&gt;權限、付費、刪除、發布、資料污染&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;怎麼才算完成？&lt;/td&gt;
+&lt;td&gt;能實際執行的 test、lint、schema check 或人工 gate&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Skill 的邊界很像 function。太小，完成一件事要載入五個 skills，規則容易互相打架；太大，&lt;code&gt;description&lt;/code&gt; 難以精準觸發，正文也會塞滿本次根本用不到的分支。&lt;/p&gt;
+&lt;h3&gt;第二步：先寫 &lt;code&gt;description&lt;/code&gt;，再寫正文&lt;/h3&gt;
+&lt;p&gt;規格要求 &lt;code&gt;name&lt;/code&gt; 最長 64 字元，只能使用小寫英數與連字號；&lt;code&gt;description&lt;/code&gt; 最長 1,024 字元，並應同時說明「做什麼」與「何時使用」。真正重要的不是把字數用滿，而是描述 user intent。&lt;/p&gt;
+&lt;pre class=&quot;language-yaml&quot;&gt;&lt;code class=&quot;language-yaml&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; publish&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;blog
+&lt;span class=&quot;token key atrule&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; 發布已審核的 Markdown 文章到 Eleventy 部落格。當使用者要求發布、部署或上線指定文章時使用；只想撰寫、修文或預覽時不要觸發。
+&lt;span class=&quot;token punctuation&quot;&gt;---&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;接著用兩組 prompts 測試它：should-trigger 要涵蓋口語、縮寫、錯字、沒有直接說出 skill 名稱的需求；should-not-trigger 則要挑關鍵字很像、意圖不同的 near-miss。「幫我發布這篇」是正例，「幫我看看發布後可能長怎樣」才是有價值的反例。&lt;/p&gt;
+&lt;h3&gt;第三步：把正文寫成決策流程&lt;/h3&gt;
+&lt;p&gt;好的 &lt;code&gt;SKILL.md&lt;/code&gt; 不只列原則，還會讓下一個 agent 知道何時讀資料、何時執行、何時停下來問人。&lt;/p&gt;
+&lt;pre class=&quot;language-markdown&quot;&gt;&lt;code class=&quot;language-markdown&quot;&gt;&lt;span class=&quot;token title important&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;##&lt;/span&gt; Workflow&lt;/span&gt;
+
+&lt;span class=&quot;token list punctuation&quot;&gt;1.&lt;/span&gt; Read the target article and canonical publication state.
+&lt;span class=&quot;token list punctuation&quot;&gt;2.&lt;/span&gt; Stop if the article has not been explicitly approved.
+&lt;span class=&quot;token list punctuation&quot;&gt;3.&lt;/span&gt; Run the read-only validation commands.
+&lt;span class=&quot;token list punctuation&quot;&gt;4.&lt;/span&gt; Present the deployment diff and request confirmation.
+&lt;span class=&quot;token list punctuation&quot;&gt;5.&lt;/span&gt; Publish only after confirmation.
+&lt;span class=&quot;token list punctuation&quot;&gt;6.&lt;/span&gt; Verify the public URL, then record the result.&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;每一步至少要有 input、action、output 或 stop condition。只寫「先分析需求」「確保品質」沒有提供新的操作資訊。&lt;/p&gt;
+&lt;p&gt;控制強度也要分開設計。文案切角有多種合理答案，可以說明判斷原則，保留高自由度；schema migration、付費 API 與正式發布容錯率低，就該鎖定命令、順序與 approval gate。整份 Skill 全寫成 &lt;code&gt;MUST&lt;/code&gt;，只會讓正常變體也被當成錯誤。&lt;/p&gt;
+&lt;h3&gt;第四步：把穩定工作交給檔案與程式&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;SKILL.md&lt;/code&gt; 應保留每次執行都需要的核心路由。官方規格建議正文低於 5,000 tokens、500 行；詳細 API、不同 framework 的作法與長篇 examples 移到 &lt;code&gt;references/&lt;/code&gt;，並明講載入條件，例如「收到非 2xx 回應時讀 &lt;code&gt;references/api-errors.md&lt;/code&gt;」。&lt;/p&gt;
+&lt;p&gt;同一段 parsing、轉檔或驗證程式在多次執行中反覆重寫，就把它固定成 &lt;code&gt;scripts/&lt;/code&gt;。模型擅長判斷，程式擅長算長度、驗 schema、比 hash 與回傳非零 exit code。把兩者硬是反過來用，通常又貴又不穩。&lt;/p&gt;
+&lt;h2&gt;最佳化不能只看最後答案&lt;/h2&gt;
+&lt;p&gt;一個輸出看起來不錯，不代表 Skill 有效。也許模型不用 Skill 就做得到；也可能最後碰巧成功，中間卻重試十次、讀錯三份文件，或差點執行不可逆操作。&lt;/p&gt;
+&lt;p&gt;最佳化時至少分開四組指標：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;層次&lt;/th&gt;
+&lt;th&gt;觀測項目&lt;/th&gt;
+&lt;th&gt;常見修法&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Trigger&lt;/td&gt;
+&lt;td&gt;recall、precision、誤觸發 near-miss&lt;/td&gt;
+&lt;td&gt;改 &lt;code&gt;description&lt;/code&gt;，不要先改正文&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Trajectory&lt;/td&gt;
+&lt;td&gt;讀檔、工具、重試、跳步、停問時機&lt;/td&gt;
+&lt;td&gt;補路由、default、gotcha 或 stop condition&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Outcome&lt;/td&gt;
+&lt;td&gt;assertion pass rate、測試、人工品質&lt;/td&gt;
+&lt;td&gt;補驗證、template、deterministic script&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Economics&lt;/td&gt;
+&lt;td&gt;tokens、時間、API 成本&lt;/td&gt;
+&lt;td&gt;刪常識、拆 references、重用 script&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;a href=&quot;https://agentskills.io/skill-creation/evaluating-skills&quot;&gt;Agent Skills 的 eval 指南&lt;/a&gt;建議同一測試同時跑「有 Skill」與「無 Skill」，或拿新版對上一版。Assertions 要檢查可觀察結果，例如「產出的 JSON 可解析」「三個必要欄位都存在」；「結果很好」無法驗證，「必須逐字等於某句話」又太脆弱。語氣、設計與整體可用性則保留人工 review，必要時用 blind comparison 降低對新版本的偏見。&lt;/p&gt;
+&lt;p&gt;不要只收失敗案例。成功 trace 可以告訴你哪些指令其實沒被使用，兩邊都能滿足的 assertion 也代表 Skill 沒有增加辨識力。刪掉無效內容，有時比再加一條規則更接近升級。&lt;/p&gt;
+&lt;h2&gt;自我提煉，不是讓 Agent 直接改正式版&lt;/h2&gt;
+&lt;p&gt;Agent 的「自我反思」很適合提出假設，不適合自己當證人、法官與部署者。&lt;/p&gt;
+&lt;p&gt;如果每次被糾正就直接把新規則 append 到正式 &lt;code&gt;SKILL.md&lt;/code&gt;，幾輪後通常會出現四種問題：把單一個案過度一般化、互相矛盾的規則持續累積、錯誤 feedback 污染共用流程，以及評測者改寫規則來迎合自己的 grader。&lt;/p&gt;
+&lt;p&gt;比較可靠的自我提煉迴路是：&lt;/p&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;真實執行與人工修正
+        │
+        ▼
+保存 prompt、trace、diff、validator 結果與成本
+        │
+        ▼
+分類 failure：trigger / context / decision / action / verification
+        │
+        ▼
+Agent 提出最小 candidate patch + 新增 regression case
+        │
+        ▼
+隔離環境重播：舊版 vs 候選版，且跑完整既有 evals
+        │
+        ▼
+人工檢視 diff、分數、trace、安全與成本
+        │
+        ├─ reject：保留證據，不污染正式版
+        └─ approve：升版、記錄變更、保留 rollback&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/agent-skill-evolution-self-refinement-loop-v2.png&quot; alt=&quot;受控的 Agent Skill 自我提煉迴路，從真實執行保存證據、分類失敗、建立候選修改、隔離重播到人工審核，再決定升版或拒絕。&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;關鍵是「先把教訓寫成 test，再改 Skill」。沒有 regression case 的修正，只是一段很快會失去背景的文字；只跑新案例、不跑舊案例，則可能修好一次誤觸發，卻破壞十個原本正常的任務。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents&quot;&gt;Anthropic 的 agent eval 實務&lt;/a&gt;也提醒，分數不能脫離 traces 解讀。Grader 可能不公平、測試可能模糊，甚至可能被繞過。自我升級因此需要多層證據：code-based checks 擋結構錯誤，model-based grading 比較難量化品質，人類負責校準目標、風險與例外。&lt;/p&gt;
+&lt;h3&gt;什麼變動可以自動，什麼必須審核&lt;/h3&gt;
+&lt;p&gt;可以讓 pipeline 自動收集失敗、建立候選 branch、執行 eval、產 benchmark 與摘要。涉及以下內容時，不應讓 runtime agent 無人監督地直接升版：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;擴大 tools、網路、檔案或 credentials 權限。&lt;/li&gt;
+&lt;li&gt;改變刪除、付款、發布、部署等不可逆操作。&lt;/li&gt;
+&lt;li&gt;移除 confirmation、validation 或 audit log。&lt;/li&gt;
+&lt;li&gt;修改 grader、expected output 或 safety boundary。&lt;/li&gt;
+&lt;li&gt;從單一使用者 feedback 推廣成所有人的預設。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;這不是不相信 agent，而是不讓同一個回饋迴路同時控制行為、評分與上線。能提出修改，和有權把修改變成正式規則，是兩件事。&lt;/p&gt;
+&lt;h2&gt;Skill 的成熟度，看它能不能被反駁&lt;/h2&gt;
+&lt;p&gt;第一版 Skill 只要能完成一個真實任務，不必先寫成百科全書。第二版開始補 near-miss、gotchas 與驗證。再往後，建立固定 eval set、成本基準、版本紀錄與 rollback，才有資格談持續升級。&lt;/p&gt;
+&lt;p&gt;判斷一個 Skill 是否成熟，可以問四句：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;它有清楚說明什麼時候不該用嗎？&lt;/li&gt;
+&lt;li&gt;它的關鍵產出能被 test 或外部狀態驗證嗎？&lt;/li&gt;
+&lt;li&gt;拿掉 Skill 後，eval 成績真的會下降嗎？&lt;/li&gt;
+&lt;li&gt;新版退步時，能指出是哪個案例、哪段 trace、哪個 diff 造成嗎？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;答不出來的 Skill，不一定不能用；只是它仍是一組有幫助的提示，還不是可治理的工程資產。&lt;/p&gt;
+&lt;p&gt;Agent Skill 真正會累積的，不是 Markdown 行數，而是被保存下來的判斷：哪些上下文不可省、哪些錯誤會重演、哪個步驟必須由程式驗證、哪種改動值得成為下一版。讓 agent 參與提煉沒有問題，但升級必須經得起舊案例、新失敗與人類目標三方面的反駁。&lt;/p&gt;
+&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://agentskills.io/specification&quot;&gt;Agent Skills：Specification&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://agentskills.io/skill-creation/best-practices&quot;&gt;Agent Skills：Best practices for skill creators&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://agentskills.io/skill-creation/optimizing-descriptions&quot;&gt;Agent Skills：Optimizing skill descriptions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://agentskills.io/skill-creation/evaluating-skills&quot;&gt;Agent Skills：Evaluating skill output quality&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://learn.chatgpt.com/docs/build-skills&quot;&gt;OpenAI Codex：Build skills&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills&quot;&gt;Anthropic：Equipping agents for the real world with Agent Skills&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents&quot;&gt;Anthropic：Demystifying evals for AI agents&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
   
   <entry>
     <title>如何與 AI 合作，我勸你善良：文件是 Agent 不走偏的起點</title>
@@ -1469,57 +1658,6 @@ npm-debug.log
 &lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/&quot;&gt;Docker：What is an image?&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://docs.docker.com/reference/cli/docker/image/&quot;&gt;docker image CLI&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://docs.docker.com/reference/cli/docker/image/pull/&quot;&gt;docker image pull&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</content>
-  </entry>
-  
-  <entry>
-    <title>Docker Container - 基本概念</title>
-    <link href="https://imfw.io/posts/2020/2020-02-22-docker-basic-container/"/>
-    <updated>2020-02-22T00:00:00Z</updated>
-    <id>https://imfw.io/posts/2020/2020-02-22-docker-basic-container/</id>
-    <content type="html">&lt;p&gt;Container 是 image 的可執行實例。最常用的起點是 &lt;code&gt;docker run&lt;/code&gt;：它會在本機沒有 image 時先下載，再建立並啟動 container。本篇用 nginx 示範 port publishing、bind mount、背景執行與清理流程。&lt;/p&gt;
-&lt;h2&gt;啟動第一個 container&lt;/h2&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container run &lt;span class=&quot;token parameter variable&quot;&gt;--name&lt;/span&gt; web &lt;span class=&quot;token parameter variable&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-p&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;8080&lt;/span&gt;:80 nginx&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;這行指令會：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;以 &lt;code&gt;nginx&lt;/code&gt; image 建立名為 &lt;code&gt;web&lt;/code&gt; 的 container。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;-d&lt;/code&gt;／&lt;code&gt;--detach&lt;/code&gt; 讓它在背景執行。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;-p&lt;/code&gt;／&lt;code&gt;--publish&lt;/code&gt; 將 host 的 &lt;code&gt;8080&lt;/code&gt; 對應到 container 的 &lt;code&gt;80&lt;/code&gt;。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;完成後開啟 &lt;code&gt;http://localhost:8080&lt;/code&gt;，應該會看到 nginx 預設頁面。&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;Dockerfile 的 &lt;code&gt;EXPOSE 80&lt;/code&gt; 只是描述服務預期監聽的 port，不會自動把 port 發布到 host；實際對外映射仍要使用 &lt;code&gt;-p&lt;/code&gt; 或其他網路設定。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;h2&gt;查看狀態與 log&lt;/h2&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container &lt;span class=&quot;token function&quot;&gt;ls&lt;/span&gt;
-&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container logs web
-&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container inspect web&lt;/code&gt;&lt;/pre&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;ls&lt;/code&gt; 列出執行中的 container。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;logs&lt;/code&gt; 查看主要 process 寫到標準輸出的 log。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;inspect&lt;/code&gt; 查看完整設定、網路和 mount 資訊。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;把本機檔案掛進 container&lt;/h2&gt;
-&lt;p&gt;先準備一個含 &lt;code&gt;index.html&lt;/code&gt; 的本機目錄，再執行：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container run &lt;span class=&quot;token parameter variable&quot;&gt;--name&lt;/span&gt; custom-web &lt;span class=&quot;token parameter variable&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;-p&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;8081&lt;/span&gt;:80 &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;--mount&lt;/span&gt; &lt;span class=&quot;token assign-left variable&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;bind,source&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token environment constant&quot;&gt;$HOME&lt;/span&gt;/Documents/demo&quot;&lt;/span&gt;,target&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;/usr/share/nginx/html,readonly &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  nginx&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;這個 bind mount 讓 nginx 讀取本機目錄內容。&lt;code&gt;readonly&lt;/code&gt; 可避免 container 修改本機檔案。路徑需要依自己的環境調整；正式資料持久化則應比較 bind mount 與 named volume 的差異。&lt;/p&gt;
-&lt;h2&gt;停止與清理&lt;/h2&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container stop web custom-web
-&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container &lt;span class=&quot;token function&quot;&gt;rm&lt;/span&gt; web custom-web&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;停止 container 不會自動刪除它；不再需要時再以 &lt;code&gt;rm&lt;/code&gt; 清理。要查看包含已停止 container 的清單，可使用：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;docker&lt;/span&gt; container &lt;span class=&quot;token function&quot;&gt;ls&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;--all&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;h2&gt;Image、Dockerfile 與 Container 的關係&lt;/h2&gt;
-&lt;p&gt;Dockerfile 定義建置步驟，image 保存建置結果，container 則是 image 的執行實例。同一個 image 可以啟動多個彼此獨立的 container，但每個 container 的 runtime 狀態不同。&lt;/p&gt;
-&lt;p&gt;回到 &lt;a href=&quot;https://imfw.io/posts/2026/2026-07-13-docker-basics-guide/&quot;&gt;Docker 基礎學習路線&lt;/a&gt;，或繼續了解 &lt;a href=&quot;https://imfw.io/posts/2020/2020-03-08-docker-basic-image/&quot;&gt;Docker Image&lt;/a&gt;。&lt;/p&gt;
-&lt;h2&gt;官方參考資料&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/&quot;&gt;Docker：What is a container?&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/reference/cli/docker/container/run/&quot;&gt;docker container run&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/engine/storage/bind-mounts/&quot;&gt;Bind mounts&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </content>
   </entry>

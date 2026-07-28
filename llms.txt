@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Agent Skill 不是 Prompt：從撰寫、評測到自我提煉的工程化方法
+
+- Published: 2026-07-24T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-24-agent-skill-evolution/
+- Tags: ai, agent-skills, automation
+
+- Description: 深入拆解 Agent Skill 的觸發、工作流、資源與驗證設計，並以 eval、失敗分類、人工審核及版本治理建立可稽核的自我提煉與升級迴路。
+
+
 ### 如何與 AI 合作，我勸你善良：文件是 Agent 不走偏的起點
 
 - Published: 2026-07-22T00:00:00.000Z
