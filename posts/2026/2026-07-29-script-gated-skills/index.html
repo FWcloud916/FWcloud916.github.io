@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪 - FW Blog</title>
+  <meta name="description" content="從一次把 SKILL.md 從 302 行砍到 159 行的真實重構出發，對照 Anthropic 的 Claude 5 context engineering 六條新規則，說明哪些規則該交給模型判斷、哪些不變量必須編進 script 與工具介面。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-07-29-script-gated-skills/">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪 - FW Blog">
+  <meta property="og:description" content="從一次把 SKILL.md 從 302 行砍到 159 行的真實重構出發，對照 Anthropic 的 Claude 5 context engineering 六條新規則，說明哪些規則該交給模型判斷、哪些不變量必須編進 script 與工具介面。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-07-29-script-gated-skills/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-07-29T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="agent-skills">
+  
+  <meta property="article:tag" content="automation">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪 - FW Blog">
+  <meta name="twitter:description" content="從一次把 SKILL.md 從 302 行砍到 159 行的真實重構出發，對照 Anthropic 的 Claude 5 context engineering 六條新規則，說明哪些規則該交給模型判斷、哪些不變量必須編進 script 與工具介面。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=627501e">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=627501e">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪",
+    "description": "從一次把 SKILL.md 從 302 行砍到 159 行的真實重構出發，對照 Anthropic 的 Claude 5 context engineering 六條新規則，說明哪些規則該交給模型判斷、哪些不變量必須編進 script 與工具介面。",
+    "url": "https://imfw.io/posts/2026/2026-07-29-script-gated-skills/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-07-29-script-gated-skills/",
+    "datePublished": "2026-07-29T00:00:00.000Z",
+    "dateModified": "2026-07-29T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai","agent-skills","automation"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-6">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/tags/" class="text-gray-600 hover:text-gray-900 transition">標籤</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-07-29T00:00:00.000Z">2026年07月29日</time></span>
+      
+      <span>13 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/agent-skills/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #agent-skills
+        </a>
+        
+      
+        
+        <a href="/tags/automation/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #automation
+        </a>
+        
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-07-29 依 Anthropic 官方文章、mattpocock/skills 的 <code>writing-great-skills</code> 原文，以及 <code>skill-progress-tracker</code> 公開 repo 的 PR #1 內容查核。行數、測試數與 commit 皆取自該 PR 的最終合併狀態；上游文件與 repo 後續可能變動。</p>
+</blockquote>
+<p>Anthropic 在 2026-07-24 說，他們對 Claude Opus 5 與 Claude Fable 5 拿掉了 Claude Code <strong>超過 80%</strong> 的系統提示，而且「在我們的 coding evaluations 上沒有可測量的損失」。</p>
+<p>這種話很容易被讀成一句許可：你的 <code>SKILL.md</code> 也該砍掉八成。</p>
+<p>四天後我確實砍了一次。<code>skill-progress-tracker</code> 的 <code>SKILL.md</code> 從 302 行降到 159 行，中間八個 commit，每一個都跑完整驗證關卡才進下一個。但真正花掉最多判斷力的，不是決定刪什麼——是決定<strong>哪幾行不能刪</strong>，以及為什麼那幾行不能刪的理由，跟官方文章其實不衝突。</p>
+<p>這篇講的就是留下來的那一半。</p>
+<h2>兩種流派：說服模型，還是限制介面</h2>
+<p>Agent Skill 生態現在大致有兩條路線。</p>
+<p><strong>Prompt 紀律派</strong>把工程紀律寫成散文。像 mattpocock 的 <code>skills</code> repo，用資訊層級、修剪與命名把 skill 寫得精準好讀，靠模型被說服而遵守。這條路輕、可組合、模型無關——但保證是軟的。模型願意配合就成立，不願意就不成立。</p>
+<p><strong>介面保證派</strong>把不變量編進 script 與工具介面。狀態轉移由程式碼強制、危險操作由 exit code 擋、共用區塊用 md5 檢查逐 byte 同步。這條路重、綁工具，但保證是硬的：模型不同意也沒用，因為它根本沒有那條路徑可走。</p>
+<p>一個具體對照，同一件事的兩種寫法：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Prompt 紀律派</th>
+<th>介面保證派</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>表達位置</td>
+<td><code>SKILL.md</code> 的散文</td>
+<td><code>scripts/*.py</code> 的驗證與 exit code</td>
+</tr>
+<tr>
+<td>遵守方式</td>
+<td>模型讀到並同意</td>
+<td>模型繞不過去</td>
+</tr>
+<tr>
+<td>改壞的代價</td>
+<td>下次也許還是對的</td>
+<td>eval 立刻紅</td>
+</tr>
+<tr>
+<td>換模型</td>
+<td>要重新測說服力</td>
+<td>不受影響</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>幾行字</td>
+<td>要寫測試、要維護</td>
+</tr>
+</tbody>
+</table>
+<p>我的立場是這不是二選一，是一條光譜，而且<strong>分界線的位置有明確判準</strong>：品味規則交給模型判斷，安全不變量交給介面。</p>
+<p>問題從來不是「該不該刪」，是「界線劃在哪」。</p>
+<h2>writing-great-skills 真正能拿來用的四個工具</h2>
+<p>mattpocock 的 <code>writing-great-skills</code> 是我這次重構的方法論來源。它談的東西不少，這裡只講我實際用上、而且改變了判斷的四個。</p>
+<p><strong>Branch 判準的 progressive disclosure。</strong> 它把 progressive disclosure 定義成「往下移一階——離開 <code>SKILL.md</code> 進入連結檔案——好讓頂層維持可讀」。關鍵在判準：如果一段內容只服務單一分支，它就不該佔用永遠載入的頂層預算。這個判準比「太長就拆」精確得多，因為它可以直接回答「拆哪一段」。</p>
+<p><strong>逐句 no-op 測試。</strong> 判準只有一句：「這句話相對於預設行為，有改變任何東西嗎？」沒有就是 no-op，刪掉。重點是<strong>整句刪除</strong>，不是把它修得更短——修剪只會讓 no-op 變成更省字的 no-op，token 還是照付。</p>
+<p><strong>Leading words。</strong> 定義是「已經住在模型 pretraining 裡、agent 會拿來思考的壓縮概念」。這是四個工具裡最省字的一個：一個對的既有概念，抵得過一整段解釋。</p>
+<p><strong>六個 failure mode 當 lint。</strong> premature completion（還沒真的做完就收尾）、duplication（同一個意思出現在兩個地方）、sediment（過時內容因為不敢刪而堆積）、sprawl（每句都好但整體太長）、no-op（模型本來就會做的事）、negation（用禁止來引導反而提高了該行為的可及性）。</p>
+<p>把這六個當成 checklist 逐條掃過去，比「看看哪裡可以精簡」有效太多，因為它們各自對應不同的刪除理由。</p>
+<h2>逐 commit 解剖：302 行怎麼變成 159 行</h2>
+<p><a href="https://github.com/FWcloud916/skill-progress-tracker/pull/1">PR #1</a> 在 2026-07-28 合併，20 個檔案、+764/−319。計畫內八個 commit，每個 commit 都跑完 <code>bash scripts/verify.sh</code> 的 22 項檢查、15 個 end-to-end scenario 與 ruff 才動下一個。</p>
+<p><code>SKILL.md</code> 有 302 行，其中約 110 行是 migration 的細節——而 migration 是<strong>單一分支</strong>。每一次呼叫這個 skill，不管使用者要做的是建立、更新還是關閉項目，都在付那 110 行的 context 稅。更糟的是 <code>workflow.md</code> 幾乎完整複述了同一份七步驟契約。</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Commit</th>
+<th>判斷重點</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Migration 拆進 <code>references/migration.md</code></td>
+<td>pointer 的措辭決定觸發率</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Description 重寫，一個分支一個 trigger</td>
+<td>description 是全 repo 最貴的文字</td>
+</tr>
+<tr>
+<td>3</td>
+<td>加上 two-phase commit anchor</td>
+<td>anchor 刻意放在 byte-sync 標記<strong>之外</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>共用詞彙 + 六 failure-mode checklist</td>
+<td>詞彙放 <code>domain-models.md</code> 而不是新開 <code>CONTEXT.md</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>README 第四份 paraphrase 收斂</td>
+<td>duplication 的長尾在 README</td>
+</tr>
+<tr>
+<td>6</td>
+<td>對照 Anthropic 官方文章</td>
+<td>記錄兩處刻意分歧</td>
+</tr>
+<tr>
+<td>7</td>
+<td>參數語意讓位給 <code>--help</code></td>
+<td>刪除前先做覆蓋率矩陣</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Scope 逗號守衛（改 CLI）</td>
+<td>把唯一的靜默失敗變大聲</td>
+</tr>
+</tbody>
+</table>
+<h3>Commit 1–2：搬走與重寫</h3>
+<p>Migration 的 110 行搬進 <code>references/migration.md</code>，成為唯一權威來源；<code>SKILL.md</code> 與 <code>workflow.md</code> 只留前置規則、閘門區塊，以及一句祈使句指標。</p>
+<p>「read <code>references/migration.md</code> in full before running any migration command」跟「詳見 migration.md」在人類眼中是同一句話，在模型眼中不是。前者是條件明確的動作指令，後者是可以略過的補充說明。progressive disclosure 的成敗其實壓在這一行上——內容搬走了但沒人去讀，那不是拆分，是遺失。</p>
+<p>Description 的重寫更關鍵，因為 description 是<strong>唯一永遠載入、而且會被拿來做觸發判斷</strong>的文字。原本它花了不少字重述本文已經講過的身分描述。改法是：把前置檢查的 leading word 提到最前面，五個生命週期分支（create / update / audit / close out / migrate）各給<strong>恰好一個</strong> trigger，其餘刪掉。</p>
+<p>最後 110 個英文字，觸發邊界不變，trigger matrix 完全沒動。刪掉的全部是重複。</p>
+<h3>Commit 3：anchor 為什麼要放在閘門外面</h3>
+<p>這是整個 PR 我最想拿出來講的一個決定。</p>
+<p>Migration 有一段硬性閘門，三個檔案（<code>SKILL.md</code>、<code>workflow.md</code>、<code>agents/progress-tracker.md</code>）逐 byte 相同，由 <code>verify.sh</code> 用 md5 檢查。內容大意是：在兩個命令跑完、第二個 exit 0 之前，<strong>不得</strong>詢問是否刪除舊資料。這條規則是 KI-001 那次事故換來的——當時空的 WIP 區塊被誤判成「沒有待處理項目」，於是稽核就這樣過了。</p>
+<p>這次要加一句 leading word anchor：</p>
+<blockquote>
+<p>Migration is a two-phase commit: the audit is the prepare phase; nothing is deleted until it votes yes.</p>
+</blockquote>
+<p>Two-phase commit 是資料庫世界的既有概念，模型完全知道它的語意：prepare 階段可以失敗、可以回滾，commit 只在全票通過後發生。一句話取代一整段解釋，這就是 leading words 該有的效果。</p>
+<p>問題是它放哪裡。放進 <code>MIGRATION_GATE</code> 標記<strong>裡面</strong>最直覺——反正都是講同一件事。但那會讓這句話變成第四份需要逐 byte 同步的內容，而它是散文，是最容易在後續編輯中被順手改掉的那種文字。md5 檢查會因此變得脆弱，而脆弱的檢查最後都會被放寬。</p>
+<p>所以 anchor 放在標記正上方，閘門本身維持三份 byte-identical。同一個段落裡，一句話給模型思考，一段規則給程式驗證，各自用各自的機制維護。</p>
+<p><code>references/migration.md</code> 也刻意<strong>不</strong>複製那個閘門區塊——那會是第四份沒有被檢查的漂移副本。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/psVGS9rZZ_-300.webp 300w, /assets/img/psVGS9rZZ_-600.webp 600w, /assets/img/psVGS9rZZ_-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/psVGS9rZZ_-300.jpeg" alt="三個檔案共用逐 byte 相同的 MIGRATION_GATE 區塊並由 verify.sh 以 md5 檢查，two-phase commit anchor 刻意放在標記之外，references/migration.md 刻意不含該區塊" width="1200" height="800" srcset="/assets/img/psVGS9rZZ_-300.jpeg 300w, /assets/img/psVGS9rZZ_-600.jpeg 600w, /assets/img/psVGS9rZZ_-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>兩派工具的共存，長得就是這樣。</p>
+<h3>Commit 4–5：刻意的分歧，與 duplication 的長尾</h3>
+<p><code>writing-great-skills</code> 建議把共用詞彙集中。我把它放進既有的 <code>docs/domain-models.md</code>，而不是新開一個 <code>CONTEXT.md</code>。理由是這個 repo 已經有一份 canonical 文件集，多開一個檔案等於多一個未來會 sediment 的地方。這是刻意偏離建議，記在 design decisions 裡。</p>
+<p>六個 failure mode 則寫進 <code>AGENTS.md</code>，變成往後編輯 <code>SKILL.md</code> 的固定檢查表——把單次的重構方法變成常駐規則。</p>
+<p>Commit 5 處理的是 duplication 的長尾。稽核條件在這個 repo 裡總共有四份 paraphrase，第四份在 README。README 是最容易漂移的地方，因為它的讀者是還沒安裝 skill 的人，改動它的人通常不會同時去改 <code>SKILL.md</code>。收斂成 two-phase commit 的說法加一個連結，指回權威文件。</p>
+<p><code>agents/progress-tracker.md</code> 則保留了一份精簡的 migration 描述——subagent 定義必須自我完備。這份重複是<strong>接受</strong>的，寫進 design decisions 當成 residual duplication，不假裝它不存在。</p>
+<h3>Commit 7–8：介面能教的，就從文件刪掉</h3>
+<p>這兩個 commit 是後來才長出來的，也最能說明我的立場。</p>
+<p>Commit 7 做了一件事：把 <code>SKILL.md</code> 裡的 Key-arguments 清單與參數說明整段刪掉，換成一句「第一次使用前先讀 <code>--help</code>」。</p>
+<p>但刪除是<strong>有前提的</strong>。方法是先跑一份逐項覆蓋率矩陣：把要刪的每一句話拿出來，確認它要嘛已經寫在 <code>--help</code> 裡，要嘛能在使用者犯錯的當下，由一則可行動的錯誤訊息當場講清楚。教不了的就不刪。</p>
+<p>矩陣跑完，剩下一個教不了的：<code>--scope</code> 裡沒有跳脫的逗號。這個輸入會被靜默地拆成兩個 entry，沒有錯誤、沒有警告，使用者要等到看見產出的表格才發現不對。</p>
+<p>Commit 8 的處理方式不是把那條規則寫回文件，是<strong>改 CLI</strong>：</p>
+<ul>
+<li>逗號旁邊有空白 → 判定為歧義並拒絕，錯誤訊息同時教兩種解法（要拆就拿掉空白，要當字面值就跳脫）</li>
+<li>空 entry（頭尾或連續逗號）→ 拒絕，不再靜默丟棄</li>
+<li>正常模式下兩個 CLI 都回吐解析結果：<code>Scope: api · worker  (2 entries)</code></li>
+</ul>
+<p>然後才把跳脫規則從 <code>SKILL.md</code> 移進 <code>--help</code>。同時新增 16 個 pytest case 與一個 <code>ambiguous-scope-refuse</code> scenario（總數來到 15），確認那個輸入會被拒絕<strong>而且什麼都沒寫進去</strong>。</p>
+<p>這一步之後，<code>SKILL.md</code> 落在 159 行，只剩一條規則是介面教不了的。</p>
+<p>順序很重要：不是「刪掉文件、改天再補防護」，是<strong>先讓失敗變大聲，再刪文件</strong>。反過來做就是把已知的坑留給使用者踩。</p>
+<p>還有一個容易被略過的細節：改 CLI 前先確認了影響範圍——現有的 pytest case、scenario 與文件範例都沒有用到「空白緊鄰逗號」的寫法，所以沒有任何原本合法的輸入改變語意。</p>
+<p>貫穿八個 commit 的作法是同一件事：<strong>eval 全綠才進下一個</strong>。多數人改 <code>SKILL.md</code> 是裸改，改完看起來順就送出去了。prompt 層的重構一樣可以有回歸保護，只是要先有 eval。</p>
+<h2>不能刪的那一半</h2>
+<p>Commit 6 是回頭把整個重構逐條對照 Anthropic 那篇文章。官方的 Then/Now 六條是這樣：</p>
+<table>
+<thead>
+<tr>
+<th>Then</th>
+<th>Now</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>給 Claude 明確規則</td>
+<td>讓 Claude 用判斷力</td>
+</tr>
+<tr>
+<td>提供使用範例</td>
+<td>設計更有表達力的工具介面</td>
+</tr>
+<tr>
+<td>上下文全部先給</td>
+<td>用 progressive disclosure，需要時才載入</td>
+</tr>
+<tr>
+<td>重複說明</td>
+<td>保持工具描述簡潔</td>
+</tr>
+<tr>
+<td>手動維護 CLAUDE.md 記憶</td>
+<td>自動記憶功能</td>
+</tr>
+<tr>
+<td>單純的 markdown 規格</td>
+<td>豐富的參考資料（HTML artifact、程式碼、評分表）</td>
+</tr>
+</tbody>
+</table>
+<p>第三條、第四條跟這次重構完全對得上，不用多說：110 行搬到分支後面、四份 paraphrase 收斂成一份。</p>
+<p>真正值得停下來的是第一條與第二條，因為它們看起來一個要我刪、一個要我留。</p>
+<h3>一、被刪的是品味規則，不是安全規則</h3>
+<p>官方文章自己留了但書：這些建議適用「<strong>除了高度重要的領域</strong>」。</p>
+<p>這句話很短，但它就是分界線。文章裡舉的被刪例子——不要刪檔案、不要寫多行註解區塊、特定 edge case 怎麼處理——共同點是它們都是<strong>品味規則</strong>：寫的時候就知道有些情況下會是錯的，只是當時模型不夠好，錯誤的規則仍然勝過沒有規則。模型變強之後，這類規則的期望值翻負，因為規則累積起來會互相牴觸，模型花力氣去調和指令，而不是解決你的問題。</p>
+<p><code>MIGRATION_GATE</code> 不是這種東西。它是一次真實事故（KI-001）換來的、由 script 強制執行的守衛，而且它保護的是<strong>不可逆操作</strong>：刪掉使用者的舊追蹤資料。這正是那個但書要留下的、承重的少數規則。</p>
+<p>判準可以更簡單一點：<strong>這條規則出錯的後果，是輸出比較醜，還是資料回不來？</strong> 前者交給判斷力，後者留著。</p>
+<h3>二、「給範例 → 設計介面」本身就是介面保證派的官方背書</h3>
+<p>第二條表面上在講刪掉範例，實際上在講<strong>把指令編進介面</strong>。官方的例子很清楚：</p>
+<blockquote>
+<p>just listing status as an enumeration between pending, in_progress, and completed, hints to Claude about how to use it</p>
+</blockquote>
+<p>把 status 列成列舉，比寫三段範例更能教會模型怎麼用。這是同一個方向再往前走一步——列舉是提示，<strong>script 強制的狀態轉移是保證</strong>。</p>
+<p><code>progress-tracker</code> 的 <code>in-progress → review → done</code> 不是寫在文件裡請模型遵守，是由腳本驗證的：跳過 <code>review</code> 直接進 <code>done</code> 會失敗。文件因此不需要花任何一行去解釋這件事。</p>
+<p>官方叫你刪掉的那些字，之所以能刪，正是因為它們的意思被搬進了介面。刪除跟強化是同一個動作的兩面。</p>
+<h3>三、「80% 可刪」只對最強的模型成立</h3>
+<p>這是我覺得最容易被忽略的一條。</p>
+<p>官方那句話的完整條件是：對 <strong>Claude Opus 5 與 Claude Fable 5</strong>，在 <strong>Anthropic 自己的 coding evaluations</strong> 上沒有可測量的損失。</p>
+<p>我的 skill 不是只跑在那兩個模型上。它有 Codex plugin，會跑在其他 client、其他世代、其他規模的模型上。散文規則的效力<strong>隨模型能力浮動</strong>；script gate 的效力不會。一個 exit code 1 在 Opus 5 上是 1，在小模型上也是 1。</p>
+<p>所以對任何要釋出給別人用、而你控制不了對方模型的 skill，介面保證不是保守，是唯一能跨模型攜帶的東西。</p>
+<p><strong>Prompt 越刪越短的前提，是介面越做越硬。</strong></p>
+<h2>可以直接照做的六步</h2>
+<ol>
+<li>量 <code>SKILL.md</code> 行數，標出只服務單一分支的段落——那是最貴、也最容易還的 context 債。</li>
+<li>逐句跑 no-op 測試：這句相對於預設行為改變了什麼？答不出來就整句刪，不要修短。</li>
+<li>重寫 description：一個分支一個 trigger、leading word 前置、刪掉本文已經講過的身分描述。</li>
+<li>找一個 pretrained 概念當 anchor（two-phase commit、dry run、feature flag），放在硬規則旁邊，但<strong>不要</strong>放進需要逐 byte 同步的區塊。</li>
+<li>刪參數說明前先做覆蓋率矩陣；教不了的那幾條，改介面讓它變大聲，而不是把文字寫回去。</li>
+<li>先有 eval 再動手。沒有 eval 的重構，你只是換了一個看起來比較舒服的版本。</li>
+</ol>
+<p>如果想快速抓一輪，Claude Code 現在有 <code>/doctor</code> 可以幫忙 rightsize skills 與 <code>CLAUDE.md</code>。</p>
+<h2>最後</h2>
+<p>這次重構是 Claude Code 依照凍結的計畫執行、我逐 commit review 的，PR 描述、design decisions 與偏離紀錄都在公開 repo 裡。用 agent 去改善 agent 自己的 skill，這件事本身就是這篇文章的一部分——而它之所以能放心讓 agent 動手，正是因為那 22 項檢查跟 15 個 scenario 在後面接著。</p>
+<p>界線該劃在哪，我目前的答案是「出錯後資料回不來的地方」。這條線在你的專案裡可能不一樣，歡迎到 repo 開 issue 聊。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models">Anthropic：The new rules of context engineering for Claude 5 generation models</a>（2026-07-24）</li>
+<li><a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/writing-great-skills/SKILL.md">mattpocock/skills：writing-great-skills</a></li>
+<li><a href="https://github.com/FWcloud916/skill-progress-tracker/pull/1">skill-progress-tracker PR #1：progressive-disclosure refactor of SKILL.md (302 → 159 lines)</a></li>
+<li><a href="https://github.com/FWcloud916/skill-progress-tracker">skill-progress-tracker</a></li>
+</ul>
+
+  </div>
+</article>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

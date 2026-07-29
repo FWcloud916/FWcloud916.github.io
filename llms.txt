@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪
+
+- Published: 2026-07-29T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-29-script-gated-skills/
+- Tags: ai, agent-skills, automation
+
+- Description: 從一次把 SKILL.md 從 302 行砍到 159 行的真實重構出發，對照 Anthropic 的 Claude 5 context engineering 六條新規則，說明哪些規則該交給模型判斷、哪些不變量必須編進 script 與工具介面。
+
+
 ### Agent Skill 不是 Prompt：從撰寫、評測到自我提煉的工程化方法
 
 - Published: 2026-07-24T00:00:00.000Z
