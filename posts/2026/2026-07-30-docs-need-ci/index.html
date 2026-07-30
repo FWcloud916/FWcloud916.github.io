@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test - FW Blog</title>
+  <meta name="description" content="一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-07-30-docs-need-ci/">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test - FW Blog">
+  <meta property="og:description" content="一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-07-30-docs-need-ci/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-07-30T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="agent-skills">
+  
+  <meta property="article:tag" content="devops">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test - FW Blog">
+  <meta name="twitter:description" content="一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=9061476">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=9061476">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test",
+    "description": "一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。",
+    "url": "https://imfw.io/posts/2026/2026-07-30-docs-need-ci/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-07-30-docs-need-ci/",
+    "datePublished": "2026-07-30T00:00:00.000Z",
+    "dateModified": "2026-07-30T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai","agent-skills","devops"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-6">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/tags/" class="text-gray-600 hover:text-gray-900 transition">標籤</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-07-30T00:00:00.000Z">2026年07月30日</time></span>
+      
+      <span>15 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/agent-skills/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #agent-skills
+        </a>
+        
+      
+        
+        <a href="/tags/devops/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #devops
+        </a>
+        
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-07-30 依 <a href="https://github.com/FWcloud916/skill-doc-architect/pull/1">skill-doc-architect PR #1</a> 的合併內容、該 repo <code>origin/main</code> 的實際檔案，以及 Anthropic 官方文章查核。行數、預算值與 eval 數量取自 PR 合併後狀態；上游後續可能變動。</p>
+</blockquote>
+<p>加了一整個新模組，檔案反而變短了。</p>
+<p><code>doc-architect</code> 這次的重構塞進一個完整的 <code>CONTEXT.md</code> 專案詞彙表模組——樣板、四個 mode 的接線、三個新 eval scenario、Fresh Session Test 多一道題——<code>SKILL.md</code> 從 225 行降到 <strong>216 行</strong>。這 9 行是<strong>含</strong>新模組接線之後的淨值。</p>
+<p>這不是壓縮技巧。是因為那個檔案的長度從頭到尾有東西在管：<code>verify.sh</code> 有一條行數預算檢查，而且預算會跟著實際行數往下棘輪。</p>
+<p><a href="/posts/2026/2026-07-29-script-gated-skills/">上一篇</a>講的是 skill 的散文哪些能刪、哪些必須編進 script。這篇把同一個判準套到專案文件上，而且發現需要保證的不只一層。</p>
+<h2>為什麼文件靠自律守不住</h2>
+<p>文件腐壞的方式不是隨機的，它有固定的三種。</p>
+<p><strong>長度會漲。</strong> 每次補一段都合理，沒有任何一次補充該被擋下來，但半年後沒有人願意從頭讀完。</p>
+<p><strong>詞彙會漂。</strong> 同一個東西在 README 叫 A、在架構文件叫 B、在程式碼註解叫 C。每一次改名都是局部正確的，錯的是沒有人有權說「以後一律叫 A」。</p>
+<p><strong>正確性會過期。</strong> 文件寫的時候是對的，程式變了以後沒人回頭改。而且最糟的是——沒有人會知道，因為沒有任何機制會因此變紅。</p>
+<p>這三種腐壞的共同點：<strong>發生的當下都不會痛</strong>。所以靠「大家記得維護」是沒有用的，那等於把成本推給半年後的自己。</p>
+<p>要擋下來，得有三層不同的保證。</p>
+<h2>第一層：長度是預算，不是自律</h2>
+<p><code>doc-architect</code> 的 <code>verify.sh</code> 有這麼一段：</p>
+<pre class="language-bash"><code class="language-bash">report <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token punctuation">[</span> <span class="token string">"<span class="token variable">$skill_lines</span>"</span> <span class="token parameter variable">-le</span> <span class="token number">216</span> <span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token builtin class-name">echo</span> $?<span class="token variable">)</span></span>"</span> <span class="token string">"SKILL.md within 216-line budget"</span> <span class="token string">"<span class="token variable">$skill_lines</span> lines"</span>
+report <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token punctuation">[</span> <span class="token string">"<span class="token variable">$agents_lines</span>"</span> <span class="token parameter variable">-le</span> <span class="token number">100</span> <span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token builtin class-name">echo</span> $?<span class="token variable">)</span></span>"</span> <span class="token string">"AGENTS.md within 100-line budget"</span> <span class="token string">"<span class="token variable">$agents_lines</span> lines"</span></code></pre>
+<p><code>SKILL.md</code> 不得超過 216 行，<code>AGENTS.md</code> 不得超過 100 行。超過就 CI 紅燈。</p>
+<p>有意思的不是有預算，是<strong>預算會往下棘輪</strong>——像棘輪扳手，順向轉得動，反向卡死。這次重構把它從 225 改成 216，改的是上限本身。行數降下來之後，上限跟著鎖到新的位置：往下隨時可以，往上就卡住了。</p>
+<p>這跟「我們盡量維持文件精簡」的差別在哪？差在<strong>放寬的成本</strong>。</p>
+<p>自律的版本裡，多寫十行不需要任何人同意，甚至不會有人發現。棘輪的版本裡，多寫十行會讓 CI 紅，你得先把 <code>verify.sh</code> 那條 216 行的檢查改掉才過得去。</p>
+<p>改那個數字是兩秒鐘的事，技術難度幾乎是零。但那個改動會進 diff、會被 reviewer 看到、會被問為什麼。真正被提高的不是門檻，是<strong>可見度</strong>——文件變長從靜默發生，變成一個要具名負責的決定。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/8FopIlZDdN-300.webp 300w, /assets/img/8FopIlZDdN-600.webp 600w, /assets/img/8FopIlZDdN-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/8FopIlZDdN-300.jpeg" alt="行數預算從 225 行的舊上限降到 216 行並鎖定，往下由重構帶動，要漲回去必須修改 verify.sh 而會出現在 diff 被 review 看見" width="1200" height="800" srcset="/assets/img/8FopIlZDdN-300.jpeg 300w, /assets/img/8FopIlZDdN-600.jpeg 600w, /assets/img/8FopIlZDdN-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>這也解釋了為什麼加模組還能變短。當長度是會紅的數字，新增內容就不再是「往後面加一段」，而是一道必須先回答的題目：這 9 行要從哪裡挪出來？</p>
+<p>這次挪出來的地方很具體，三個都是同一種病：<strong>同一份規則被抄了兩份</strong>。</p>
+<ul>
+<li>Mode B 的偵測順序，本來在流程裡寫一次、在 stacks 索引裡又寫一次 → 只留索引那份</li>
+<li>混合／monorepo 專案的處置規則，散在偵測步驟與規劃步驟 → 收進「Plan before you write」</li>
+<li>互動與 headless 的行為差異，本來每個 mode 各講一次 → 收進 Definition of Done 與稽核清單第六節</li>
+</ul>
+<p>剩下的就是逐句 no-op 掃描——模型本來就會做的事，整句刪掉。</p>
+<p>預算不是在懲罰寫作，是在強迫每次新增都先做一次刪除。而被逼著刪的時候，最先浮出來的永遠是重複，不是有用的內容。</p>
+<h2>第二層：詞彙有人裁決，而且那個人是使用者</h2>
+<p><code>CONTEXT.md</code> 是這次新增的 opt-in 模組，專門處理術語漂移。它的樣板開頭寫得很直接：</p>
+<blockquote>
+<p>專案根目錄的詞彙表——<strong>關於東西叫什麼的裁決</strong>。</p>
+</blockquote>
+<p>不是「詞彙說明」，是裁決。這個用字差別是整個模組的設計核心。</p>
+<p>它記三種東西：canonical 名稱與定義、<code>_Avoid_</code> 該避免的同義詞、以及已經被裁定的歧義。第三種長這樣：</p>
+<pre class="language-markdown"><code class="language-markdown"><span class="token title important"><span class="token punctuation">##</span> Flagged ambiguities</span>
+
+<span class="token list punctuation">-</span> "<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>word</span><span class="token punctuation">></span></span>" 同時指 <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>X</span><span class="token punctuation">></span></span> 與 <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>Y</span><span class="token punctuation">></span></span>；<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>date</span><span class="token punctuation">></span></span> 裁定為 <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>X</span><span class="token punctuation">></span></span>。<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>Y</span><span class="token punctuation">></span></span> 現在叫 "<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>term</span><span class="token punctuation">></span></span>"。</code></pre>
+<p>記下來的不只是結論，還有<strong>這個結論是什麼時候被誰定的</strong>。半年後有人想改回去，他面對的不是模糊的慣例，是一筆有日期的決議。</p>
+<h3>誰有權裁決</h3>
+<p>樣板裡最關鍵的一句：</p>
+<blockquote>
+<p><strong>Rulings are decisions, not facts.</strong> A canonical name and its Avoid list are chosen by the user, never derived from the code alone.</p>
+</blockquote>
+<p>裁決是決定，不是事實。canonical 名稱與它的 Avoid 清單由<strong>使用者</strong>選定，永遠不能單從程式碼推導出來。</p>
+<p>這條規則接下來變成一個具體的權限邊界：</p>
+<ul>
+<li><strong>互動執行</strong>：一次裁決一個詞，給候選、給推薦的裁決、附一行理由，由使用者拍板</li>
+<li><strong>Headless 執行</strong>：每個候選詞一律標記 <code>proposed — pending ruling</code>，決定保持開放</li>
+</ul>
+<p>agent 可以偵測到「這個東西在三個地方有三個名字」——那是事實，可以從程式碼與文件推導。但「以後統一叫哪個」不是事實，那是取捨，牽涉到團隊習慣、對外文件、既有程式碼的改名成本。agent 沒有那個資訊，也不該假裝有。</p>
+<p>這個 repo 自己的 <code>CONTEXT.md</code> 就誠實地留著 <code>proposed — pending ruling</code>：</p>
+<pre class="language-markdown"><code class="language-markdown"><span class="token bold"><span class="token punctuation">**</span><span class="token content">Doc set</span><span class="token punctuation">**</span></span> — the modular output a mode produces: core files plus selected modules.
+<span class="token italic"><span class="token punctuation">_</span><span class="token content">Avoid</span><span class="token punctuation">_</span></span>: doc suite (proposed — pending ruling)</code></pre>
+<p>它知道 <code>doc suite</code> 是漂移，但它沒有自己拍板。這比一份看起來很完整、其實混了一堆 agent 自行決定的詞彙表誠實得多。</p>
+<h3>預算再出現一次</h3>
+<p><code>CONTEXT.md</code> 也有硬預算：<strong>約 80 行</strong>。理由寫在樣板裡：</p>
+<blockquote>
+<p>價值來自裁決密度，不是完整性——一個詞要值得一則條目，前提是叫錯它會造成真正的工作損失。</p>
+</blockquote>
+<p>超過預算時，最無關痛癢的詞先被砍掉。</p>
+<p>還有一條劃界規則：<code>CONTEXT.md</code> 管<strong>命名</strong>，<code>docs/domain-models.md</code> 管<strong>結構</strong>（實體、欄位、關聯、ER 圖）。同時出現在兩邊的詞，用相對路徑連過去，不重述——重述就是 duplication，review 會擋。</p>
+<h3>四個 mode 各自怎麼接</h3>
+<p>這個模組不是加一個檔案就算完，它要接進四種既有的執行流程，而<strong>每一種的權限都不一樣</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>情境</th>
+<th>對詞彙做什麼</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B</td>
+<td>從既有程式碼建文件</td>
+<td>抽取術語，並偵測同義詞漂移</td>
+</tr>
+<tr>
+<td>G</td>
+<td>新專案訪談</td>
+<td>訪談中使用者造的詞當場收集成候選</td>
+</tr>
+<tr>
+<td>U-1</td>
+<td>依 diff 增量更新</td>
+<td>diff 帶進來的新詞<strong>只當候選</strong>，裁決留給使用者</td>
+</tr>
+<tr>
+<td>U-2</td>
+<td>全面稽核</td>
+<td>用 grep 檢查既有裁決有沒有被違反</td>
+</tr>
+</tbody>
+</table>
+<p>U-1 那一列最值得看。增量更新是最常跑的模式，也最容易順手把新詞「就這樣定下來」——規則明講了不行，diff 引入的詞一律只是候選。</p>
+<p>而 U-2 用 grep 檢查裁決，這是三層保證裡少數真正<strong>自動</strong>的部分：裁決一旦落地，違反它就是可偵測的字串比對，不需要人記得。</p>
+<p>至於這個模組什麼時候該生成，doc-set 表的條件也不是「有詞彙就生」：Mode B 要抽取真的找到，Mode G 要訪談浮出<strong>至少三個</strong>需要定義的詞。門檻不到就不生——一份只有兩個詞的詞彙表沒有裁決密度，只是多一個要維護的檔案。</p>
+<h2>第三層：驗收要由不知情的人做</h2>
+<p>前兩層管的是文件的形狀，管不了它是不是<strong>真的能用</strong>。</p>
+<p><code>doc-architect</code> 的答案是 Fresh Session Test：一個只有這個 repo 當上下文的 agent，回答六個固定問題，而且每個答案都要標明出處在文件的哪一節。</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>問題</th>
+<th>預期出處</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>這個系統是什麼？</td>
+<td>README 第一段 / AGENTS.md 身分句</td>
+</tr>
+<tr>
+<td>2</td>
+<td>它怎麼組織的？</td>
+<td>project-overview §3–4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>我怎麼把它跑起來？</td>
+<td>README Quickstart / AGENTS.md Commands</td>
+</tr>
+<tr>
+<td>4</td>
+<td>我怎麼驗證我的工作？</td>
+<td>test + lint 命令</td>
+</tr>
+<tr>
+<td>5</td>
+<td>這個 repo 追蹤什麼工作狀態？</td>
+<td><code>PROGRESS.md</code>；沒有就答 <code>N/A</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>核心術語是什麼意思，避免哪些同義詞？</td>
+<td><code>CONTEXT.md</code> §Language</td>
+</tr>
+</tbody>
+</table>
+<p>第六題是這次新增的，而且<strong>只有在 <code>CONTEXT.md</code> 存在時才問</strong>。沒有詞彙表的專案不會被問一個它答不出來的問題——這避免了「為了通過測試而硬生一份沒有裁決密度的詞彙表」。</p>
+<h3>為什麼不能自己扮演</h3>
+<p>這一節最關鍵的設計理由寫在稽核清單裡：</p>
+<blockquote>
+<p>在剛寫完文件的同一個 session 裡自我模擬「一個只有 repo 當上下文的 agent」，並不是真的乾淨上下文——它記得自己剛做過的每一個決定，因此會<strong>系統性地高估文件品質</strong>。</p>
+</blockquote>
+<p>這句話點破的東西很實在。文件寫完後自問「這樣夠清楚嗎」，答案幾乎必然是「夠」，因為問的人腦子裡還留著所有沒寫進文件的背景。這不是不誠實，是結構性的盲點。</p>
+<p>所以做法是實際去 spawn 一個<strong>沒有任何對話歷史</strong>的 headless 子行程，把答案以 JSON 收回來。引用規則卡得很死：Q1–Q4 的引用必須指名真實存在的 Markdown 檔；<code>PROGRESS.md</code> 不存在時要用一字不差的 <code>PROGRESS.md absent at repository root</code>；Q6 的引用必須指名 <code>CONTEXT.md</code>。</p>
+<p>不接受「我讀過了」這種自我宣稱，答案必須指得出來源——跟上一篇談的 script gate 是同一個手法：把「我有做」換成「我做了而且這裡是證據」。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/IIfb7WegMM-300.webp 300w, /assets/img/IIfb7WegMM-600.webp 600w, /assets/img/IIfb7WegMM-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/IIfb7WegMM-300.jpeg" alt="比較同一 session 自我模擬與獨立 headless 子行程：前者記得剛做過的每個決定、系統性高估文件品質、必須標記 degraded，不算獨立通過；後者零對話歷史、六題答案回傳 JSON、引用必須指名真實檔案，才算獨立通過" width="1200" height="800" srcset="/assets/img/IIfb7WegMM-300.jpeg 300w, /assets/img/IIfb7WegMM-600.jpeg 600w, /assets/img/IIfb7WegMM-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<h3>降級要說出來</h3>
+<p>獨立執行器不可用時可以退回自我模擬，但規則要求標記 <code>degraded — independent runner unavailable</code>，而且 <strong>MUST NOT</strong> 報告成獨立通過或無條件的 <code>complete</code>。</p>
+<p>還有一句寫得特別好：</p>
+<blockquote>
+<p>供應商暫時失敗是重試或記錄降級的理由，不是捏造綠燈結果的理由。</p>
+</blockquote>
+<p>這條規則防的是最隱蔽的一種失效——不是文件爛，是<strong>驗收本身被摸魚</strong>。而摸魚在事後幾乎看不出來，因為紀錄上就是一個通過。</p>
+<p>評分則刻意留在原本的 session：腳本只負責提供答案，判斷「這是阻斷性缺口、通過、還是誠實的 TBD」仍然是規則的事。取得證據與判讀證據分開，跟第二層把「偵測漂移」與「裁決名稱」分開是同一種切法。</p>
+<p><code>test_fresh_session.py</code> 對 5 題與 6 題兩種形狀都有測試，11 個 case 全過。</p>
+<h2>Mode G：把訪談本身當介面設計</h2>
+<p>前三層都是產出物的保證。這次還改了一個容易被忽略的東西：<strong>取得資訊的過程</strong>。</p>
+<p>Greenfield 模式要訪談使用者才知道專案要做什麼。改法有四條：</p>
+<p><strong>一次問一題，等答案，讓答案決定下一題。</strong> 不是一次丟十個問題的表單。</p>
+<p><strong>事實自己先查。</strong> 現有檔案、git 狀態、既有文件——這些 agent 自己看得到的東西不准拿來問。原文的說法是：問題只花在<strong>決策</strong>上。</p>
+<p><strong>每個問題自帶建議。</strong> 語言、框架、架構形狀、資料庫、初始目錄結構、linter，每一個開放決策都要附 2–3 個候選、一個<strong>標記出來的推薦</strong>，加一行理由。不是把選擇丟回去讓使用者自己想。</p>
+<p><strong>已經決定的不重新翻案。</strong> 原文寫得很白：record, don't re-litigate。</p>
+<p>還有一條同樣重要：沒決定的區塊一律寫 <code>TBD — not yet designed</code>，<strong>絕不默默填上</strong>。而且每個 TBD 都要標記它的回訪觸發條件（例如「等第一批 model 落地後」）。</p>
+<p>這四條合起來，其實就是把一場對話當成介面在設計：輸入要驗證（事實自己查）、每次只處理一個決定、選項要窮舉並標出預設值、未定義的狀態要顯式存在而不是留空。</p>
+<p>Headless 模式則直接跳過訪談，從請求裡取決策，其餘一律誠實 TBD。同一個 skill、同樣的規則，只是少了那個可以回答問題的人。</p>
+<h2>一個把「別給範例」變成實測的小實驗</h2>
+<p>上一篇提過 Anthropic 那份 Then/Now 表格裡的第二條：<strong>提供使用範例 → 設計更有表達力的介面</strong>。那時我只能從設計層面論證它。這個 PR 裡有一個直接的實測。</p>
+<p><code>AGENTS.md</code> 的樣板本來在「Hard constraints」那節給了三行示範：</p>
+<pre class="language-markdown"><code class="language-markdown"><span class="token list punctuation">-</span> MUST run <span class="token code-snippet code keyword">`&lt;test command>`</span> and see it pass before declaring any task done (source: CI gate)
+<span class="token list punctuation">-</span> MUST NOT edit <span class="token code-snippet code keyword">`&lt;generated dir>`</span> by hand — regenerate via <span class="token code-snippet code keyword">`&lt;tool>`</span> (source: <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>config</span> <span class="token attr-name">file</span><span class="token punctuation">></span></span>)
+<span class="token list punctuation">-</span> MUST NOT commit directly to <span class="token code-snippet code keyword">`&lt;default branch>`</span> (source: repo settings / team rule)</code></pre>
+<p>看起來很合理——告訴模型約束長什麼樣子。實際行為卻是：模型去<strong>抄這三行的形狀</strong>，然後在目標 repo 裡找對應的東西填進去，而不是去找那個 repo 真正的約束是什麼。範例變成了天花板。</p>
+<p>改法是整段拿掉，換成把介面本身定義清楚：</p>
+<pre class="language-markdown"><code class="language-markdown">&lt;Non-negotiables only — the rules that break the build, the data, or the team's
+process if violated. ≤ 15. Each is a MUST / MUST NOT with its source in
+parentheses, found in THIS repo's config, CI, and team rules — the test-gate rule
+is always one of them.></code></pre>
+<p>規格說清楚了：格式（MUST／MUST NOT + 括號註明來源）、上限（≤ 15）、來源在哪裡找（這個 repo 的 config、CI、團隊規則）、以及唯一一條永遠成立的（測試關卡）。三行示範刪掉，淨變動 −5/+3 行。</p>
+<p>驗證方式是跑一輪 live 10-scenario sweep 確認行為沒退步。</p>
+<p>同一批還有第二個實驗：<code>SKILL.md</code> 裡的共用慣例本來重複寫在多處，收成一個指標 bullet，規則本體留在樣板與稽核清單。</p>
+<p>兩個實驗都在 2026-07-24 那篇官方文章之後才驗證——PR 的敘述沒有掩飾這個順序。這不是獨立收斂後被印證，是拿官方的建議當假設，在自己的 repo 上跑了一次。</p>
+<h2>代價與證據</h2>
+<p>這些保證不是免費的。這個 PR 動了 52 個檔案、+1328/−228，從建立到合併跨了兩天（2026-07-28 → 07-29），版本 2.3.0 → 2.4.0。</p>
+<p>驗證的部分：</p>
+<ul>
+<li>eval scenario <strong>7 → 10</strong>，新增的三個都針對詞彙表（<code>context-term-drift</code>、<code>context-no-terms-skip</code>、<code>context-avoid-drift-audit</code>）</li>
+<li>trigger matrix <strong>16 → 18</strong> 條</li>
+<li>live detection sweep <strong>35/35</strong>，重構前後各跑一次</li>
+<li><code>test_fresh_session.py</code> <strong>11/11</strong>，涵蓋 5 題與 6 題兩種形狀</li>
+</ul>
+<p>其中 live sweep 抓到了兩個<strong>潛伏的契約不一致</strong>——不是這次改動造成的，是本來就在那裡、只是沒人踩到。修法是從契約端修（vscode-extension 的 <code>build-tooling</code> 角色改成 additive、evidence 明確限定為 file-only），不是改測試讓它過。</p>
+<p>description 那一段也順手瘦了：11 行/100 字 → 9 行/約 85 字。作法跟上一篇一樣——刪掉本文已經講過的身分句，每個 mode 給恰好一個 trigger、各配一個中文例子。全部 16 條 trigger matrix 條目逐條走過，確認 <code>generated</code> 與 <code>endpoint descriptions</code> 這兩個詞真的在承重，留下。</p>
+<p>有一項誠實地沒打勾：互動式 Mode G 的實機測試，因為它需要一個真人受訪者。這件事寫在 PR 的 test plan 裡沒有假裝完成。</p>
+<h2>三層之間的關係</h2>
+<p>回頭看，三層保證各自擋掉一種腐壞，而且<strong>擋不住彼此的</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>腐壞</th>
+<th>保證</th>
+<th>機制</th>
+<th>誰有權放寬</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>長度會漲</td>
+<td>行數預算 + 棘輪</td>
+<td><code>verify.sh</code> 數行數，CI 紅燈</td>
+<td>改 <code>verify.sh</code>，diff 可見</td>
+</tr>
+<tr>
+<td>詞彙會漂</td>
+<td><code>CONTEXT.md</code> 裁決</td>
+<td>canonical + <code>_Avoid_</code> + 歧義紀錄</td>
+<td>只有使用者，headless 一律 pending</td>
+</tr>
+<tr>
+<td>正確性過期</td>
+<td>Fresh Session Test</td>
+<td>無上下文 agent + 引用驗證</td>
+<td>沒有人——通不過就是通不過</td>
+</tr>
+</tbody>
+</table>
+<p>有預算但沒有詞彙裁決，你會得到一份很短、但每個名詞都在漂的文件。有詞彙表但沒有驗收，你會得到一份自洽、但跟程式碼脫節的文件。三層都有，才是完整的。</p>
+<p>至於順序，我的判斷是先做<strong>驗收</strong>。行數預算和詞彙表都需要先知道文件到底哪裡沒用——Fresh Session Test 會直接告訴你。</p>
+<h2>可以照做的五步</h2>
+<p>不用整套搬過來，這五步各自獨立有效：</p>
+<ol>
+<li><strong>先跑一次假的 fresh session。</strong> 開一個沒有上下文的對話，只給它 repo，問那六題。答不出來的就是你的文件破口——這一步不需要任何工具。</li>
+<li><strong>量現在的行數，把它寫成上限。</strong> 不是訂一個理想值，是把<strong>今天的實際行數</strong>寫進 CI。之後只能往下改。</li>
+<li><strong>超過上限時先問「刪哪裡」。</strong> 答案通常是重複的段落，不是有用的內容。找那些同一份規則被抄了兩份的地方。</li>
+<li><strong>詞彙表只收會痛的詞。</strong> 叫錯了會造成真正工作損失的才值得一則條目。訂個約 80 行的上限，寫下 canonical 名稱、該避免的同義詞、以及裁決日期。</li>
+<li><strong>裁決留給人。</strong> agent 可以偵測漂移、可以提候選、可以給推薦，但「以後統一叫哪個」是人的決定。沒人拍板就誠實寫「待裁決」，不要自己填。</li>
+</ol>
+<p>第 1 步做完通常就會知道 2–5 要從哪裡開始。</p>
+<p>上一篇的結論是「Prompt 越刪越短的前提，是介面越做越硬」。換到文件上是同一件事：文件能維持可讀，前提是有東西在管它的長度、名字和正確性，而那個東西不能是自律。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://github.com/FWcloud916/skill-doc-architect/pull/1">skill-doc-architect PR #1：Grill-pruned SKILL.md, tightened trigger description, Mode G grilling, CONTEXT.md glossary module (2.4.0)</a></li>
+<li><a href="https://github.com/FWcloud916/skill-doc-architect">skill-doc-architect</a></li>
+<li><a href="https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models">Anthropic：The new rules of context engineering for Claude 5 generation models</a>（2026-07-24）</li>
+<li><a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/writing-great-skills/SKILL.md">mattpocock/skills：writing-great-skills</a></li>
+<li>本站前一篇：<a href="/posts/2026/2026-07-29-script-gated-skills/">Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪</a></li>
+</ul>
+
+  </div>
+</article>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

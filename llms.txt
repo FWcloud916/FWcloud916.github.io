@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test
+
+- Published: 2026-07-30T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-30-docs-need-ci/
+- Tags: ai, agent-skills, devops
+
+- Description: 一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。
+
+
 ### Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪
 
 - Published: 2026-07-29T00:00:00.000Z
