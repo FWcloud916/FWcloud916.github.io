@@ -84,6 +84,7 @@ source text is retained verbatim enough for row-level audit and future work.
 
 ### 2026-07-30
 
+- Commit `e8af147` — favicon/theme-color and About portrait implementation.
 - Added a geometric `FW` favicon set (SVG, multi-size ICO, 180×180 Apple
   Touch Icon) and configured the shared layout to emit the icon links and the
   blue-600 browser `theme-color` from site data.

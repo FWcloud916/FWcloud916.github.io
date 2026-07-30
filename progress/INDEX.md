@@ -9,7 +9,7 @@ workflow.
 
 | Status | Item | Folder | Scope | Ticket | Plan | Created | Notes |
 |---|---|---|---|---|---|---|---|
-| `in-progress` | FW Blog Roadmap | `progress/2026-07-27-fw-blog-roadmap/` | `site` | N/A | [fw-blog-roadmap-PROGRESS.md](_plans/fw-blog-roadmap-PROGRESS.md) | 2026-07-27 | Favicon/theme-color complete; Tier 1 continues |
+| `in-progress` | FW Blog Roadmap | `progress/2026-07-27-fw-blog-roadmap/` | `site` | N/A | [fw-blog-roadmap-PROGRESS.md](_plans/fw-blog-roadmap-PROGRESS.md) | 2026-07-27 | Favicon/theme-color `e8af147`; tests 69/69; Tier 1 continues |
 | `done` | Article Lottie Runtime | `progress/2026-07-30-article-lottie/` | `site` | N/A | N/A | 2026-07-30 | Runtime `4cf5400`; pilot `2875bea`; tests/build pass; not deployed |
 
 ## Status legend
