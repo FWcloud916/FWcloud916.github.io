@@ -1,0 +1,29 @@
+---
+layout: layouts/base.njk
+pagination:
+  data: topics
+  size: 1
+  alias: topic
+permalink: /topics/{{ topic.slug }}/
+eleventyComputed:
+  title: "{{ topic.title }}"
+  description: "{{ topic.description }}"
+---
+
+<nav aria-label="麵包屑" class="text-sm text-gray-600 mb-6">
+  <a href="/" class="hover:text-blue-600 transition">首頁</a>
+  <span aria-hidden="true"> / </span>
+  <a href="/topics/" class="hover:text-blue-600 transition">技術主題</a>
+  <span aria-hidden="true"> / </span>
+  <span aria-current="page">{{ topic.shortTitle }}</span>
+</nav>
+
+<h1 class="text-3xl font-bold mb-4">{{ topic.title }}</h1>
+<p class="text-lg text-gray-600 mb-8">{{ topic.description }}</p>
+
+{% set topicPosts = collections.posts | filterByUrls(topic.postUrls) %}
+<div class="space-y-6">
+{% for post in topicPosts %}
+  {% include "components/post-card.njk" %}
+{% endfor %}
+</div>

@@ -1,0 +1,40 @@
+[
+  {
+    "slug": "containers",
+    "title": "Docker、Podman 與容器技術",
+    "shortTitle": "容器技術",
+    "description": "從 Container、Image、Dockerfile 的基礎概念，一路理解 OCI、Rootless Docker、Podman 與正式環境的安全取捨。",
+    "postUrls": [
+      "/posts/2026/2026-07-21-what-is-containerization/",
+      "/posts/2026/2026-07-13-docker-basics-guide/",
+      "/posts/2020/2020-02-16-docker-basic-concept/",
+      "/posts/2020/2020-02-22-docker-basic-container/",
+      "/posts/2020/2020-03-08-docker-basic-image/",
+      "/posts/2020/2020-03-15-docker-basic-dockerfile/",
+      "/posts/2026/2026-07-21-production-rootless-docker/",
+      "/posts/2026/2026-07-21-podman-rootless-production/"
+    ]
+  },
+  {
+    "slug": "ai-agent-engineering",
+    "title": "AI Agent、Skill 與文件工程",
+    "shortTitle": "Agent 工程",
+    "description": "從專案文件、Agent Skill 設計與評測，到用 CI 和 script-gated workflow 把 AI 協作變成可驗證的工程流程。",
+    "postUrls": [
+      "/posts/2026/2026-07-22-documentation-for-ai-agents/",
+      "/posts/2026/2026-07-24-agent-skill-evolution/",
+      "/posts/2026/2026-07-29-script-gated-skills/",
+      "/posts/2026/2026-07-30-docs-need-ci/"
+    ]
+  },
+  {
+    "slug": "social-api-automation",
+    "title": "社群平台 API 與自動化",
+    "shortTitle": "社群 API",
+    "description": "整理 X、Facebook、Instagram、Threads 的 API 申請門檻、權限、費用、Token 生命週期與實際踩坑經驗。",
+    "postUrls": [
+      "/posts/2026/2026-07-13-social-platform-apis-2026/",
+      "/posts/2026/2026-07-20-meta-app-setup-pitfalls/"
+    ]
+  }
+]

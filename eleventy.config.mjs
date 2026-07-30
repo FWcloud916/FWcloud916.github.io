@@ -7,6 +7,9 @@ import {
   readingTime,
   seoDescription,
   seoTags,
+  filterByUrls,
+  topicsForPost,
+  relatedPosts,
   safeJson,
   assertNoSlugCollisions,
 } from "./lib/filters.mjs";
@@ -90,6 +93,9 @@ export default function(eleventyConfig) {
   eleventyConfig.addFilter("readingTime", readingTime);
   eleventyConfig.addFilter("seoDescription", seoDescription);
   eleventyConfig.addFilter("seoTags", seoTags);
+  eleventyConfig.addFilter("filterByUrls", filterByUrls);
+  eleventyConfig.addFilter("topicsForPost", topicsForPost);
+  eleventyConfig.addFilter("relatedPosts", relatedPosts);
   eleventyConfig.addFilter("safeJson", safeJson);
 
   eleventyConfig.addFilter("filterByTag", (posts, tag) => {

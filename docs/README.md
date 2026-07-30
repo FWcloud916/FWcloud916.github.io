@@ -163,15 +163,30 @@ Tags are automatically processed:
 2. Tag pages are auto-generated at `/tags/{tag}/`
 3. Tag list page available at `/tags/`
 
+### Curated Topics and Related Posts
+
+High-value reading paths are maintained in `src/_data/topics.json`. Each topic
+defines a stable `slug`, visible titles and description, plus an ordered
+`postUrls` list. The order in that list is the reading order rendered at
+`/topics/<slug>/`; use canonical root-relative post URLs and run `npm test`
+after changing it. Build tests fail when a topic references a missing post.
+
+The topic index is `/topics/`. Article pages link back to every curated topic
+that contains them and show up to three related articles selected only from the
+same topic. Shared tags determine recommendation priority, but they do not
+decide topic membership. Articles not assigned to a topic remain discoverable
+through `/archive/`, which lists every post.
+
 ### Navigation
 
 Edit `src/_includes/components/nav.njk`:
 
 ```html
-<ul class="flex gap-6">
-  <li><a href="/">Home</a></li>
-  <li><a href="/tags/">Tags</a></li>
-  <li><a href="/about/">About</a></li>
+<ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+  <li><a href="/">首頁</a></li>
+  <li><a href="/topics/">主題</a></li>
+  <li><a href="/archive/">文章</a></li>
+  <li><a href="/about/">關於</a></li>
   <!-- Add custom links -->
 </ul>
 ```

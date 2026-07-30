@@ -25,8 +25,9 @@ typography:
 rounded: { none: "0", sm: "0.25rem", lg: "0.5rem", full: "9999px" }
 spacing: { xs: "0.25rem", sm: "0.5rem", md: "1rem", lg: "1.5rem", xl: "2rem", xxl: "3rem" }
 components:
-  nav: { background: "{colors.surface}", shadow: "shadow-sm", link-color: "{colors.text-secondary}", link-hover: "{colors.text-primary}" }
+  nav: { background: "{colors.surface}", shadow: "shadow-sm", link-color: "{colors.text-secondary}", link-hover: "{colors.text-primary}", mobile-gap: "1rem", desktop-gap: "1.5rem" }
   card: { background: "{colors.surface}", rounded: "{rounded.lg}", shadow: "shadow-md", shadow-hover: "shadow-lg", padding: "{spacing.lg}" }
+  topic-card: { extends: "{components.card}", body: "description + article count link" }
   tag-chip-post: { background: "{colors.accent-surface}", color: "{colors.accent-text}", rounded: "{rounded.full}", padding: "{spacing.xs} 0.75rem", hover-background: "#bedbff" }
   tag-chip-card: { background: "{colors.chip-neutral-surface}", color: "{colors.text-muted}", rounded: "{rounded.sm}", padding: "{spacing.xs} {spacing.sm}", hover-background: "{colors.border}" }
   tag-chip-index: { background: "{colors.accent-surface}", color: "{colors.accent-text}", rounded: "{rounded.lg}", padding: "{spacing.sm} {spacing.md}", hover-background: "#bedbff" }
@@ -76,8 +77,10 @@ Three levels only: `shadow-sm` (nav bar) → `shadow-md` (cards, code blocks) �
 
 ## Components
 
-- **Nav** ([nav.njk](src/_includes/components/nav.njk)): white bar, `shadow-sm`, site title bold left, links right; hover transitions `text-gray-600 → text-gray-900` (title → `text-blue-600`).
+- **Nav** ([nav.njk](src/_includes/components/nav.njk)): white bar, `shadow-sm`, site title bold left, links right; hover transitions `text-gray-600 → text-gray-900` (title → `text-blue-600`). The four links are 首頁／主題／文章／關於; mobile uses `gap-4 text-sm`, returning to `gap-6 text-base` at `sm`.
 - **Post card** ([post-card.njk](src/_includes/components/post-card.njk)): white, `rounded-lg shadow-md hover:shadow-lg transition`, `p-6`; title, date + reading-time row, description (or 150-char truncation), neutral tag chips.
+- **Topic card** ([topics-list.njk](src/topics-list.njk)): reuses the post-card surface/elevation and presents a curated topic description plus its current article count. Topic detail and archive pages reuse `post-card.njk` instead of creating another article-list style.
+- **Related posts** ([post.njk](src/_includes/layouts/post.njk)): a separate `延伸閱讀` section after the article body, containing up to three existing post cards from the same curated topic.
 - **Tag chips**: three context variants (see `components` tokens); all get `transition` and a slightly darker background on hover; label is `#{{ tag }}`.
 - **Code block**: One Dark background, `rounded-lg shadow-md`, `padding: 1rem` — enforced with `!important` in `input.css` to beat `.prose`; do not restyle via prose classes.
 - **Article Lottie**: a 16:9 `rounded-lg shadow-md` stage using the static poster as its default surface; the local SVG player replaces it only after successful initialization. Controls use blue-600 on white, `rounded-lg`, and visible focus rings. The caption stays in the normal gray text hierarchy.

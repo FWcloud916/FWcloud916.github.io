@@ -81,6 +81,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 - **One author entity**: visible article bylines, `BlogPosting.author`, the About page's `ProfilePage` schema, and external profile links share the stable `https://imfw.io/about/#person` identity.
 - **Honest freshness signals**: posts MAY define `updated`; the visible date, Open Graph metadata, `BlogPosting.dateModified`, sitemap `lastmod`, and `llms.txt` all use it. It MUST NOT precede `date` or be changed without a substantive content update.
 - **Chinese-safe URLs**: the built-in `slug` filter is overridden (via [lib/filters.mjs](../lib/filters.mjs) `toSlug`) to transliterate Chinese via pinyin-pro; without it, CJK tags slugify to empty strings and collide. Tags whose slugs collide anyway (case variants, homophones) or come out empty **fail the build** (`assertNoSlugCollisions`, called from the `tagList` collection).
+- **Curated discovery paths**: [src/_data/topics.json](../src/_data/topics.json) explicitly orders the posts in each high-value topic. Topic membership is not inferred from broad tags; article pages link back to their topics and recommend up to three same-topic posts. `/archive/` provides a direct crawlable link to every post, including standalone articles outside a topic.
 - **CSS builds after Eleventy**: `npm run build` runs `build:11ty` then `build:css` because Tailwind writes directly into `_site/assets/css/`.
 
 ## 4. Directory Structure
@@ -109,6 +110,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 ├── src/
 │   ├── _data/site.json        # global site metadata ({{ site.* }} in templates)
 │   ├── _data/build.mjs        # build version ({{ build.version }}): git short hash for CSS cache-busting
+│   ├── _data/topics.json      # curated topic metadata + ordered canonical post URLs
 │   ├── _includes/
 │   │   ├── layouts/base.njk   # HTML shell: SEO/social metadata, JSON-LD, nav, footer, optional integrations
 │   │   ├── layouts/post.njk   # article layout: title, date, reading time, tag chips
@@ -123,6 +125,9 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   │   ├── posts.json         # directory data: default layout, "posts" tag, article marker
 │   │   └── <year>/*.md        # posts, filenames YYYY-MM-DD-slug.md
 │   ├── index.njk              # homepage: 10 newest posts
+│   ├── archive.njk            # all posts at /archive/
+│   ├── topics-list.njk        # curated topic index at /topics/
+│   ├── topics.njk             # paginated topic detail pages
 │   ├── about.md               # /about/
 │   ├── 404.md                 # /404.html (GitHub Pages picks it up)
 │   ├── tags.njk               # paginated per-tag pages at /tags/<slug>/
@@ -175,6 +180,8 @@ No database — the "domain model" is the content model: Markdown files + frontm
 
 **Tag** — not a file; derived by the `tagList` collection from all post frontmatter (excluding `posts`). URL: `/tags/{{ tag | slug }}/`.
 
+**Topic** — an object in [src/_data/topics.json](../src/_data/topics.json) with `slug`, `title`, `shortTitle`, `description`, and an ordered `postUrls` array. A post MAY belong to more than one topic. Topic pages preserve the explicit URL order; related-post selection stays within shared topics, ranks candidates by shared public tags and publication date, and excludes the current article.
+
 **Site metadata** — [src/_data/site.json](../src/_data/site.json): site and author identity, display values, browser `themeColor`, IndexNow key, Google/Bing verification tokens, and analytics ID. Empty optional verification/analytics values keep their snippets disabled.
 
 **Build version** — [src/_data/build.mjs](../src/_data/build.mjs): exposes `{{ build.version }}` (git short hash of HEAD; falls back to a timestamp when git is unavailable). `base.njk` appends it as `?v=` to both CSS links so a deploy bypasses the CDN's 4-hour `max-age` cache; rebuilding the same commit keeps the same URL.
@@ -189,6 +196,9 @@ Static HTML site — the "interface" is the generated URL surface:
 |---|---|---|
 | `/` | src/index.njk | homepage, 10 newest posts |
 | `/posts/<year>/<YYYY-MM-DD-slug>/` | src/posts/`<year>`/*.md | individual posts — default Eleventy permalink mirrors the file path, date prefix included (verified: `/posts/2019/2019-03-19-nvm-install/`) |
+| `/archive/` | src/archive.njk | all posts, newest first; complete crawlable article inventory |
+| `/topics/` | src/topics-list.njk | manually curated topic index |
+| `/topics/<slug>/` | src/topics.njk | ordered reading path for one curated topic |
 | `/tags/` | src/tags-list.njk | all tags with post counts |
 | `/tags/<slug>/` | src/tags.njk | per-tag post list (pagination over `tagList`, size 1) |
 | `/about/` | src/about.md | about page |
@@ -208,7 +218,7 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/favicon.svg`, `/favicon.ico` | src/assets/icons | browser favicon set, passthrough-copied to the site root |
 | `/apple-touch-icon.png` | src/assets/icons | 180×180 Apple home-screen icon |
 
-Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription` (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD serialization), `filterByTag`, `limit`, `slug` (pinyin override); plugin `eleventyImageTransformPlugin` (responsive images from plain `<img>`/markdown). Filter logic lives in [lib/filters.mjs](../lib/filters.mjs).
+Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription` (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD serialization), `filterByTag`, `filterByUrls`, `topicsForPost`, `relatedPosts`, `limit`, `slug` (pinyin override); plugin `eleventyImageTransformPlugin` (responsive images from plain `<img>`/markdown). Filter logic lives in [lib/filters.mjs](../lib/filters.mjs).
 
 ## 7. Background Jobs & Scheduled Tasks
 

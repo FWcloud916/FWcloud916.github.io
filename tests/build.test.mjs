@@ -7,9 +7,11 @@ import { ROOT, SITE_DIR, loadPosts, newestPost, escapeHtml } from "./helpers.mjs
 
 // 跑完整 production build 後對 _site/ 產物做 smoke 檢查
 const posts = loadPosts();
+const topics = JSON.parse(fs.readFileSync(path.join(ROOT, "src", "_data", "topics.json"), "utf8"));
 const read = (p) => fs.readFileSync(path.join(SITE_DIR, p), "utf8");
 const exists = (p) => fs.existsSync(path.join(SITE_DIR, p));
 const postOutputPath = (post) => post.file.replace(/^src\//, "").replace(/\.md$/, "/index.html");
+const postUrl = (post) => `/${postOutputPath(post).replace(/index\.html$/, "")}`;
 const jsonLd = (html) => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
   .map((match) => JSON.parse(match[1]));
 
@@ -24,6 +26,42 @@ describe("build output", () => {
 
   it("首頁包含最新一篇文章", () => {
     expect(read("index.html")).toContain(escapeHtml(newestPost(posts).data.title));
+  });
+
+  it("主題入口與文章彙整頁提供完整的站內探索路徑", () => {
+    const home = read("index.html");
+    expect(home).toContain('href="/topics/"');
+    expect(home).toContain('href="/archive/"');
+
+    const topicIndex = read("topics/index.html");
+    const archive = read("archive/index.html");
+    for (const topic of topics) {
+      expect(topicIndex).toContain(`href="/topics/${topic.slug}/"`);
+      expect(topicIndex).toContain(escapeHtml(topic.description));
+
+      const topicPage = read(`topics/${topic.slug}/index.html`);
+      for (const url of topic.postUrls) {
+        const post = posts.find((item) => postUrl(item) === url);
+        expect(post, `主題 ${topic.slug} 引用了不存在的文章 ${url}`).toBeTruthy();
+        expect(topicPage).toContain(`href="${url}"`);
+        expect(topicPage).toContain(escapeHtml(post.data.title));
+      }
+    }
+
+    for (const post of posts) {
+      expect(archive, `彙整頁缺少 ${postUrl(post)}`).toContain(`href="${postUrl(post)}"`);
+    }
+  });
+
+  it("主題文章會連回主題入口並提供同主題延伸閱讀", () => {
+    const topic = topics.find((item) => item.postUrls.length > 1);
+    const currentUrl = topic.postUrls[0];
+    const currentPost = posts.find((post) => postUrl(post) === currentUrl);
+    const html = read(postOutputPath(currentPost));
+
+    expect(html).toContain(`href="/topics/${topic.slug}/"`);
+    expect(html).toContain("延伸閱讀");
+    expect(topic.postUrls.slice(1).some((url) => html.includes(`href="${url}"`))).toBe(true);
   });
 
   it("404 頁、llms.txt 存在", () => {

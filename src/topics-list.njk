@@ -1,0 +1,24 @@
+---
+layout: layouts/base.njk
+title: 技術主題
+permalink: /topics/
+description: 依學習路線瀏覽 FW Blog 的容器技術、AI Agent 工程與社群平台 API 系列文章。
+---
+
+<h1 class="text-3xl font-bold mb-4">技術主題</h1>
+<p class="text-lg text-gray-600 mb-8">從主題入口依序閱讀基礎概念、實作方法與進階取捨。</p>
+
+<div class="space-y-6">
+{% for topic in topics %}
+  {% set topicPosts = collections.posts | filterByUrls(topic.postUrls) %}
+  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+    <h2 class="text-2xl font-bold mb-2">
+      <a href="/topics/{{ topic.slug }}/" class="text-gray-900 hover:text-blue-600 transition">{{ topic.title }}</a>
+    </h2>
+    <p class="text-gray-700 mb-4">{{ topic.description }}</p>
+    <a href="/topics/{{ topic.slug }}/" class="text-blue-600 hover:text-blue-800 transition">
+      查看 {{ topicPosts.length }} 篇文章<span aria-hidden="true"> →</span>
+    </a>
+  </article>
+{% endfor %}
+</div>

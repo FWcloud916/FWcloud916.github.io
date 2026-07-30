@@ -4,6 +4,9 @@ import {
   readingTime,
   seoDescription,
   seoTags,
+  filterByUrls,
+  topicsForPost,
+  relatedPosts,
   safeJson,
   assertNoSlugCollisions,
 } from "../lib/filters.mjs";
@@ -76,6 +79,30 @@ describe("seoDescription", () => {
 describe("seoTags", () => {
   it("排除 Eleventy 內部 posts tag", () => {
     expect(seoTags(["posts", "Docker", "工具"])).toEqual(["Docker", "工具"]);
+  });
+});
+
+describe("人工策展主題", () => {
+  const posts = [
+    { url: "/posts/new/", date: new Date("2026-07-30"), data: { tags: ["posts", "Docker"] } },
+    { url: "/posts/old/", date: new Date("2020-01-01"), data: { tags: ["posts", "Docker", "Image"] } },
+    { url: "/posts/other/", date: new Date("2026-07-29"), data: { tags: ["posts", "api"] } },
+  ];
+  const topics = [{ slug: "containers", postUrls: ["/posts/old/", "/posts/new/"] }];
+
+  it("filterByUrls 依策展清單順序回傳文章，並略過不存在的 URL", () => {
+    expect(filterByUrls(posts, ["/posts/old/", "/missing/", "/posts/new/"]))
+      .toEqual([posts[1], posts[0]]);
+  });
+
+  it("topicsForPost 找出文章所屬主題", () => {
+    expect(topicsForPost(topics, "/posts/new/")).toEqual(topics);
+    expect(topicsForPost(topics, "/posts/other/")).toEqual([]);
+  });
+
+  it("relatedPosts 只挑同主題文章，並排除目前文章", () => {
+    expect(relatedPosts(posts, "/posts/new/", topics, 3)).toEqual([posts[1]]);
+    expect(relatedPosts(posts, "/posts/other/", topics, 3)).toEqual([]);
   });
 });
 
