@@ -41,4 +41,46 @@
   .prose pre[class*="language-"] code {
     background-color: transparent !important;
   }
+
+  /* 文章 Lottie：16:9 舞台先由 poster 佔位，避免播放器載入時版面跳動 */
+  .prose .article-lottie {
+    @apply my-8;
+  }
+
+  .article-lottie__stage {
+    @apply relative overflow-hidden rounded-lg bg-gray-100 shadow-md;
+    aspect-ratio: 16 / 9;
+  }
+
+  .article-lottie__stage > img,
+  .article-lottie__poster,
+  .article-lottie__animation {
+    @apply absolute inset-0 h-full w-full;
+  }
+
+  .article-lottie__stage > img,
+  .article-lottie__poster {
+    @apply object-contain;
+  }
+
+  .article-lottie__animation svg {
+    @apply block h-full w-full;
+  }
+
+  .article-lottie__stage > img[hidden],
+  .article-lottie__animation[hidden] {
+    display: none;
+  }
+
+  .article-lottie__controls {
+    @apply mt-3 flex items-center gap-2;
+  }
+
+  .article-lottie__control {
+    @apply rounded-lg border border-blue-600 bg-white px-3 py-2 text-sm text-blue-600 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2;
+  }
+
+  .prose .article-lottie figcaption {
+    @apply mt-3 text-sm text-gray-600;
+  }
 }

@@ -40,8 +40,13 @@ export default function(eleventyConfig) {
   // Passthrough Copy
   eleventyConfig.addPassthroughCopy("CNAME");
   eleventyConfig.addPassthroughCopy("src/assets/images");
+  eleventyConfig.addPassthroughCopy("src/assets/js");
+  eleventyConfig.addPassthroughCopy("src/assets/lottie");
   eleventyConfig.addPassthroughCopy({
     "node_modules/prism-themes/themes/prism-one-dark.css": "assets/css/prism-one-dark.css"
+  });
+  eleventyConfig.addPassthroughCopy({
+    "node_modules/lottie-web/build/player/lottie_light.min.js": "assets/js/lottie-light-5.13.0.min.js"
   });
 
   // Watch targets

@@ -2,7 +2,7 @@
 
 > **Type:** Explanation
 > **Audience:** Developers, AI assistants, and any tooling that needs project context
-> **Last updated:** 2026-07-21
+> **Last updated:** 2026-07-30
 >
 > Static personal blog (imfw.io) built with Eleventy 3 and Tailwind CSS v4, deployed to GitHub Pages. Related docs: [README.md](README.md) (how-tos), [../DESIGN.md](../DESIGN.md) (design system), [../AGENTS.md](../AGENTS.md) (agent guide).
 
@@ -15,6 +15,7 @@
 - Publish blog posts written in Markdown (Traditional Chinese content about web development and technology) at https://imfw.io.
 - Generate per-tag pages, an all-tags index, an Atom feed (`/feed.xml`), a sitemap (`/sitemap.xml`), crawler rules (`/robots.txt`), and an `llms.txt` (`/llms.txt`) for LLM crawlers.
 - Optimize images at build time (responsive sizes, WebP) via `eleventyImageTransformPlugin` — posts use plain markdown `![alt](/assets/images/…)`.
+- Progressively enhance approved article figures with local, same-origin Lottie JSON while retaining a static poster for no-JavaScript, reduced-motion, and error fallbacks.
 
 ### 1.2 Relationship with Other Systems
 
@@ -42,6 +43,7 @@
 | @11ty/eleventy-plugin-rss | 3.0.0 | Atom feed filters (`dateToRfc3339`, `absoluteUrl`, …) |
 | @11ty/eleventy-plugin-syntaxhighlight | 5.0.2 | Prism.js syntax highlighting at build time |
 | prism-themes | 1.9.0 | Prism One Dark CSS (passthrough-copied from node_modules) |
+| lottie-web | 5.13.0 | pinned local light/SVG article-animation player, loaded on demand |
 | luxon | 3.7.2 | date formatting filters |
 | pinyin-pro | 3.28.1 | Chinese→pinyin transliteration for the custom `slug` filter |
 | npm-run-all | 4.1.5 | runs the two watch processes in parallel (`npm start`) |
@@ -72,7 +74,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 
 ### Key Principles
 
-- **Build-time everything**: images, syntax highlighting, feeds are generated at build; the deployed site is pure static files with no client-side JS (except the optional GA snippet).
+- **Static-first output**: images, syntax highlighting, and feeds are generated at build. Article Lottie is optional progressive enhancement: every animation keeps a meaningful poster, while a small post bootstrap loads the local player only when an eligible figure is present and motion is allowed.
 - **Data flows from `src/_data/site.json`**: templates MUST read site metadata as `{{ site.* }}`, never hardcode it.
 - **Directory data over frontmatter**: [src/posts/posts.json](../src/posts/posts.json) supplies `layout: layouts/post.njk` and the `posts` tag to every post — individual posts do not repeat them.
 - **One SEO source of truth**: [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) builds canonical URLs, robots directives, Open Graph/X cards, and JSON-LD from page data plus `site.json`. Article descriptions prefer frontmatter, then a normalized 160-character content excerpt, then the site description; social images prefer per-post `socialImage`, then `site.socialImage`.
@@ -113,7 +115,9 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   │   └── components/        # nav.njk (top bar), post-card.njk (list-item card)
 │   ├── assets/
 │   │   ├── css/input.css      # Tailwind v4 entry + prose/Prism overrides (THE Tailwind config)
-│   │   └── images/            # static images (passthrough-copied)
+│   │   ├── images/            # static images and Lottie posters (passthrough-copied)
+│   │   ├── js/                # article Lottie bootstrap (passthrough-copied)
+│   │   └── lottie/            # approved article Lottie JSON (passthrough-copied)
 │   ├── posts/
 │   │   ├── posts.json         # directory data: default layout, "posts" tag, article marker
 │   │   └── <year>/*.md        # posts, filenames YYYY-MM-DD-slug.md
@@ -197,6 +201,9 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/assets/css/prism-one-dark.css` | passthrough from node_modules/prism-themes | code-block theme; linked with `?v=<git short hash>` |
 | `/assets/img/…` | eleventy-img output | optimized images (webp + jpeg; 300/600/1200 px) |
 | `/assets/images/…` | passthrough of src/assets/images | raw static images |
+| `/assets/lottie/…` | passthrough of src/assets/lottie | approved same-origin article Lottie JSON and optional sibling PNG/JPEG assets |
+| `/assets/js/article-lottie.js` | passthrough of src/assets/js | post bootstrap; validates figures and conditionally loads the player |
+| `/assets/js/lottie-light-5.13.0.min.js` | passthrough from pinned lottie-web | light SVG player, fetched only by eligible article figures |
 
 Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription` (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD serialization), `filterByTag`, `limit`, `slug` (pinyin override); plugin `eleventyImageTransformPlugin` (responsive images from plain `<img>`/markdown). Filter logic lives in [lib/filters.mjs](../lib/filters.mjs).
 
@@ -213,9 +220,10 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 | Google Search Console | DNS ownership verification; optional HTML-meta hook in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) | verified through DNS; sitemap submitted; HTML token intentionally empty |
 | Bing Webmaster Tools | same layout, keyed by `site.bingSiteVerification` | verified; sitemap submitted |
 | Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-QBS6V0SVT1`) |
+| lottie-web | local npm dependency and post bootstrap | active only on article pages containing an approved Lottie figure |
 | IndexNow | [scripts/submit-indexnow.mjs](../scripts/submit-indexnow.mjs), called by deploy workflow | active after deploy; non-blocking notification |
 
-The deployed static pages make no runtime API calls other than GA; IndexNow runs only in CI after deployment.
+The deployed pages make no runtime API calls other than GA and same-origin Lottie JSON/player requests on eligible article pages; IndexNow runs only in CI after deployment.
 
 ## 9. Database / Data Stores
 

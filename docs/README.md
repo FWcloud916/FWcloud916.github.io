@@ -2,7 +2,7 @@
 
 > **Type:** How-to guides
 > **Audience:** Developers and AI assistants working on the blog
-> **Last updated:** 2026-07-21
+> **Last updated:** 2026-07-30
 
 Complete documentation for the FW Blog.
 
@@ -261,6 +261,38 @@ eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
   defaultAttributes: { loading: "lazy", decoding: "async", sizes: "…" },
 });
 ```
+
+### Article Lottie Animations
+
+Article animations are progressive enhancements, not replacements for readable static content. Put reviewed JSON in `src/assets/lottie/`, put its 1200×675 poster in `src/assets/images/`, and add this raw HTML contract to the post:
+
+```html
+<figure class="article-lottie"
+        data-lottie-src="/assets/lottie/example.json">
+  <div class="article-lottie__stage"
+       role="img"
+       aria-label="Describe the complete meaning of the animation.">
+    <img eleventy:ignore
+         src="/assets/images/example-poster.jpg"
+         alt="Describe the complete meaning of the animation."
+         width="1200"
+         height="675"
+         loading="lazy"
+         decoding="async">
+  </div>
+  <figcaption>Brief visible caption.</figcaption>
+</figure>
+```
+
+Requirements:
+
+- `data-lottie-src` MUST be a root-relative `.json` URL under `/assets/lottie/`. Absolute URLs, query strings, and path traversal are rejected.
+- Article v1 JSON MUST be 1200×675 at 24 FPS, 4–12 seconds long, and no larger than 1 MB. A post MAY contain at most two animations.
+- A Lottie image asset MAY use a bare `.png`, `.jpg`, or `.jpeg` filename stored beside its JSON. Its `u` MUST be absent, empty, or `./`; its `e` MUST be absent or `0`. URLs, path separators/traversal, embedded assets, other extensions, and more than 5 MB of local images are rejected.
+- The stage MUST have `role="img"` and a complete `aria-label`; the poster MUST use the same meaningful `alt` and `eleventy:ignore` so the image transform does not replace the fallback.
+- Keep a non-empty `figcaption`. The poster remains visible when JavaScript or the player fails and whenever the visitor requests reduced motion.
+- The post layout loads only the small `article-lottie.js` bootstrap. It loads the pinned local light/SVG player and JSON after finding an eligible figure; animations play once on entry, pause offscreen, resume on return, and expose play/pause/replay controls.
+- Lottie fonts are remapped in memory to the site's existing `Huninn` webfont. Do not add remote font paths to JSON.
 
 ### RSS Feed
 

@@ -33,6 +33,7 @@ components:
   code-block: { background: "{colors.code-block-background}", rounded: "{rounded.lg}", shadow: "shadow-md", padding: "{spacing.md}" }
   inline-code: { background: "{colors.chip-neutral-surface}", rounded: "{rounded.sm}", fontSize: "{typography.caption.fontSize}" }
   info-banner: { background: "{colors.info-surface}", border: "1px solid #bedbff", rounded: "{rounded.lg}", color: "{colors.accent-text}", padding: "{spacing.lg}" }
+  article-lottie: { background: "{colors.chip-neutral-surface}", rounded: "{rounded.lg}", shadow: "shadow-md", aspectRatio: "16 / 9", control: "blue-600 on white" }
 ---
 # FW Blog Design System
 
@@ -79,11 +80,12 @@ Three levels only: `shadow-sm` (nav bar) → `shadow-md` (cards, code blocks) �
 - **Post card** ([post-card.njk](src/_includes/components/post-card.njk)): white, `rounded-lg shadow-md hover:shadow-lg transition`, `p-6`; title, date + reading-time row, description (or 150-char truncation), neutral tag chips.
 - **Tag chips**: three context variants (see `components` tokens); all get `transition` and a slightly darker background on hover; label is `#{{ tag }}`.
 - **Code block**: One Dark background, `rounded-lg shadow-md`, `padding: 1rem` — enforced with `!important` in `input.css` to beat `.prose`; do not restyle via prose classes.
-- **Interaction rule**: every hover state uses the `transition` utility; there are no buttons or form inputs yet — when adding one, use the primary blue on white with `rounded-lg`.
+- **Article Lottie**: a 16:9 `rounded-lg shadow-md` stage using the static poster as its default surface; the local SVG player replaces it only after successful initialization. Controls use blue-600 on white, `rounded-lg`, and visible focus rings. The caption stays in the normal gray text hierarchy.
+- **Interaction rule**: every hover state uses the `transition` utility. Buttons use the primary blue on white with `rounded-lg`; keyboard focus MUST remain visible.
 
 ## Responsive Behavior
 
-Mobile-first with Tailwind defaults; the layout is a fluid single column capped at `max-w-4xl`, so there are almost no breakpoint utilities in the templates. Images from the `image` shortcode are responsive (300/600/1200 px, `sizes` attribute).
+Mobile-first with Tailwind defaults; the layout is a fluid single column capped at `max-w-4xl`, so there are almost no breakpoint utilities in the templates. Images from the image transform are responsive (300/600/1200 px, `sizes` attribute). Article Lottie stages keep a fluid 16:9 aspect ratio and never require horizontal scrolling.
 
 ## Do's and Don'ts
 

@@ -146,6 +146,14 @@ describe("build output", () => {
     expect(home).toMatch(/href="\/assets\/css\/prism-one-dark\.css\?v=[0-9a-z]+"/);
   });
 
+  it("文章載入輕量 bootstrap，Lottie heavy player 由本站提供", () => {
+    const post = read(postOutputPath(newestPost(posts)));
+    expect(post).toMatch(/<script type="module" src="\/assets\/js\/article-lottie\.js\?v=[0-9a-z]+"><\/script>/);
+    expect(read("index.html")).not.toContain("article-lottie.js");
+    expect(exists("assets/js/article-lottie.js")).toBe(true);
+    expect(exists("assets/js/lottie-light-5.13.0.min.js")).toBe(true);
+  });
+
   it("每個 tag 都有對應的 tag 頁", () => {
     expect(exists("tags/index.html")).toBe(true);
     const tags = new Set(posts.flatMap((p) => p.data.tags ?? []));
