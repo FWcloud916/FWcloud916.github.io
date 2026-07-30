@@ -66,23 +66,41 @@ source text is retained verbatim enough for row-level audit and future work.
 - [ ] Monitor Search Console sitemap processing and indexing results. _(external/manual — not code-verifiable; still open)_
 - [ ] Rescan Bing SEO/GEO signals after deployment. _(external/manual — not code-verifiable; still open)_
 - [x] Add a favicon set and `theme-color`. _(FW monogram SVG/ICO/Apple Touch Icon; blue browser theme color; build-tested)_
-- [ ] Add `BreadcrumbList` JSON-LD and breadcrumb UI. _(confirmed missing — no match in `src/`, `lib/`, `eleventy.config.mjs`)_
+- [ ] Add `BreadcrumbList` JSON-LD and breadcrumb UI. _(partially done: curated topic detail pages now have visible breadcrumbs; article breadcrumbs and JSON-LD remain)_
 - [ ] Add heading anchor IDs via `markdown-it-anchor`. _(confirmed missing — no dependency, no config reference)_
 - [ ] Add resource hints and skip Prism CSS on code-free pages. _(partially done: Google Fonts `preconnect`/`display=swap` exists in `base.njk`; still missing `googletagmanager` preconnect, CSS `preload`, and conditional Prism loading)_
 - [ ] Backfill `description` and `updated` for `2019-03-19-nvm-install.md`. _(confirmed missing — frontmatter has only `title`/`date`/`tags`)_
-- [ ] Add frontmatter-driven `FAQPage`/`HowTo` schema. _(confirmed missing — no match anywhere)_
+- [ ] Add frontmatter-driven `FAQPage`/`HowTo` schema. _(deprioritized: Google deprecated How-to rich results and generally limits FAQ rich results to authoritative government/health sites; only revisit for a non-Google consumer or a demonstrable use case)_
 - [ ] Upgrade `BlogPosting` publisher/image structured data. _(confirmed unchanged — `base.njk:104-107` publisher is still `"@type": "Person"`, `image` is still a plain URL string, not `ImageObject`)_
 - [ ] Generate `llms-full.txt`. _(confirmed missing — `src/llms.njk` only emits `/llms.txt`, index-only: title/date/tags/one-line description per post)_
 - [ ] Strengthen author `sameAs` after profile URLs are supplied. _(confirmed unchanged — `site.authorSameAs` in `src/_data/site.json` still has only the GitHub URL; blocked on user supplying more profile URLs)_
-- [ ] Add related posts and link orphan posts into a cluster. _(confirmed missing — no "related" module in `src/` or `lib/`)_
-- [ ] Add `/archive/` and evaluate Pagefind as content grows. _(confirmed missing — no archive page, no `pagefind` dependency)_
+- [x] Add related posts and eliminate orphan discovery paths. _(commit `627c6b8`: three curated topic hubs cover 14/15 posts; article pages link back to their topic and show up to three same-topic recommendations; standalone NVM remains intentionally unthemed but is directly linked from `/archive/`)_
+- [x] Add `/archive/` and evaluate Pagefind as content grows. _(commit `627c6b8`: complete archive shipped; Pagefind deferred at 15 posts until inventory or observed navigation demand justifies search)_
 - [ ] Write unique tag-page descriptions. _(confirmed still templated — `src/tags.njk` generates the same "瀏覽 FW Blog 中與 {{ tag }} 相關的文章。" for every tag)_
-- [ ] Plan a second content pillar cluster. _(partially overtaken by events: post count grew 7→12 since the 2026-07-13 audit, with a 3rd emerging cluster — AI agent/documentation, 2 posts tagged `ai`/`agent-skills` — alongside Docker (~8 posts) and social-API automation (2-3 posts); still thin, so left open)_
+- [x] Plan a second content pillar cluster. _(commit `627c6b8`: manually curated Docker/containers, AI Agent engineering, and social API automation reading paths now make the three existing pillars explicit; future posts extend the ordered URL lists)_
 - [ ] Update matching `tests/build.test.mjs` assertions with every SEO implementation. _(standing practice, not a one-off item — no existing assertions found for any of the unimplemented items above, so nothing to reconcile yet)_
 
 ## Work log
 
 ### 2026-07-30
+
+- Commit `627c6b8` — curated SEO discovery paths.
+- Added `/topics/` with three hand-curated reading paths and ordered canonical
+  post URL lists: containers (8), AI Agent engineering (4), and social API
+  automation (2). Topic membership is explicit rather than inferred from broad
+  tags.
+- Added reciprocal topic links and up to three same-topic related cards on
+  article pages. Added `/archive/` as a complete crawlable inventory, so the
+  standalone NVM article also has a stable internal entry point.
+- Replaced the nav's tag shortcut with 主題 and added 文章. The tag index and
+  per-tag URLs remain available through article/card chips.
+- Added filter units and build assertions for curated order, valid post URLs,
+  topic backlinks, related posts, full archive coverage, and nav entry points.
+  Documentation impact reviewed and synchronized across DESIGN.md,
+  docs/README.md, and docs/project-overview.md.
+- Verification: `npm test` passes 74/74. Chrome checks passed at desktop and
+  390×844: no horizontal overflow, topic counts/order and article related links
+  are correct, and the console has no errors.
 
 - Commit `e8af147` — favicon/theme-color and About portrait implementation.
 - Added a geometric `FW` favicon set (SVG, multi-size ICO, 180×180 Apple
