@@ -55,8 +55,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=776f687">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=776f687">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=1a3aefe">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1a3aefe">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -135,7 +135,7 @@
       <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
       <span>發布：<time datetime="2026-07-30T00:00:00.000Z">2026年07月30日</time></span>
       
-      <span>15 分鐘閱讀</span>
+      <span>16 分鐘閱讀</span>
     </div>
     
     <div class="mt-4 flex flex-wrap gap-2">
@@ -188,7 +188,12 @@ report <span class="token string">"<span class="token variable"><span class="tok
 <p>這跟「我們盡量維持文件精簡」的差別在哪？差在<strong>放寬的成本</strong>。</p>
 <p>自律的版本裡，多寫十行不需要任何人同意，甚至不會有人發現。棘輪的版本裡，多寫十行會讓 CI 紅，你得先把 <code>verify.sh</code> 那條 216 行的檢查改掉才過得去。</p>
 <p>改那個數字是兩秒鐘的事，技術難度幾乎是零。但那個改動會進 diff、會被 reviewer 看到、會被問為什麼。真正被提高的不是門檻，是<strong>可見度</strong>——文件變長從靜默發生，變成一個要具名負責的決定。</p>
-<p><picture><source type="image/webp" srcset="/assets/img/8FopIlZDdN-300.webp 300w, /assets/img/8FopIlZDdN-600.webp 600w, /assets/img/8FopIlZDdN-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/8FopIlZDdN-300.jpeg" alt="行數預算從 225 行的舊上限降到 216 行並鎖定，往下由重構帶動，要漲回去必須修改 verify.sh 而會出現在 diff 被 review 看見" width="1200" height="800" srcset="/assets/img/8FopIlZDdN-300.jpeg 300w, /assets/img/8FopIlZDdN-600.jpeg 600w, /assets/img/8FopIlZDdN-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<figure class="article-lottie" data-lottie-src="/assets/lottie/docs-need-ci-line-budget-ratchet.json">
+  <div class="article-lottie__stage" role="img" aria-label="行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。">
+    <img src="/assets/images/docs-need-ci-line-budget-ratchet-poster.jpg" alt="行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。" loading="lazy" decoding="async">
+  </div>
+  <figcaption>行數預算一旦下降，放寬就必須留下可 review 的 diff。</figcaption>
+</figure>
 <p>這也解釋了為什麼加模組還能變短。當長度是會紅的數字，新增內容就不再是「往後面加一段」，而是一道必須先回答的題目：這 9 行要從哪裡挪出來？</p>
 <p>這次挪出來的地方很具體，三個都是同一種病：<strong>同一份規則被抄了兩份</strong>。</p>
 <ul>
@@ -425,6 +430,8 @@ is always one of them.></code></pre>
 
   </div>
 </article>
+
+<script type="module" src="/assets/js/article-lottie.js?v=1a3aefe"></script>
 
   </main>
 

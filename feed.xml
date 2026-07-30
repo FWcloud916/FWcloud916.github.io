@@ -39,7 +39,12 @@ report &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;tok
 &lt;p&gt;這跟「我們盡量維持文件精簡」的差別在哪？差在&lt;strong&gt;放寬的成本&lt;/strong&gt;。&lt;/p&gt;
 &lt;p&gt;自律的版本裡，多寫十行不需要任何人同意，甚至不會有人發現。棘輪的版本裡，多寫十行會讓 CI 紅，你得先把 &lt;code&gt;verify.sh&lt;/code&gt; 那條 216 行的檢查改掉才過得去。&lt;/p&gt;
 &lt;p&gt;改那個數字是兩秒鐘的事，技術難度幾乎是零。但那個改動會進 diff、會被 reviewer 看到、會被問為什麼。真正被提高的不是門檻，是&lt;strong&gt;可見度&lt;/strong&gt;——文件變長從靜默發生，變成一個要具名負責的決定。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/docs-need-ci-line-budget-ratchet-v3.png&quot; alt=&quot;行數預算從 225 行的舊上限降到 216 行並鎖定，往下由重構帶動，要漲回去必須修改 verify.sh 而會出現在 diff 被 review 看見&quot; /&gt;&lt;/p&gt;
+&lt;figure class=&quot;article-lottie&quot; data-lottie-src=&quot;/assets/lottie/docs-need-ci-line-budget-ratchet.json&quot;&gt;
+  &lt;div class=&quot;article-lottie__stage&quot; role=&quot;img&quot; aria-label=&quot;行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。&quot;&gt;
+    &lt;img eleventy:ignore=&quot;&quot; src=&quot;https://imfw.io/assets/images/docs-need-ci-line-budget-ratchet-poster.jpg&quot; alt=&quot;行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; /&gt;
+  &lt;/div&gt;
+  &lt;figcaption&gt;行數預算一旦下降，放寬就必須留下可 review 的 diff。&lt;/figcaption&gt;
+&lt;/figure&gt;
 &lt;p&gt;這也解釋了為什麼加模組還能變短。當長度是會紅的數字，新增內容就不再是「往後面加一段」，而是一道必須先回答的題目：這 9 行要從哪裡挪出來？&lt;/p&gt;
 &lt;p&gt;這次挪出來的地方很具體，三個都是同一種病：&lt;strong&gt;同一份規則被抄了兩份&lt;/strong&gt;。&lt;/p&gt;
 &lt;ul&gt;
