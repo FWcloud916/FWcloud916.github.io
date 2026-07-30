@@ -115,6 +115,13 @@
 
   
   <url>
+    <loc>https://imfw.io/archive/</loc>
+    
+  </url>
+  
+
+  
+  <url>
     <loc>https://imfw.io/</loc>
     
   </url>
@@ -127,6 +134,20 @@
   </url>
   
 
+  
+
+  
+  <url>
+    <loc>https://imfw.io/topics/</loc>
+    
+  </url>
+  
+
+  
+  <url>
+    <loc>https://imfw.io/topics/containers/</loc>
+    
+  </url>
   
 
 

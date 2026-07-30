@@ -61,8 +61,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=0263be5">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=0263be5">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=936d43e">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=936d43e">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -116,12 +116,15 @@
       <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
         FW Blog
       </a>
-      <ul class="flex gap-6">
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
         <li>
           <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
         </li>
         <li>
-          <a href="/tags/" class="text-gray-600 hover:text-gray-900 transition">標籤</a>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">主題</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
         </li>
         <li>
           <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
@@ -165,6 +168,15 @@
           #automation
         </a>
         
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/ai-agent-engineering/" class="text-blue-600 hover:text-blue-800 transition">Agent 工程</a>
       
     </div>
     
@@ -402,7 +414,149 @@
   </div>
 </article>
 
-<script type="module" src="/assets/js/article-lottie.js?v=0263be5"></script>
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-24-agent-skill-evolution/" class="text-gray-900 hover:text-blue-600 transition">
+      Agent Skill 不是 Prompt：從撰寫、評測到自我提煉的工程化方法
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-24T00:00:00.000Z">2026年07月24日</time>
+    <span>9 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">深入拆解 Agent Skill 的觸發、工作流、資源與驗證設計，並以 eval、失敗分類、人工審核及版本治理建立可稽核的自我提煉與升級迴路。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+      
+      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #automation
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-22-documentation-for-ai-agents/" class="text-gray-900 hover:text-blue-600 transition">
+      如何與 AI 合作，我勸你善良：文件是 Agent 不走偏的起點
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-22T00:00:00.000Z">2026年07月22日</time>
+    <span>10 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">AI 能把迭代速度拉高，卻不會自動知道專案的目標、限制與歷史；本文拆解文件如何成為人與 agent 共用的邊界、共享記憶與驗證介面，並介紹 doc-architect skill 的實務工作流。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+      
+      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #automation
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-30-docs-need-ci/" class="text-gray-900 hover:text-blue-600 transition">
+      文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-30T00:00:00.000Z">2026年07月30日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=936d43e"></script>
 
   </main>
 
