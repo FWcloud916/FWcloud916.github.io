@@ -13,7 +13,7 @@
 
 | Scope | Branch | Ticket | Notes |
 |---|---|---|---|
-| `site` | current branch | N/A | Eleventy article runtime only; no pilot article or deployment |
+| `site` | current branch | N/A | Eleventy article runtime and approved first pilot; no deployment |
 
 ## Background & goals
 
@@ -24,6 +24,8 @@ Add a static-first article Lottie contract to the Eleventy blog. Every animation
 - [x] Add the pinned local player, same-origin asset passthrough, and article bootstrap.
 - [x] Add accessible poster fallback, playback controls, viewport behavior, and reduced-motion handling.
 - [x] Add runtime, content-contract, and build-output tests.
+- [x] Integrate the approved line-budget pilot figure, JSON, and poster into the latest post.
+- [x] Verify the generated post and passthrough asset hashes.
 - [x] Run the final `npm test` and `npm run build` gates.
 - [x] Record the implementation commit and close this item.
 
@@ -35,11 +37,14 @@ Add a static-first article Lottie contract to the Eleventy blog. Every animation
 - Added the article figure runtime without adding or publishing a pilot animation.
 - Final verification passed: `npm test` (66/66) and `npm run build`.
 - Recorded implementation commit `4cf5400`; no push or deployment was performed.
+- Integrated the approved 1200×675 line-budget ratchet pilot with byte-identical JSON and poster assets; retained the previous static image.
+- Re-ran `npm test` (66/66) and `npm run build`, then verified the generated figure and both published asset hashes.
+- Recorded pilot commit `2875bea`; no push or deployment was performed.
 
 ## Outcome
 
-The blog now accepts validated, static-first article Lottie figures. Posts retain an accessible poster fallback, and eligible visitors receive same-origin light/SVG playback with viewport-aware controls.
+The blog now accepts validated, static-first article Lottie figures. The latest post contains the first approved pilot with an accessible poster fallback; eligible visitors receive same-origin light/SVG playback with viewport-aware controls.
 
 **Final status:** done
-**PR / Commit:** `4cf5400`
-**Follow-ups:** Pilot article and its reviewed JSON/poster remain in the paired brag-talker task.
+**PR / Commit:** Runtime `4cf5400`; pilot `2875bea`
+**Follow-ups:** Push and deployment remain intentionally unperformed.
