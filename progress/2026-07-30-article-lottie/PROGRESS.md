@@ -1,7 +1,7 @@
 # Article Lottie Runtime
 
 **Slug:** article-lottie
-**Status:** in-progress
+**Status:** done
 **Ticket:** N/A
 **Related plan:** N/A — approved in the paired brag-talker implementation session
 **Created:** 2026-07-30
@@ -24,8 +24,8 @@ Add a static-first article Lottie contract to the Eleventy blog. Every animation
 - [x] Add the pinned local player, same-origin asset passthrough, and article bootstrap.
 - [x] Add accessible poster fallback, playback controls, viewport behavior, and reduced-motion handling.
 - [x] Add runtime, content-contract, and build-output tests.
-- [ ] Run the final `npm test` and `npm run build` gates.
-- [ ] Record the implementation commit and close this item.
+- [x] Run the final `npm test` and `npm run build` gates.
+- [x] Record the implementation commit and close this item.
 
 ## Work log
 
@@ -33,11 +33,13 @@ Add a static-first article Lottie contract to the Eleventy blog. Every animation
 
 - Established a clean 56/56 passing test baseline before implementation.
 - Added the article figure runtime without adding or publishing a pilot animation.
+- Final verification passed: `npm test` (66/66) and `npm run build`.
+- Recorded implementation commit `4cf5400`; no push or deployment was performed.
 
 ## Outcome
 
-> Fill in after development finishes.
+The blog now accepts validated, static-first article Lottie figures. Posts retain an accessible poster fallback, and eligible visitors receive same-origin light/SVG playback with viewport-aware controls.
 
-**Final status:**
-**PR / Commit:**
+**Final status:** done
+**PR / Commit:** `4cf5400`
 **Follow-ups:** Pilot article and its reviewed JSON/poster remain in the paired brag-talker task.
