@@ -53,5 +53,5 @@ Add a static-first article Lottie contract to the Eleventy blog. Every animation
 The blog now accepts validated, static-first article Lottie figures. The latest post contains the first approved pilot with an accessible poster fallback; eligible visitors receive same-origin light/SVG playback with viewport-aware controls.
 
 **Final status:** done
-**PR / Commit:** Runtime `4cf5400`; pilot `2875bea`; browser compatibility fix pending this closeout commit
+**PR / Commit:** Runtime `4cf5400`; pilot `2875bea`; browser compatibility fix `c5130ba`
 **Follow-ups:** Push and deployment remain intentionally unperformed.
