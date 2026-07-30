@@ -65,6 +65,121 @@ export function remapFontsToHuninn(animationData) {
   return animationData;
 }
 
+export function normalizeLottieForWeb(animationData) {
+  const normalizeKeyframes = (value) => {
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        normalizeKeyframes(child);
+      }
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+    if (value.a === 1 && Array.isArray(value.k)) {
+      for (let index = 0; index < value.k.length - 1; index += 1) {
+        const current = value.k[index];
+        const next = value.k[index + 1];
+        if (current && typeof current === "object" && Object.hasOwn(current, "e")) {
+          current.i ??= next?.i ?? { x: [0], y: [1] };
+          current.o ??= { x: [0.2], y: [0] };
+        }
+      }
+    }
+    for (const child of Object.values(value)) {
+      normalizeKeyframes(child);
+    }
+  };
+
+  const normalizeTransform = (transform) => {
+    if (!transform || typeof transform !== "object") {
+      return;
+    }
+    transform.sk ??= { a: 0, k: 0 };
+    transform.sa ??= { a: 0, k: 0 };
+  };
+
+  const normalizeShapes = (shapes) => {
+    if (!Array.isArray(shapes)) {
+      return;
+    }
+    shapes.forEach((shape, index) => {
+      if (!shape || typeof shape !== "object") {
+        return;
+      }
+      shape.ix ??= index + 1;
+      shape.hd ??= false;
+      if (shape.ty === "rc" || shape.ty === "el") {
+        shape.d ??= 1;
+      } else if (shape.ty === "tr") {
+        normalizeTransform(shape);
+      } else if (shape.ty === "gr") {
+        shape.np ??= Array.isArray(shape.it) ? shape.it.length : 0;
+        shape.cix ??= 2;
+        shape.bm ??= 0;
+        normalizeShapes(shape.it);
+      }
+    });
+  };
+
+  const normalizeLayers = (layers) => {
+    if (!Array.isArray(layers)) {
+      return;
+    }
+    layers.forEach((layer, index) => {
+      if (!layer || typeof layer !== "object") {
+        return;
+      }
+      layer.ind ??= index + 1;
+      layer.ddd ??= 0;
+      layer.ao ??= 0;
+      layer.bm ??= 0;
+      normalizeTransform(layer.ks);
+      if (layer.ty === 4) {
+        layer.sr ??= 1;
+        normalizeShapes(layer.shapes);
+      }
+      if (layer.ty === 5 && layer.t && typeof layer.t === "object") {
+        layer.t.a ??= [];
+        layer.t.p ??= {};
+        layer.t.m ??= { g: 1, a: { a: 0, k: [0, 0] } };
+        const documents = layer.t.d?.k;
+        if (Array.isArray(documents)) {
+          for (const keyframe of documents) {
+            if (keyframe?.s && typeof keyframe.s === "object") {
+              keyframe.s.ls ??= 0;
+            }
+          }
+        }
+      }
+    });
+  };
+
+  animationData.ddd ??= 0;
+  normalizeKeyframes(animationData);
+  normalizeLayers(animationData.layers);
+  if (Array.isArray(animationData.assets)) {
+    for (const asset of animationData.assets) {
+      normalizeLayers(asset?.layers);
+    }
+  }
+  return animationData;
+}
+
+export function collapseNativeText(container) {
+  for (const group of container.querySelectorAll("g[aria-label]")) {
+    const label = group.getAttribute("aria-label");
+    const nodes = [...group.querySelectorAll("text")];
+    if (!label || nodes.length === 0) {
+      continue;
+    }
+    nodes[0].textContent = label;
+    for (const node of nodes.slice(1)) {
+      node.remove();
+    }
+  }
+}
+
 export function createPlaybackController(animation, onStateChange = () => {}) {
   const state = {
     status: "idle",
@@ -196,7 +311,7 @@ async function initializeFigure({ figure, player, documentRef, windowRef, fetchF
     throw new Error(`Lottie JSON 載入失敗（${response.status}）`);
   }
 
-  const animationData = remapFontsToHuninn(await response.json());
+  const animationData = remapFontsToHuninn(normalizeLottieForWeb(await response.json()));
   if (hasUnsafeAssets(animationData)) {
     throw new Error("Lottie JSON 含有不安全的素材路徑");
   }
@@ -223,6 +338,7 @@ async function initializeFigure({ figure, player, documentRef, windowRef, fetchF
 
   try {
     await waitForAnimation(animation);
+    collapseNativeText(mount);
   } catch (error) {
     animation.destroy();
     mount.remove();
@@ -282,7 +398,15 @@ export async function initializeArticleLotties({
 }
 
 if (typeof document !== "undefined" && typeof window !== "undefined") {
-  initializeArticleLotties().catch((error) => {
-    console.warn("文章 Lottie 初始化失敗，保留靜態 poster。", error);
-  });
+  initializeArticleLotties()
+    .then((results) => {
+      for (const result of results) {
+        if (result.status === "rejected") {
+          console.warn("文章 Lottie 初始化失敗，保留靜態 poster。", result.reason);
+        }
+      }
+    })
+    .catch((error) => {
+      console.warn("文章 Lottie 初始化失敗，保留靜態 poster。", error);
+    });
 }

@@ -3,9 +3,11 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   assetDirectoryForAnimation,
+  collapseNativeText,
   createPlaybackController,
   hasUnsafeAssets,
   initializeArticleLotties,
+  normalizeLottieForWeb,
   remapFontsToHuninn,
   resolveAnimationUrl,
 } from "../src/assets/js/article-lottie.js";
@@ -53,6 +55,65 @@ describe("文章 Lottie runtime", () => {
       { fName: "SourceHanSans", fFamily: "Huninn" },
       { fName: "Huninn", fFamily: "Huninn" },
     ]);
+  });
+
+  it("在記憶體中補齊受控 authoring dialect 的 lottie-web 必要欄位", () => {
+    const animationData = {
+      layers: [
+        {
+          ty: 5,
+          ks: {
+            o: {
+              a: 1,
+              k: [
+                { t: 0, s: [0], e: [100], o: { x: [0.2], y: [0] } },
+                { t: 10, s: [100], i: { x: [0], y: [1] } },
+              ],
+            },
+          },
+          t: { d: { k: [{ s: { t: "文件也需要 CI" } }] } },
+        },
+        {
+          ty: 4,
+          ks: {},
+          shapes: [{ ty: "gr", it: [{ ty: "rc" }, { ty: "tr" }] }],
+        },
+      ],
+      assets: [],
+    };
+
+    expect(normalizeLottieForWeb(animationData)).toBe(animationData);
+    expect(animationData.ddd).toBe(0);
+    expect(animationData.layers[0]).toMatchObject({ ind: 1, ddd: 0, ao: 0, bm: 0 });
+    expect(animationData.layers[0].t).toMatchObject({
+      a: [],
+      p: {},
+      m: { g: 1, a: { a: 0, k: [0, 0] } },
+    });
+    expect(animationData.layers[0].t.d.k[0].s.ls).toBe(0);
+    expect(animationData.layers[0].ks.o.k[0].i).toEqual({ x: [0], y: [1] });
+    expect(animationData.layers[1].shapes[0]).toMatchObject({ np: 2, cix: 2, bm: 0 });
+    expect(animationData.layers[1].shapes[0].it[0].d).toBe(1);
+    expect(animationData.layers[1].shapes[0].it[1]).toMatchObject({
+      sk: { a: 0, k: 0 },
+      sa: { a: 0, k: 0 },
+    });
+  });
+
+  it("把受控 native text 的逐字節點收斂成完整標籤", () => {
+    const removed = [];
+    const first = { textContent: "文", remove: vi.fn() };
+    const second = { textContent: "件", remove: vi.fn(() => removed.push("件")) };
+    const group = {
+      getAttribute: vi.fn(() => "文件"),
+      querySelectorAll: vi.fn(() => [first, second]),
+    };
+    const container = { querySelectorAll: vi.fn(() => [group]) };
+
+    collapseNativeText(container);
+
+    expect(first.textContent).toBe("文件");
+    expect(removed).toEqual(["件"]);
   });
 
   it("只接受同目錄的純檔名 PNG/JPEG asset", () => {
