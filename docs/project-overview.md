@@ -128,7 +128,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   ├── archive.njk            # all posts at /archive/
 │   ├── topics-list.njk        # curated topic index at /topics/
 │   ├── topics.njk             # paginated topic detail pages
-│   ├── about.md               # /about/
+│   ├── about.njk              # /about/ — hero band, tech chips, featured posts, contact CTA
 │   ├── 404.md                 # /404.html (GitHub Pages picks it up)
 │   ├── tags.njk               # paginated per-tag pages at /tags/<slug>/
 │   ├── tags-list.njk          # all-tags index at /tags/
@@ -201,7 +201,7 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/topics/<slug>/` | src/topics.njk | ordered reading path for one curated topic |
 | `/tags/` | src/tags-list.njk | all tags with post counts |
 | `/tags/<slug>/` | src/tags.njk | per-tag post list (pagination over `tagList`, size 1) |
-| `/about/` | src/about.md | about page |
+| `/about/` | src/about.njk | about page — hero, principles, topics, tech chips, featured posts, contact CTA |
 | `/404.html` | src/404.md | not-found page (excluded from collections) |
 | `/feed.xml` | src/feed.njk | Atom feed, newest 10 posts (excluded from collections) |
 | `/llms.txt` | src/llms.njk | machine-readable site summary for LLMs (excluded from collections) |
