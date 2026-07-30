@@ -123,7 +123,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   │   ├── posts.json         # directory data: default layout, "posts" tag, article marker
 │   │   └── <year>/*.md        # posts, filenames YYYY-MM-DD-slug.md
 │   ├── index.njk              # homepage: 10 newest posts
-│   ├── about.md               # /about/
+│   ├── about.njk              # /about/ — hero band, tech chips, featured posts, contact CTA
 │   ├── 404.md                 # /404.html (GitHub Pages picks it up)
 │   ├── tags.njk               # paginated per-tag pages at /tags/<slug>/
 │   ├── tags-list.njk          # all-tags index at /tags/
@@ -191,7 +191,7 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/posts/<year>/<YYYY-MM-DD-slug>/` | src/posts/`<year>`/*.md | individual posts — default Eleventy permalink mirrors the file path, date prefix included (verified: `/posts/2019/2019-03-19-nvm-install/`) |
 | `/tags/` | src/tags-list.njk | all tags with post counts |
 | `/tags/<slug>/` | src/tags.njk | per-tag post list (pagination over `tagList`, size 1) |
-| `/about/` | src/about.md | about page |
+| `/about/` | src/about.njk | about page — hero, principles, topics, tech chips, featured posts, contact CTA |
 | `/404.html` | src/404.md | not-found page (excluded from collections) |
 | `/feed.xml` | src/feed.njk | Atom feed, newest 10 posts (excluded from collections) |
 | `/llms.txt` | src/llms.njk | machine-readable site summary for LLMs (excluded from collections) |

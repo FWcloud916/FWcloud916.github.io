@@ -1,0 +1,136 @@
+---
+layout: layouts/base.njk
+title: 關於我
+permalink: /about/
+description: 關於 FW Blog 使用的技術、內容方向與聯絡方式。
+isProfile: true
+---
+
+{% set techStack = [
+  { name: "11ty", role: "靜態網站生成器" },
+  { name: "Tailwind CSS", role: "CSS 框架" },
+  { name: "Nunjucks", role: "模板引擎" },
+  { name: "Prism.js", role: "One Dark 語法高亮" },
+  { name: "Lottie", role: "文章動畫" },
+  { name: "Vitest", role: "建置測試" },
+  { name: "GitHub Pages", role: "部署平台" }
+] %}
+
+<div class="space-y-16">
+
+<header class="relative overflow-hidden bg-gray-900 rounded-lg shadow-md md:grid md:grid-cols-2 md:items-center">
+  <svg viewBox="0 0 64 64" aria-hidden="true" class="absolute -right-10 -bottom-12 w-72 md:w-[28rem] text-blue-600 opacity-20 pointer-events-none">
+    <path fill="currentColor" d="M11 14h20v8H20v6h10v8H20v14h-9V14Z"/>
+    <path fill="currentColor" d="M29 14h8l3 23 4-18h6l4 18 3-23h6l-6 36h-6l-4-16-4 16h-8l-6-36Z"/>
+  </svg>
+
+  <div class="relative p-8 md:p-12">
+    <p class="text-blue-400 text-sm font-bold tracking-widest">關於這個部落格的作者</p>
+    <h1 class="mt-2 text-5xl md:text-7xl font-bold text-white">關於我</h1>
+    <p class="mt-6 text-lg text-gray-300">
+      我是 FW，一名 Web 開發者。這裡記錄我實際開發、API 整合、自動化與基礎設施的研究和踩坑經驗。
+    </p>
+  </div>
+
+  <div class="p-8 md:p-12">
+    <figure>
+      <img src="/assets/images/fw-role.png"
+           alt="FW 戴著橘色帽兜與眼鏡，坐在筆電前撰寫程式。"
+           class="w-full rounded-lg shadow-lg"
+           sizes="(min-width: 48rem) 26rem, calc(100vw - 6rem)"
+           loading="eager"
+           fetchpriority="high">
+      <figcaption class="mt-3 text-center text-sm text-gray-400">在程式碼與踩坑紀錄之間持續前進的 FW。</figcaption>
+    </figure>
+  </div>
+</header>
+
+<section>
+  <h2 class="text-3xl font-bold mb-8">寫作原則</h2>
+  <div class="grid gap-6 md:grid-cols-3">
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <span class="text-4xl font-bold text-blue-600">01</span>
+      <h3 class="mt-3 text-xl font-bold text-gray-900">交代環境與來源</h3>
+      <p class="mt-2 text-gray-700">文章會盡量交代測試環境與參考來源。</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <span class="text-4xl font-bold text-blue-600">02</span>
+      <h3 class="mt-3 text-xl font-bold text-gray-900">註明查核日期</h3>
+      <p class="mt-2 text-gray-700">內容有版本差異或需要修正時會標註時間，歡迎透過 GitHub 聯絡我。</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <span class="text-4xl font-bold text-blue-600">03</span>
+      <h3 class="mt-3 text-xl font-bold text-gray-900">區分官方與實測</h3>
+      <p class="mt-2 text-gray-700">清楚區分官方規則、實測結果和個人判斷。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 class="text-3xl font-bold mb-8">關注主題</h2>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">Web 與 API 開發</h3>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">開發流程自動化</h3>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">Docker 與開發環境</h3>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">靜態網站與內容發布</h3>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 class="text-3xl font-bold mb-8">網站技術</h2>
+  <div class="flex flex-wrap gap-3">
+    {% for item in techStack %}
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">{{ item.name }}</span>
+      <span class="text-sm text-blue-800/70">{{ item.role }}</span>
+    </span>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+  <div class="flex items-baseline justify-between mb-6">
+    <h2 class="text-3xl font-bold">精選文章</h2>
+    <a href="/" class="text-blue-600 hover:text-blue-700 transition">查看全部 →</a>
+  </div>
+  <div class="space-y-6">
+  {% for post in collections.posts | limit(3) %}
+    {% include "components/post-card.njk" %}
+  {% endfor %}
+  </div>
+</section>
+
+<section class="bg-white rounded-lg shadow-md p-8 md:p-12 text-center">
+  <h2 class="text-3xl font-bold">聯絡方式</h2>
+  <p class="mt-4 text-gray-700">內容有版本差異或需要修正時，歡迎透過 GitHub 聯絡我。</p>
+  <div class="mt-6 flex flex-wrap justify-center gap-4">
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank"
+       class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      <svg viewBox="0 0 16 16" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+                 -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07
+                 -1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82
+                 a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+                 .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+                 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+      </svg>
+      @FWcloud916
+    </a>
+    <a href="/feed.xml"
+       class="inline-flex items-center gap-2 px-6 py-3 border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50 transition">
+      訂閱 RSS
+    </a>
+  </div>
+  <p class="mt-8 text-sm text-gray-600">感謝您的閱讀！</p>
+</section>
+
+</div>

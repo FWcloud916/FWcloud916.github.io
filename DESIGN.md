@@ -34,6 +34,10 @@ components:
   inline-code: { background: "{colors.chip-neutral-surface}", rounded: "{rounded.sm}", fontSize: "{typography.caption.fontSize}" }
   info-banner: { background: "{colors.info-surface}", border: "1px solid #bedbff", rounded: "{rounded.lg}", color: "{colors.accent-text}", padding: "{spacing.lg}" }
   article-lottie: { background: "{colors.chip-neutral-surface}", rounded: "{rounded.lg}", shadow: "shadow-md", aspectRatio: "16 / 9", control: "blue-600 on white" }
+  hero-band: { background: "gray-900 (inverted {colors.text-primary})", rounded: "{rounded.lg}", shadow: "shadow-md", heading: "text-white, text-5xl → text-7xl", body-on-dark: "text-gray-300", caption-on-dark: "text-gray-400", kicker-on-dark: "text-blue-400", decorative-accent: "text-blue-600 at opacity-20 (monogram watermark, aria-hidden)" }
+  tech-chip: { background: "{colors.accent-surface}", color: "{colors.accent-text}", rounded: "{rounded.full}", padding: "{spacing.xs} {spacing.md}", hover-background: "#bedbff" }
+  cta-button-primary: { background: "blue-600", color: "white", rounded: "{rounded.lg}", padding: "0.75rem 1.5rem", hover-background: "blue-700" }
+  cta-button-secondary: { border: "1px solid blue-600", color: "blue-600", background: "white", rounded: "{rounded.lg}", padding: "0.75rem 1.5rem", hover-background: "blue-50" }
 ---
 # FW Blog Design System
 
@@ -50,6 +54,7 @@ All hex values above are sRGB conversions of the Tailwind v4 oklch palette token
 - **Accent:** blue only. Hover on titles/links: `hover:text-blue-600`. Tag chips: `bg-blue-100 text-blue-800` (post page, tags index) or neutral `bg-gray-100 text-gray-700` (post cards).
 - **Code:** blocks are Prism One Dark on `#282c34` (the only raw hex in the codebase, `input.css`); inline code is `bg-gray-100` at `text-sm`.
 - **Status colors:** none exist yet (`success`/`warning`/`error` are TODO) — the only message surface is the blue info banner (`bg-blue-50 border-blue-200 text-blue-800`) on the empty homepage.
+- **Dark inversion:** `bg-gray-900` is permitted as a surface **only** for the About page hero band ([about.njk](src/about.njk)) — an inversion of the existing gray ramp, not a new hue (the One Dark code block is the existing precedent for dark-on-light). On that surface, text steps down the ramp in the other direction: `text-white` heading, `text-gray-300` body, `text-gray-400` caption, and `text-blue-400` (not `blue-600`, which fails contrast on dark) for the accent kicker line. No other component may invert the ramp.
 
 ## Typography
 
@@ -81,6 +86,9 @@ Three levels only: `shadow-sm` (nav bar) → `shadow-md` (cards, code blocks) �
 - **Tag chips**: three context variants (see `components` tokens); all get `transition` and a slightly darker background on hover; label is `#{{ tag }}`.
 - **Code block**: One Dark background, `rounded-lg shadow-md`, `padding: 1rem` — enforced with `!important` in `input.css` to beat `.prose`; do not restyle via prose classes.
 - **Article Lottie**: a 16:9 `rounded-lg shadow-md` stage using the static poster as its default surface; the local SVG player replaces it only after successful initialization. Controls use blue-600 on white, `rounded-lg`, and visible focus rings. The caption stays in the normal gray text hierarchy.
+- **Hero band** ([about.njk](src/about.njk)): the About page only. `bg-gray-900 rounded-lg shadow-md`, two-column on `md:` (copy left, portrait right), an oversized `aria-hidden` monogram SVG watermark (`text-blue-600 opacity-20`, clipped by `overflow-hidden`) sits behind the portrait. See "Dark inversion" under Colors for the on-dark text ramp.
+- **Tech chip**: enlarged `tag-chip-index`-style pill (`rounded-full bg-blue-100 text-blue-800`) carrying a bold name plus a lighter-weight role label, used for the About page's tech-stack wall.
+- **CTA buttons** (About page contact section, also the existing [404.md](src/404.md) pattern): primary is `bg-blue-600 text-white rounded-lg hover:bg-blue-700`; secondary is `border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50`. Both `inline-flex items-center gap-2 px-6 py-3 transition`.
 - **Interaction rule**: every hover state uses the `transition` utility. Buttons use the primary blue on white with `rounded-lg`; keyboard focus MUST remain visible.
 
 ## Brand Assets
