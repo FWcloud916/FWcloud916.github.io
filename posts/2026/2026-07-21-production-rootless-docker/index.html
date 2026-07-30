@@ -12,6 +12,7 @@
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
   <title>正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署 - FW Blog</title>
   <meta name="description" content="從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。">
   <meta name="robots" content="index, follow">
@@ -20,6 +21,11 @@
   <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
   
   <link rel="canonical" href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <!-- Social sharing -->
   <meta property="og:site_name" content="FW Blog">
@@ -59,8 +65,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=1a3aefe">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=1a3aefe">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=0263be5">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=0263be5">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -485,7 +491,7 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
   </div>
 </article>
 
-<script type="module" src="/assets/js/article-lottie.js?v=1a3aefe"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=0263be5"></script>
 
   </main>
 

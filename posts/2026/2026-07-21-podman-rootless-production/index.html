@@ -12,6 +12,7 @@
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
   <title>Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制 - FW Blog</title>
   <meta name="description" content="從 daemon、API socket、user namespace、網路、cgroup、storage 與 systemd，比較 Rootless Podman 和 Rootless Docker 在正式環境的共同限制與關鍵差異。">
   <meta name="robots" content="index, follow">
@@ -20,6 +21,11 @@
   <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
   
   <link rel="canonical" href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <!-- Social sharing -->
   <meta property="og:site_name" content="FW Blog">
@@ -57,8 +63,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=1a3aefe">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=1a3aefe">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=0263be5">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=0263be5">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -359,7 +365,7 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
   </div>
 </article>
 
-<script type="module" src="/assets/js/article-lottie.js?v=1a3aefe"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=0263be5"></script>
 
   </main>
 
