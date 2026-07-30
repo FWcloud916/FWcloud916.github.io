@@ -52,8 +52,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=936d43e">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=936d43e">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=3cd46e4">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=3cd46e4">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -117,35 +117,280 @@
 
 
   <main class="max-w-4xl mx-auto px-4 py-8">
-    <h1>關於我</h1>
-<p>我是 FW，一名 Web 開發者。這裡記錄我實際開發、API 整合、自動化與基礎設施的研究和踩坑經驗。</p>
-<figure class="my-8 mx-auto max-w-lg">
-  <picture><source type="image/webp" srcset="/assets/img/lYz3uRwUlg-300.webp 300w, /assets/img/lYz3uRwUlg-600.webp 600w, /assets/img/lYz3uRwUlg-1024.webp 1024w" sizes="(min-width: 48rem) 32rem, calc(100vw - 2rem)"><img loading="lazy" decoding="async" src="/assets/img/lYz3uRwUlg-300.jpeg" alt="FW 戴著橘色帽兜與眼鏡，坐在筆電前撰寫程式。" class="w-full rounded-lg shadow-md" width="1024" height="1024" srcset="/assets/img/lYz3uRwUlg-300.jpeg 300w, /assets/img/lYz3uRwUlg-600.jpeg 600w, /assets/img/lYz3uRwUlg-1024.jpeg 1024w" sizes="(min-width: 48rem) 32rem, calc(100vw - 2rem)"></picture>
-  <figcaption class="mt-2 text-center text-sm text-gray-600">在程式碼與踩坑紀錄之間持續前進的 FW。</figcaption>
-</figure>
-<p>文章會盡量交代測試環境、查核日期與參考來源，並清楚區分官方規則、實測結果和個人判斷。內容有版本差異或需要修正時，歡迎透過 GitHub 聯絡我。</p>
-<h2>關注主題</h2>
-<ul>
-<li>Web 與 API 開發</li>
-<li>開發流程自動化</li>
-<li>Docker 與開發環境</li>
-<li>靜態網站與內容發布</li>
-</ul>
-<h2>網站技術</h2>
-<p>這個部落格使用以下技術建構：</p>
-<ul>
-<li><strong>11ty</strong> - 靜態網站生成器</li>
-<li><strong>Tailwind CSS</strong> - CSS 框架</li>
-<li><strong>Prism.js (One Dark)</strong> - 程式碼語法高亮</li>
-<li><strong>GitHub Pages</strong> - 部署平台</li>
-</ul>
-<h2>聯絡方式</h2>
-<ul>
-<li>GitHub: <a href="https://github.com/FWcloud916">@FWcloud916</a></li>
-<li>Website: <a href="https://imfw.io">imfw.io</a></li>
-</ul>
-<hr>
-<p>感謝您的閱讀！</p>
+    
+
+
+<div class="space-y-16">
+
+<header class="relative overflow-hidden bg-gray-900 rounded-lg shadow-md md:grid md:grid-cols-2 md:items-center">
+  <svg viewBox="0 0 64 64" aria-hidden="true" class="absolute -right-10 -bottom-12 w-72 md:w-[28rem] text-blue-600 opacity-20 pointer-events-none">
+    <path fill="currentColor" d="M11 14h20v8H20v6h10v8H20v14h-9V14Z"></path>
+    <path fill="currentColor" d="M29 14h8l3 23 4-18h6l4 18 3-23h6l-6 36h-6l-4-16-4 16h-8l-6-36Z"></path>
+  </svg>
+
+  <div class="relative p-8 md:p-12">
+    <p class="text-blue-400 text-sm font-bold tracking-widest">關於這個部落格的作者</p>
+    <h1 class="mt-2 text-5xl md:text-7xl font-bold text-white">關於我</h1>
+    <p class="mt-6 text-lg text-gray-300">
+      我是 FW，一名 Web 開發者。這裡記錄我實際開發、API 整合、自動化與基礎設施的研究和踩坑經驗。
+    </p>
+  </div>
+
+  <div class="p-8 md:p-12">
+    <figure>
+      <picture><source type="image/webp" srcset="/assets/img/lYz3uRwUlg-300.webp 300w, /assets/img/lYz3uRwUlg-600.webp 600w, /assets/img/lYz3uRwUlg-1024.webp 1024w" sizes="(min-width: 48rem) 26rem, calc(100vw - 6rem)"><img loading="eager" decoding="async" src="/assets/img/lYz3uRwUlg-300.jpeg" alt="FW 戴著橘色帽兜與眼鏡，坐在筆電前撰寫程式。" class="w-full rounded-lg shadow-lg" fetchpriority="high" width="1024" height="1024" srcset="/assets/img/lYz3uRwUlg-300.jpeg 300w, /assets/img/lYz3uRwUlg-600.jpeg 600w, /assets/img/lYz3uRwUlg-1024.jpeg 1024w" sizes="(min-width: 48rem) 26rem, calc(100vw - 6rem)"></picture>
+      <figcaption class="mt-3 text-center text-sm text-gray-400">在程式碼與踩坑紀錄之間持續前進的 FW。</figcaption>
+    </figure>
+  </div>
+</header>
+
+<section>
+  <h2 class="text-3xl font-bold mb-8">寫作原則</h2>
+  <div class="grid gap-6 md:grid-cols-3">
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <span class="text-4xl font-bold text-blue-600">01</span>
+      <h3 class="mt-3 text-xl font-bold text-gray-900">交代環境與來源</h3>
+      <p class="mt-2 text-gray-700">文章會盡量交代測試環境與參考來源。</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <span class="text-4xl font-bold text-blue-600">02</span>
+      <h3 class="mt-3 text-xl font-bold text-gray-900">註明查核日期</h3>
+      <p class="mt-2 text-gray-700">內容有版本差異或需要修正時會標註時間，歡迎透過 GitHub 聯絡我。</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <span class="text-4xl font-bold text-blue-600">03</span>
+      <h3 class="mt-3 text-xl font-bold text-gray-900">區分官方與實測</h3>
+      <p class="mt-2 text-gray-700">清楚區分官方規則、實測結果和個人判斷。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 class="text-3xl font-bold mb-8">關注主題</h2>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">Web 與 API 開發</h3>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">開發流程自動化</h3>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">Docker 與開發環境</h3>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+      <h3 class="text-xl font-bold text-gray-900">靜態網站與內容發布</h3>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 class="text-3xl font-bold mb-8">網站技術</h2>
+  <div class="flex flex-wrap gap-3">
+    
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">11ty</span>
+      <span class="text-sm text-blue-800/70">靜態網站生成器</span>
+    </span>
+    
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">Tailwind CSS</span>
+      <span class="text-sm text-blue-800/70">CSS 框架</span>
+    </span>
+    
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">Nunjucks</span>
+      <span class="text-sm text-blue-800/70">模板引擎</span>
+    </span>
+    
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">Prism.js</span>
+      <span class="text-sm text-blue-800/70">One Dark 語法高亮</span>
+    </span>
+    
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">Lottie</span>
+      <span class="text-sm text-blue-800/70">文章動畫</span>
+    </span>
+    
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">Vitest</span>
+      <span class="text-sm text-blue-800/70">建置測試</span>
+    </span>
+    
+    <span class="inline-flex items-baseline gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800 hover:bg-blue-200 transition">
+      <span class="font-bold">GitHub Pages</span>
+      <span class="text-sm text-blue-800/70">部署平台</span>
+    </span>
+    
+  </div>
+</section>
+
+<section>
+  <div class="flex items-baseline justify-between mb-6">
+    <h2 class="text-3xl font-bold">精選文章</h2>
+    <a href="/" class="text-blue-600 hover:text-blue-700 transition">查看全部 →</a>
+  </div>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-30-docs-need-ci/" class="text-gray-900 hover:text-blue-600 transition">
+      文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-30T00:00:00.000Z">2026年07月30日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-29-script-gated-skills/" class="text-gray-900 hover:text-blue-600 transition">
+      Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-29T00:00:00.000Z">2026年07月29日</time>
+    <span>13 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從一次把 SKILL.md 從 302 行砍到 159 行的真實重構出發，對照 Anthropic 的 Claude 5 context engineering 六條新規則，說明哪些規則該交給模型判斷、哪些不變量必須編進 script 與工具介面。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+      
+      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #automation
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-24-agent-skill-evolution/" class="text-gray-900 hover:text-blue-600 transition">
+      Agent Skill 不是 Prompt：從撰寫、評測到自我提煉的工程化方法
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-24T00:00:00.000Z">2026年07月24日</time>
+    <span>9 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">深入拆解 Agent Skill 的觸發、工作流、資源與驗證設計，並以 eval、失敗分類、人工審核及版本治理建立可稽核的自我提煉與升級迴路。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+      
+      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #automation
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+<section class="bg-white rounded-lg shadow-md p-8 md:p-12 text-center">
+  <h2 class="text-3xl font-bold">聯絡方式</h2>
+  <p class="mt-4 text-gray-700">內容有版本差異或需要修正時，歡迎透過 GitHub 聯絡我。</p>
+  <div class="mt-6 flex flex-wrap justify-center gap-4">
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      <svg viewBox="0 0 16 16" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+                 -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07
+                 -1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82
+                 a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+                 .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+                 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+      </svg>
+      @FWcloud916
+    </a>
+    <a href="/feed.xml" class="inline-flex items-center gap-2 px-6 py-3 border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50 transition">
+      訂閱 RSS
+    </a>
+  </div>
+  <p class="mt-8 text-sm text-gray-600">感謝您的閱讀！</p>
+</section>
+
+</div>
 
   </main>
 
