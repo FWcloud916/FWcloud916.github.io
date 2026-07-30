@@ -51,7 +51,12 @@ report "$([ "$agents_lines" -le 100 ]; echo $?)" "AGENTS.md within 100-line budg
 
 改那個數字是兩秒鐘的事，技術難度幾乎是零。但那個改動會進 diff、會被 reviewer 看到、會被問為什麼。真正被提高的不是門檻，是**可見度**——文件變長從靜默發生，變成一個要具名負責的決定。
 
-![行數預算從 225 行的舊上限降到 216 行並鎖定，往下由重構帶動，要漲回去必須修改 verify.sh 而會出現在 diff 被 review 看見](/assets/images/docs-need-ci-line-budget-ratchet-v3.png)
+<figure class="article-lottie" data-lottie-src="/assets/lottie/docs-need-ci-line-budget-ratchet.json">
+  <div class="article-lottie__stage" role="img" aria-label="行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。">
+    <img eleventy:ignore src="/assets/images/docs-need-ci-line-budget-ratchet-poster.jpg" alt="行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。" loading="lazy" decoding="async">
+  </div>
+  <figcaption>行數預算一旦下降，放寬就必須留下可 review 的 diff。</figcaption>
+</figure>
 
 這也解釋了為什麼加模組還能變短。當長度是會紅的數字，新增內容就不再是「往後面加一段」，而是一道必須先回答的題目：這 9 行要從哪裡挪出來？
 
