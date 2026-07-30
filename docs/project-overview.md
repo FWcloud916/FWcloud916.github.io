@@ -115,7 +115,8 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   │   └── components/        # nav.njk (top bar), post-card.njk (list-item card)
 │   ├── assets/
 │   │   ├── css/input.css      # Tailwind v4 entry + prose/Prism overrides (THE Tailwind config)
-│   │   ├── images/            # static images and Lottie posters (passthrough-copied)
+│   │   ├── icons/             # favicon SVG/ICO + Apple Touch Icon (copied to site root)
+│   │   ├── images/            # static images, About portrait and Lottie posters
 │   │   ├── js/                # article Lottie bootstrap (passthrough-copied)
 │   │   └── lottie/            # approved article Lottie JSON (passthrough-copied)
 │   ├── posts/
@@ -174,7 +175,7 @@ No database — the "domain model" is the content model: Markdown files + frontm
 
 **Tag** — not a file; derived by the `tagList` collection from all post frontmatter (excluding `posts`). URL: `/tags/{{ tag | slug }}/`.
 
-**Site metadata** — [src/_data/site.json](../src/_data/site.json): site and author identity, display values, IndexNow key, Google/Bing verification tokens, and analytics ID. Empty optional verification/analytics values keep their snippets disabled.
+**Site metadata** — [src/_data/site.json](../src/_data/site.json): site and author identity, display values, browser `themeColor`, IndexNow key, Google/Bing verification tokens, and analytics ID. Empty optional verification/analytics values keep their snippets disabled.
 
 **Build version** — [src/_data/build.mjs](../src/_data/build.mjs): exposes `{{ build.version }}` (git short hash of HEAD; falls back to a timestamp when git is unavailable). `base.njk` appends it as `?v=` to both CSS links so a deploy bypasses the CDN's 4-hour `max-age` cache; rebuilding the same commit keeps the same URL.
 
@@ -204,6 +205,8 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/assets/lottie/…` | passthrough of src/assets/lottie | approved same-origin article Lottie JSON and optional sibling PNG/JPEG assets |
 | `/assets/js/article-lottie.js` | passthrough of src/assets/js | post bootstrap; validates figures and conditionally loads the player |
 | `/assets/js/lottie-light-5.13.0.min.js` | passthrough from pinned lottie-web | light SVG player, fetched only by eligible article figures |
+| `/favicon.svg`, `/favicon.ico` | src/assets/icons | browser favicon set, passthrough-copied to the site root |
+| `/apple-touch-icon.png` | src/assets/icons | 180×180 Apple home-screen icon |
 
 Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`, `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription` (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD serialization), `filterByTag`, `limit`, `slug` (pinyin override); plugin `eleventyImageTransformPlugin` (responsive images from plain `<img>`/markdown). Filter logic lives in [lib/filters.mjs](../lib/filters.mjs).
 

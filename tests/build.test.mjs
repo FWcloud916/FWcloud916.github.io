@@ -44,6 +44,27 @@ describe("build output", () => {
     expect(home).toContain('<meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">');
   });
 
+  it("共用 head 發布品牌 favicon 與 theme-color", () => {
+    const home = read("index.html");
+    expect(home).toContain('<meta name="theme-color" content="#155dfc">');
+    expect(home).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml">');
+    expect(home).toContain('<link rel="icon" href="/favicon.ico" sizes="any">');
+    expect(home).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png">');
+
+    const svg = read("favicon.svg");
+    expect(svg).toContain('viewBox="0 0 64 64"');
+    expect(svg).toContain('fill="#155dfc"');
+
+    const ico = fs.readFileSync(path.join(SITE_DIR, "favicon.ico"));
+    expect(ico.subarray(0, 4)).toEqual(Buffer.from([0, 0, 1, 0]));
+    expect(ico.readUInt16LE(4)).toBe(3);
+
+    const appleIcon = fs.readFileSync(path.join(SITE_DIR, "apple-touch-icon.png"));
+    expect(appleIcon.subarray(1, 4).toString("ascii")).toBe("PNG");
+    expect(appleIcon.readUInt32BE(16)).toBe(180);
+    expect(appleIcon.readUInt32BE(20)).toBe(180);
+  });
+
   it("文章有獨立摘要、article metadata 與可解析的 BlogPosting JSON-LD", () => {
     const post = newestPost(posts);
     const html = read(postOutputPath(post));
@@ -113,7 +134,8 @@ describe("build output", () => {
   });
 
   it("作者頁有 ProfilePage JSON-LD", () => {
-    const profile = jsonLd(read("about/index.html")).find((entry) => entry["@type"] === "ProfilePage");
+    const about = read("about/index.html");
+    const profile = jsonLd(about).find((entry) => entry["@type"] === "ProfilePage");
     expect(profile).toMatchObject({
       url: "https://imfw.io/about/",
       mainEntity: {
@@ -123,6 +145,9 @@ describe("build output", () => {
         sameAs: ["https://github.com/FWcloud916"],
       },
     });
+    expect(about).toContain('<picture>');
+    expect(about).toContain('alt="FW 戴著橘色帽兜與眼鏡，坐在筆電前撰寫程式。"');
+    expect(about).toMatch(/srcset="\/assets\/img\/[^\"]+-300\.webp 300w, \/assets\/img\/[^\"]+-600\.webp 600w, \/assets\/img\/[^\"]+-1024\.webp 1024w"/);
   });
 
   it("feed.xml 是 Atom feed，且第一個 entry 是最新文章", () => {

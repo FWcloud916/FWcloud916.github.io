@@ -83,6 +83,12 @@ Three levels only: `shadow-sm` (nav bar) â†’ `shadow-md` (cards, code blocks) â†
 - **Article Lottie**: a 16:9 `rounded-lg shadow-md` stage using the static poster as its default surface; the local SVG player replaces it only after successful initialization. Controls use blue-600 on white, `rounded-lg`, and visible focus rings. The caption stays in the normal gray text hierarchy.
 - **Interaction rule**: every hover state uses the `transition` utility. Buttons use the primary blue on white with `rounded-lg`; keyboard focus MUST remain visible.
 
+## Brand Assets
+
+- The favicon is a geometric white `FW` monogram on a blue-600 rounded square; its editable SVG source and generated fallbacks live in `src/assets/icons/`.
+- The About portrait is the warm-toned developer illustration at `src/assets/images/fw-role.png`. Its orange/olive palette is a brand-illustration exception: it MUST NOT be reused as UI status or accent colors.
+- Brand illustrations MAY introduce their own contained palette, while surrounding interface elements continue to use the gray + blue system above.
+
 ## Responsive Behavior
 
 Mobile-first with Tailwind defaults; the layout is a fluid single column capped at `max-w-4xl`, so there are almost no breakpoint utilities in the templates. Images from the image transform are responsive (300/600/1200 px, `sizes` attribute). Article Lottie stages keep a fluid 16:9 aspect ratio and never require horizontal scrolling.

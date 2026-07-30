@@ -43,6 +43,11 @@ export default function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/assets/js");
   eleventyConfig.addPassthroughCopy("src/assets/lottie");
   eleventyConfig.addPassthroughCopy({
+    "src/assets/icons/favicon.svg": "favicon.svg",
+    "src/assets/icons/favicon.ico": "favicon.ico",
+    "src/assets/icons/apple-touch-icon.png": "apple-touch-icon.png",
+  });
+  eleventyConfig.addPassthroughCopy({
     "node_modules/prism-themes/themes/prism-one-dark.css": "assets/css/prism-one-dark.css"
   });
   eleventyConfig.addPassthroughCopy({

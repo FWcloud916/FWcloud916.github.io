@@ -12,6 +12,7 @@
   {% if noindex %}{% set robotsContent = "noindex, nofollow" %}{% endif %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="{{ site.themeColor }}">
   <title>{{ seoTitle }}</title>
   <meta name="description" content="{{ metaDescription }}">
   <meta name="robots" content="{{ robotsContent }}">
@@ -22,6 +23,11 @@
   <meta name="msvalidate.01" content="{{ site.bingSiteVerification }}">
   {% endif %}
   <link rel="canonical" href="{{ canonicalUrl }}">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <!-- Social sharing -->
   <meta property="og:site_name" content="{{ site.title }}">

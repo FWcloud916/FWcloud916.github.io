@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">FW Blog</title>
+  <rect width="64" height="64" rx="14" fill="#155dfc"/>
+  <path fill="#fff" d="M11 14h20v8H20v6h10v8H20v14h-9V14Z"/>
+  <path fill="#fff" d="M29 14h8l3 23 4-18h6l4 18 3-23h6l-6 36h-6l-4-16-4 16h-8l-6-36Z"/>
+</svg>

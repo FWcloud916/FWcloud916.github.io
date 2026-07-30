@@ -34,6 +34,7 @@ All global site settings are stored in `src/_data/site.json`:
   "authorDescription": "Your public author bio",
   "authorSameAs": ["https://github.com/your-account"],
   "currentYear": "2026",
+  "themeColor": "#155dfc",
   "socialImage": "/assets/images/og-default.png",
   "indexNowKey": "your-public-indexnow-key",
   "googleSiteVerification": "",
@@ -43,6 +44,11 @@ All global site settings are stored in `src/_data/site.json`:
 ```
 
 These values are accessible in all templates via `{{ site.property }}`. Leave the verification and analytics IDs empty to keep their snippets disabled.
+
+`themeColor` controls the browser chrome color emitted by `layouts/base.njk`.
+The favicon source files live in `src/assets/icons/` and build to
+`/favicon.svg`, `/favicon.ico`, and `/apple-touch-icon.png`; keep all three in
+sync when replacing the site mark.
 
 ### 11ty Configuration
 
@@ -228,6 +234,12 @@ Edit the Prism CSS in `src/assets/css/input.css`:
 ```
 
 ### Images
+
+The About page portrait lives at `src/assets/images/fw-role.png`. Like article
+images, it is processed into responsive WebP/JPEG output during the build; keep
+meaningful `alt` text and its square aspect ratio when replacing it. Do not add
+an HTML `width` override: the shared 300/600/1200 transform widths should remain
+in control.
 
 #### Using Markdown Syntax
 

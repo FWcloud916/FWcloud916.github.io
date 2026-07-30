@@ -10,6 +10,14 @@ isProfile: true
 
 我是 FW，一名 Web 開發者。這裡記錄我實際開發、API 整合、自動化與基礎設施的研究和踩坑經驗。
 
+<figure class="my-8 mx-auto max-w-lg">
+  <img src="/assets/images/fw-role.png"
+       alt="FW 戴著橘色帽兜與眼鏡，坐在筆電前撰寫程式。"
+       class="w-full rounded-lg shadow-md"
+       sizes="(min-width: 48rem) 32rem, calc(100vw - 2rem)">
+  <figcaption class="mt-2 text-center text-sm text-gray-600">在程式碼與踩坑紀錄之間持續前進的 FW。</figcaption>
+</figure>
+
 文章會盡量交代測試環境、查核日期與參考來源，並清楚區分官方規則、實測結果和個人判斷。內容有版本差異或需要修正時，歡迎透過 GitHub 聯絡我。
 
 ## 關注主題

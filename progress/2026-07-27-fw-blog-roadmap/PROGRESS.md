@@ -1,11 +1,11 @@
 # FW Blog Roadmap
 
 **Slug:** fw-blog-roadmap
-**Status:** planning
+**Status:** in-progress
 **Ticket:** N/A
 **Related plan:** [fw-blog-roadmap-PROGRESS.md](../_plans/fw-blog-roadmap-PROGRESS.md)
 **Created:** 2026-07-27
-**Updated:** 2026-07-27
+**Updated:** 2026-07-30
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Scope | Branch | Ticket | Notes |
 |---|---|---|---|
-| `site` | TBD | TBD |  |
+| `site` | `main` | N/A | Tier 1 implementation underway |
 
 ## Background & goals
 
@@ -65,7 +65,7 @@ source text is retained verbatim enough for row-level audit and future work.
 - [x] ~~Publish the remaining queued posts.~~ Stale — no queued drafts exist; see 2026-07-27 work log.
 - [ ] Monitor Search Console sitemap processing and indexing results. _(external/manual — not code-verifiable; still open)_
 - [ ] Rescan Bing SEO/GEO signals after deployment. _(external/manual — not code-verifiable; still open)_
-- [ ] Add a favicon set and `theme-color`. _(confirmed missing — no favicon files, no `theme-color` meta in `base.njk`)_
+- [x] Add a favicon set and `theme-color`. _(FW monogram SVG/ICO/Apple Touch Icon; blue browser theme color; build-tested)_
 - [ ] Add `BreadcrumbList` JSON-LD and breadcrumb UI. _(confirmed missing — no match in `src/`, `lib/`, `eleventy.config.mjs`)_
 - [ ] Add heading anchor IDs via `markdown-it-anchor`. _(confirmed missing — no dependency, no config reference)_
 - [ ] Add resource hints and skip Prism CSS on code-free pages. _(partially done: Google Fonts `preconnect`/`display=swap` exists in `base.njk`; still missing `googletagmanager` preconnect, CSS `preload`, and conditional Prism loading)_
@@ -81,6 +81,23 @@ source text is retained verbatim enough for row-level audit and future work.
 - [ ] Update matching `tests/build.test.mjs` assertions with every SEO implementation. _(standing practice, not a one-off item — no existing assertions found for any of the unimplemented items above, so nothing to reconcile yet)_
 
 ## Work log
+
+### 2026-07-30
+
+- Added a geometric `FW` favicon set (SVG, multi-size ICO, 180×180 Apple
+  Touch Icon) and configured the shared layout to emit the icon links and the
+  blue-600 browser `theme-color` from site data.
+- Added the user-supplied FW developer illustration to the About page with
+  meaningful Traditional Chinese alternative text, explicit dimensions and
+  responsive image output; documented its warm palette as a contained brand
+  exception rather than a new UI color family.
+- Added build coverage for icon metadata, binary formats/dimensions and the
+  responsive About portrait. Documentation impact reviewed and synchronized
+  across DESIGN.md, docs/README.md and docs/project-overview.md.
+- Verification: `npm test` passes 69/69. Production output was served locally
+  and checked in Chrome: the 512px desktop portrait and 358px portrait at a
+  390px mobile viewport render without horizontal overflow; favicon metadata,
+  theme color and alternative text are present.
 
 ### 2026-07-27
 
