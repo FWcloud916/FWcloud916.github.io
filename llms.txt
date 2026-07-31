@@ -18,6 +18,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 把專用動畫流程抽成 Agent Skill：lottie-maker 如何讓 Lottie 可建立、可診斷、可驗證
+
+- Published: 2026-07-31T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-07-31-lottie-maker-agent-skill/
+- Tags: ai, agent-skills, automation, Lottie
+
+- Description: 從內容管線的專用 Lottie workflow 出發，拆解如何把 motion brief、portable profile、CanvasKit 預覽與決定性驗證整理成可跨專案使用的 lottie-maker Agent Skill。
+
+
 ### 文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test
 
 - Published: 2026-07-30T00:00:00.000Z
@@ -187,6 +197,8 @@ Author: FW (https://imfw.io/about/)
 - Dockerfile: https://imfw.io/tags/dockerfile/
 
 - Image: https://imfw.io/tags/image/
+
+- Lottie: https://imfw.io/tags/lottie/
 
 - Podman: https://imfw.io/tags/podman/
 
