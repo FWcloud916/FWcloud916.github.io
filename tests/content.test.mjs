@@ -8,6 +8,35 @@ import { ROOT, loadPosts } from "./helpers.mjs";
 // 對 src/posts/**/*.md 的 frontmatter 做全量檢查（AGENTS.md 硬性約束的可執行版）
 const posts = loadPosts();
 
+function findRedundantTerminalHolds(value, outPoint, pathParts = [], findings = []) {
+  if (Array.isArray(value)) {
+    if (value.length >= 2 && value.every((entry) =>
+      entry && typeof entry === "object" && Number.isFinite(entry.t)
+    )) {
+      const previous = value.at(-2);
+      const terminal = value.at(-1);
+      if (terminal.t === outPoint &&
+          Object.hasOwn(previous, "s") &&
+          Object.hasOwn(terminal, "s") &&
+          JSON.stringify(previous.s) === JSON.stringify(terminal.s)) {
+        findings.push(pathParts.join("/"));
+      }
+    }
+
+    value.forEach((entry, index) =>
+      findRedundantTerminalHolds(entry, outPoint, [...pathParts, index], findings)
+    );
+    return findings;
+  }
+
+  if (value && typeof value === "object") {
+    for (const [key, entry] of Object.entries(value)) {
+      findRedundantTerminalHolds(entry, outPoint, [...pathParts, key], findings);
+    }
+  }
+  return findings;
+}
+
 describe("post frontmatter", () => {
   it("至少有一篇文章", () => {
     expect(posts.length).toBeGreaterThan(0);
@@ -86,6 +115,10 @@ describe("文章 Lottie figure 合約", () => {
         expect(animationData.w, `${lottieSource} 寬度`).toBe(1200);
         expect(animationData.h, `${lottieSource} 高度`).toBe(675);
         expect(animationData.fr, `${lottieSource} FPS`).toBe(24);
+        expect(
+          findRedundantTerminalHolds(animationData, animationData.op),
+          `${lottieSource} 在排除性的 op 上含重複終點 keyframe，可能造成重播狀態未重設`
+        ).toEqual([]);
         expect((animationData.op - animationData.ip) / animationData.fr, `${lottieSource} 長度（秒）`)
           .toBeGreaterThanOrEqual(4);
         expect((animationData.op - animationData.ip) / animationData.fr, `${lottieSource} 長度（秒）`)

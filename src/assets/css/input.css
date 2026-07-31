@@ -72,8 +72,8 @@
     display: none;
   }
 
-  .article-lottie__controls {
-    @apply mt-3 flex items-center gap-2;
+  .prose .article-lottie__controls {
+    @apply mt-4! flex items-center gap-2;
   }
 
   .article-lottie__control {
