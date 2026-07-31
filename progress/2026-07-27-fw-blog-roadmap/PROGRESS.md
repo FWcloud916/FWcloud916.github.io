@@ -5,7 +5,7 @@
 **Ticket:** N/A
 **Related plan:** [fw-blog-roadmap-PROGRESS.md](../_plans/fw-blog-roadmap-PROGRESS.md)
 **Created:** 2026-07-27
-**Updated:** 2026-07-30
+**Updated:** 2026-07-31
 
 ---
 
@@ -78,9 +78,26 @@ source text is retained verbatim enough for row-level audit and future work.
 - [x] Add `/archive/` and evaluate Pagefind as content grows. _(commit `627c6b8`: complete archive shipped; Pagefind deferred at 15 posts until inventory or observed navigation demand justifies search)_
 - [ ] Write unique tag-page descriptions. _(confirmed still templated — `src/tags.njk` generates the same "瀏覽 FW Blog 中與 {{ tag }} 相關的文章。" for every tag)_
 - [x] Plan a second content pillar cluster. _(commit `627c6b8`: manually curated Docker/containers, AI Agent engineering, and social API automation reading paths now make the three existing pillars explicit; future posts extend the ordered URL lists)_
+- [x] Fix article Lottie replay and control spacing. _(commit `210451e`: removed redundant terminal hold keyframes that prevented gear rotation from resetting; enforced the design-system 16px stage-to-control gap; added a content regression)_
 - [ ] Update matching `tests/build.test.mjs` assertions with every SEO implementation. _(standing practice, not a one-off item — no existing assertions found for any of the unimplemented items above, so nothing to reconcile yet)_
 
 ## Work log
+
+### 2026-07-31
+
+- Commit `210451e` — repaired article Lottie replay and control spacing.
+- Removed redundant hold keyframes at the animation's exclusive `op` from the
+  three gears and connector trim path. The second playback now resets to the
+  initial angles and all three gear SVG transforms change again during replay.
+- Raised the Article Lottie stage-to-control gap to the documented 16px token
+  and used Tailwind's important utility so Typography's `figure > *` reset
+  cannot collapse it to zero.
+- Added a full-content regression against redundant terminal hold keyframes.
+  Documentation impact was reviewed; `DESIGN.md` now records the control gap,
+  while the how-to and architecture docs are unaffected.
+- Verification: `npm test` passes 75/75 and `npm run build` passes. Browser QA
+  passed at desktop and 390×844: replayed gears move, computed spacing is 16px,
+  focus/control behavior remains intact, and there is no horizontal overflow.
 
 ### 2026-07-30
 
