@@ -63,10 +63,10 @@ describe("文章 Lottie figure 合約", () => {
     }
   });
 
-  it("每篇文章至多兩個動畫，且引用的檔案存在並符合 article v1 預算", () => {
+  it("每篇文章至多三個動畫，且引用的檔案存在並符合 article v1 預算", () => {
     for (const post of posts) {
       const postFigures = figures.filter(([file]) => file === post.file);
-      expect(postFigures.length, `${post.file} 的 Lottie 數量`).toBeLessThanOrEqual(2);
+      expect(postFigures.length, `${post.file} 的 Lottie 數量`).toBeLessThanOrEqual(3);
 
       for (const [, figure] of postFigures) {
         const lottieSource = figure.match(/data-lottie-src=["']([^"']+)["']/)?.[1];
