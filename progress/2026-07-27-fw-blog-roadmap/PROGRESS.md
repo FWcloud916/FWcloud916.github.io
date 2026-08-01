@@ -86,7 +86,7 @@ source text is retained verbatim enough for row-level audit and future work.
 
 ### 2026-08-01
 
-- Prepared the Digital Garden pilot on local branch `feature/digital-garden`.
+- Prepared the Digital Garden pilot on local branch `feature/digital-garden` (commit `b9ead76`).
 - Added six Traditional Chinese concept notes across the three existing topics, with explicit
   `maturity` and `related` URLs. `/topics/` now presents core concepts before the existing article
   route; note pages link to related posts and note backlinks.
