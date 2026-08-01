@@ -5,7 +5,7 @@
 **Ticket:** N/A
 **Related plan:** [fw-blog-roadmap-PROGRESS.md](../_plans/fw-blog-roadmap-PROGRESS.md)
 **Created:** 2026-07-27
-**Updated:** 2026-07-31
+**Updated:** 2026-08-01
 
 ---
 
@@ -79,9 +79,21 @@ source text is retained verbatim enough for row-level audit and future work.
 - [ ] Write unique tag-page descriptions. _(confirmed still templated — `src/tags.njk` generates the same "瀏覽 FW Blog 中與 {{ tag }} 相關的文章。" for every tag)_
 - [x] Plan a second content pillar cluster. _(commit `627c6b8`: manually curated Docker/containers, AI Agent engineering, and social API automation reading paths now make the three existing pillars explicit; future posts extend the ordered URL lists)_
 - [x] Fix article Lottie replay and control spacing. _(commit `210451e`: removed redundant terminal hold keyframes that prevented gear rotation from resetting; enforced the design-system 16px stage-to-control gap; added a content regression)_
+- [x] Add a test-guarded Digital Garden surface for six pilot concept notes. _(local `feature/digital-garden` branch; stable `/notes/<slug>/` pages, explicit topic `noteUrls`, maturity/relations, sitemap + llms discovery, and no homepage/archive/RSS mixing; not deployed)_
 - [ ] Update matching `tests/build.test.mjs` assertions with every SEO implementation. _(standing practice, not a one-off item — no existing assertions found for any of the unimplemented items above, so nothing to reconcile yet)_
 
 ## Work log
+
+### 2026-08-01
+
+- Prepared the Digital Garden pilot on local branch `feature/digital-garden` (commit `b9ead76`).
+- Added six Traditional Chinese concept notes across the three existing topics, with explicit
+  `maturity` and `related` URLs. `/topics/` now presents core concepts before the existing article
+  route; note pages link to related posts and note backlinks.
+- Added tests for note frontmatter, topic membership, relations, structured metadata, sitemap／llms
+  discovery, and exclusion from homepage／archive／RSS. `npm test` passed 88/88 and `npm run build`
+  produced the six note pages. Browser QA passed on desktop and 390×844 without overflow or console
+  errors. No push or deployment was performed.
 
 ### 2026-07-31
 

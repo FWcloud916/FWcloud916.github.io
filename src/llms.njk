@@ -17,6 +17,7 @@ Author: {{ site.author }} ({{ site.authorUrl }})
 ## Navigation
 
 - Home: {{ site.url }}/
+- Knowledge Garden: {{ site.url }}/topics/
 - Tags: {{ site.url }}/tags/
 - About: {{ site.url }}/about/
 
@@ -31,6 +32,18 @@ Author: {{ site.author }} ({{ site.authorUrl }})
 {% if post.data.tags %}- Tags: {% for tag in post.data.tags %}{% if tag != "posts" %}{{ tag }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
 {% endif %}
 - Description: {{ post.data.description or (post.rawInput | seoDescription) }}
+
+{% endfor %}
+
+## Knowledge Notes
+{% for note in collections.notes %}
+### {{ note.data.title }}
+
+- Maturity: {{ note.data.maturity | maturityLabel }}
+- Created: {{ note.data.created | dateIso }}
+{% if note.data.updated %}- Updated: {{ note.data.updated | dateIso }}
+{% endif %}- URL: {{ note.url | absoluteUrl(site.url) }}
+- Description: {{ note.data.description or (note.rawInput | seoDescription) }}
 
 {% endfor %}
 

@@ -1,0 +1,66 @@
+---
+layout: layouts/base.njk
+---
+
+<article>
+  <nav aria-label="麵包屑" class="text-sm text-gray-600 mb-6">
+    <a href="/" class="hover:text-blue-600 transition">首頁</a>
+    <span aria-hidden="true"> / </span>
+    <a href="/topics/" class="hover:text-blue-600 transition">知識花園</a>
+    <span aria-hidden="true"> / </span>
+    <span aria-current="page">概念筆記</span>
+  </nav>
+  <header class="mb-8">
+    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-4">
+      <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">{{ maturity | maturityLabel }}</span>
+      {% if created %}<span>建立：<time datetime="{{ created | dateIso }}">{{ created | dateDisplay }}</time></span>{% endif %}
+      {% if updated %}<span>更新：<time datetime="{{ updated | dateIso }}">{{ updated | dateDisplay }}</time></span>{% endif %}
+    </div>
+    <h1 class="text-4xl font-bold mb-4">{{ title }}</h1>
+    {% if description %}<p class="text-lg text-gray-600">{{ description }}</p>{% endif %}
+
+    {% set noteTopics = topics | topicsForNote(page.url) %}
+    {% if noteTopics.length %}
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      {% for topic in noteTopics %}
+      <a href="/topics/{{ topic.slug }}/" class="text-blue-600 hover:text-blue-800 transition">{{ topic.shortTitle }}</a>{% if not loop.last %}<span>、</span>{% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    {{ content | safe }}
+  </div>
+</article>
+
+{% set outgoing = collections.posts | relatedContent(collections.notes, page.url, related) %}
+{% if outgoing.length %}
+<section class="mt-12" aria-labelledby="related-content-title">
+  <h2 id="related-content-title" class="text-2xl font-bold mb-6">相關內容</h2>
+  <div class="space-y-6">
+  {% for item in outgoing %}
+    {% if item.data.isGardenNote %}
+      {% set post = item %}
+      {% include "components/garden-note-card.njk" %}
+    {% else %}
+      {% set post = item %}
+      {% include "components/post-card.njk" %}
+    {% endif %}
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% set backlinks = collections.notes | backlinksForTarget(page.url, related) %}
+{% if backlinks.length %}
+<section class="mt-12" aria-labelledby="backlinks-title">
+  <h2 id="backlinks-title" class="text-2xl font-bold mb-6">其他提到這個概念的筆記</h2>
+  <div class="space-y-6">
+  {% for post in backlinks %}
+    {% include "components/garden-note-card.njk" %}
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
