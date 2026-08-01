@@ -3,10 +3,11 @@ import path from "node:path";
 import { describe, it, expect } from "vitest";
 import { assertNoSlugCollisions } from "../lib/filters.mjs";
 import { hasUnsafeAssets } from "../src/assets/js/article-lottie.js";
-import { ROOT, loadPosts } from "./helpers.mjs";
+import { ROOT, loadNotes, loadPosts } from "./helpers.mjs";
 
 // 對 src/posts/**/*.md 的 frontmatter 做全量檢查（AGENTS.md 硬性約束的可執行版）
 const posts = loadPosts();
+const notes = loadNotes();
 
 function findRedundantTerminalHolds(value, outPoint, pathParts = [], findings = []) {
   if (Array.isArray(value)) {
@@ -63,6 +64,33 @@ describe("post frontmatter", () => {
     // layout 與 posts tag 由 src/posts/posts.json 供給，不可手動設定
     expect(post.data.layout, "layout 不可手動設定（posts.json 會給）").toBeUndefined();
     expect(post.data.tags ?? [], "posts tag 不可手動加（posts.json 會給）").not.toContain("posts");
+  });
+});
+
+describe("Garden note frontmatter", () => {
+  it("至少有一篇概念筆記", () => {
+    expect(notes.length).toBeGreaterThan(0);
+  });
+
+  it.each(notes.map((note) => [note.file, note]))("%s", (_file, note) => {
+    expect(note.data.title, "缺 title").toBeTruthy();
+    expect(note.data.description, "缺 description").toBeTruthy();
+    expect(note.data.created, "缺 created").toBeTruthy();
+    expect(note.data.updated, "缺 updated").toBeTruthy();
+    expect(["seedling", "growing", "evergreen"]).toContain(note.data.maturity);
+    expect(Array.isArray(note.data.related), "related 必須是陣列").toBe(true);
+    expect(note.data.related.length, "related 不可為空").toBeGreaterThan(0);
+    expect(note.data.related, "related URL 不得重複").toEqual([...new Set(note.data.related)]);
+    for (const url of note.data.related) {
+      expect(url, `${note.file} 的 related URL`).toMatch(/^\/(?:notes|posts)\/[A-Za-z0-9_./-]+\/$/);
+    }
+
+    const prefix = note.file.match(/src\/notes\/([^/]+)\.md$/)?.[1];
+    expect(prefix, "筆記檔名必須是 slug").toBeTruthy();
+    expect(prefix).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    expect(note.data.layout, "layout 由 notes.json 供給").toBeUndefined();
+    expect(note.data.permalink, "permalink 由檔案路徑供給").toBeUndefined();
+    expect(new Date(note.data.updated).valueOf()).toBeGreaterThanOrEqual(new Date(note.data.created).valueOf());
   });
 });
 

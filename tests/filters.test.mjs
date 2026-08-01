@@ -6,7 +6,11 @@ import {
   seoTags,
   filterByUrls,
   topicsForPost,
+  topicsForNote,
   relatedPosts,
+  relatedContent,
+  backlinksForTarget,
+  maturityLabel,
   safeJson,
   assertNoSlugCollisions,
 } from "../lib/filters.mjs";
@@ -89,6 +93,10 @@ describe("人工策展主題", () => {
     { url: "/posts/other/", date: new Date("2026-07-29"), data: { tags: ["posts", "api"] } },
   ];
   const topics = [{ slug: "containers", postUrls: ["/posts/old/", "/posts/new/"] }];
+  const notes = [
+    { url: "/notes/rootless/", data: { related: ["/posts/new/"] } },
+    { url: "/notes/isolation/", data: { related: ["/notes/rootless/", "/posts/old/"] } },
+  ];
 
   it("filterByUrls 依策展清單順序回傳文章，並略過不存在的 URL", () => {
     expect(filterByUrls(posts, ["/posts/old/", "/missing/", "/posts/new/"]))
@@ -100,9 +108,31 @@ describe("人工策展主題", () => {
     expect(topicsForPost(topics, "/posts/other/")).toEqual([]);
   });
 
+  it("topicsForNote 找出筆記所屬主題", () => {
+    const noteTopics = [{ slug: "agent", noteUrls: ["/notes/rootless/"] }];
+    expect(topicsForNote(noteTopics, "/notes/rootless/")).toEqual(noteTopics);
+    expect(topicsForNote(noteTopics, "/notes/other/")).toEqual([]);
+  });
+
   it("relatedPosts 只挑同主題文章，並排除目前文章", () => {
     expect(relatedPosts(posts, "/posts/new/", topics, 3)).toEqual([posts[1]]);
     expect(relatedPosts(posts, "/posts/other/", topics, 3)).toEqual([]);
+  });
+
+  it("relatedContent 依 explicit URL 合併文章與筆記，保留指定順序", () => {
+    expect(relatedContent(posts, notes, "/notes/rootless/", ["/posts/new/", "/notes/isolation/"]))
+      .toEqual([posts[0], notes[1]]);
+  });
+
+  it("backlinksForTarget 找出指向目標的筆記並排除已列出的 related", () => {
+    expect(backlinksForTarget(notes, "/posts/new/")).toEqual([notes[0]]);
+    expect(backlinksForTarget(notes, "/notes/rootless/", ["/notes/isolation/"])).toEqual([]);
+  });
+
+  it("maturityLabel 使用可理解的文字，不依賴顏色", () => {
+    expect(maturityLabel("seedling")).toBe("萌芽");
+    expect(maturityLabel("growing")).toBe("成長中");
+    expect(maturityLabel("evergreen")).toBe("常青");
   });
 });
 

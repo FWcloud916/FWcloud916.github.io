@@ -1,0 +1,18 @@
+<article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">{{ post.data.maturity | maturityLabel }}</span>
+    {% if post.data.updated %}
+    <time datetime="{{ post.data.updated | dateIso }}">更新於 {{ post.data.updated | dateDisplay }}</time>
+    {% elif post.data.created %}
+    <time datetime="{{ post.data.created | dateIso }}">建立於 {{ post.data.created | dateDisplay }}</time>
+    {% endif %}
+  </div>
+  <h3 class="text-2xl font-bold mb-2">
+    <a href="{{ post.url }}" class="text-gray-900 hover:text-blue-600 transition">
+      {{ post.data.title }}
+    </a>
+  </h3>
+  {% if post.data.description %}
+  <p class="text-gray-700">{{ post.data.description }}</p>
+  {% endif %}
+</article>

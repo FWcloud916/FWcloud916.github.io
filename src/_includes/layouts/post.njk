@@ -50,4 +50,16 @@ layout: layouts/base.njk
 </section>
 {% endif %}
 
+{% set conceptNotes = collections.notes | backlinksForTarget(page.url) %}
+{% if conceptNotes.length %}
+<section class="mt-12" aria-labelledby="related-notes-title">
+  <h2 id="related-notes-title" class="text-2xl font-bold mb-6">相關概念</h2>
+  <div class="space-y-6">
+  {% for post in conceptNotes %}
+    {% include "components/garden-note-card.njk" %}
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 <script type="module" src="/assets/js/article-lottie.js?v={{ build.version }}"></script>

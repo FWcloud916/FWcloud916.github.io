@@ -9,7 +9,11 @@ import {
   seoTags,
   filterByUrls,
   topicsForPost,
+  topicsForNote,
   relatedPosts,
+  relatedContent,
+  backlinksForTarget,
+  maturityLabel,
   safeJson,
   assertNoSlugCollisions,
 } from "./lib/filters.mjs";
@@ -66,6 +70,15 @@ export default function(eleventyConfig) {
       .sort((a, b) => b.date - a.date);
   });
 
+  eleventyConfig.addCollection("notes", function(collectionApi) {
+    return collectionApi.getFilteredByGlob("src/notes/**/*.md")
+      .sort((a, b) => {
+        const aDate = new Date(a.data.updated ?? a.data.created ?? a.date);
+        const bDate = new Date(b.data.updated ?? b.data.created ?? b.date);
+        return bDate - aDate;
+      });
+  });
+
   eleventyConfig.addCollection("tagList", function(collection) {
     const tagSet = new Set();
     collection.getAll().forEach(item => {
@@ -95,7 +108,11 @@ export default function(eleventyConfig) {
   eleventyConfig.addFilter("seoTags", seoTags);
   eleventyConfig.addFilter("filterByUrls", filterByUrls);
   eleventyConfig.addFilter("topicsForPost", topicsForPost);
+  eleventyConfig.addFilter("topicsForNote", topicsForNote);
   eleventyConfig.addFilter("relatedPosts", relatedPosts);
+  eleventyConfig.addFilter("relatedContent", relatedContent);
+  eleventyConfig.addFilter("backlinksForTarget", backlinksForTarget);
+  eleventyConfig.addFilter("maturityLabel", maturityLabel);
   eleventyConfig.addFilter("safeJson", safeJson);
 
   eleventyConfig.addFilter("filterByTag", (posts, tag) => {

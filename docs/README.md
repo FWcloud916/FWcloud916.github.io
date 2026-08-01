@@ -2,7 +2,7 @@
 
 > **Type:** How-to guides
 > **Audience:** Developers and AI assistants working on the blog
-> **Last updated:** 2026-07-30
+> **Last updated:** 2026-08-01
 
 Complete documentation for the FW Blog.
 
@@ -57,6 +57,8 @@ The `eleventy.config.mjs` file (ESM) contains all 11ty-specific configuration:
 #### Collections
 
 - **posts**: All blog posts sorted by date (newest first)
+- **notes**: Public Digital Garden concept notes sorted by `updated`／`created`; their directory data
+  supplies `layouts/garden-note.njk` and `isGardenNote`
 - **tagList**: All unique tags used across posts
 
 #### Filters
@@ -70,6 +72,9 @@ The `eleventy.config.mjs` file (ESM) contains all 11ty-specific configuration:
 - **filterByTag**: Filters posts by specific tag
 - **limit**: Limits array to specified number of items
 - **slug**: Overrides the built-in slugifier — transliterates Chinese to pinyin (via pinyin-pro) so CJK tags get valid URLs (e.g. 工具 → `gong-ju`)
+- **topicsForNote**／**relatedContent**／**backlinksForTarget**: Resolve explicit Garden topic and
+  relation URLs without inferring links from tags
+- **maturityLabel**: Maps `seedling`／`growing`／`evergreen` to the visible Traditional Chinese labels
 
 #### Image Transform
 
@@ -134,6 +139,36 @@ Use standard Markdown syntax. The content will be rendered with:
 - **Tailwind Typography** for styling
 - **Prism.js One Dark** for code syntax highlighting
 
+### Digital Garden Notes
+
+Garden notes are small, public concept nodes that complement full posts. They live in
+`src/notes/<slug>.md` and use a stable `/notes/<slug>/` URL. The shared directory data in
+`src/notes/notes.json` supplies the layout; do not repeat `layout` or `isGardenNote` in note
+frontmatter.
+
+```yaml
+---
+title: Rootless 容器
+description: 一句描述目前模型與邊界。
+created: 2026-08-01
+updated: 2026-08-01
+maturity: growing # seedling | growing | evergreen
+related:
+  - /notes/container-isolation-model/
+  - /posts/2026/2026-07-21-production-rootless-docker/
+---
+```
+
+`related` MUST be a unique, non-empty list of canonical root-relative `/notes/` or `/posts/`
+URLs. The note body should explain one concept, include its boundary or uncertainty, and link to
+evidence without becoming a shortened article. Topic membership is maintained explicitly in
+`src/_data/topics.json`: add ordered `noteUrls` alongside `postUrls`. Do not infer membership from
+tags, and preserve note URLs when editing article topic membership.
+
+Notes are shown in `/topics/` and `/topics/<slug>/` under 「核心概念」, and link to related posts and
+backlinks. They are included in `/sitemap.xml` and `/llms.txt` for discovery, but intentionally do
+not appear in the homepage newest-post list, `/archive/`, or `/feed.xml`.
+
 ### Pages
 
 #### Creating Static Pages
@@ -166,16 +201,18 @@ Tags are automatically processed:
 ### Curated Topics and Related Posts
 
 High-value reading paths are maintained in `src/_data/topics.json`. Each topic
-defines a stable `slug`, visible titles and description, plus an ordered
-`postUrls` list. The order in that list is the reading order rendered at
-`/topics/<slug>/`; use canonical root-relative post URLs and run `npm test`
-after changing it. Build tests fail when a topic references a missing post.
+defines a stable `slug`, visible titles and description, plus ordered `noteUrls`
+and `postUrls` lists. Notes render as core concepts before the article reading route
+at `/topics/<slug>/`; use canonical root-relative URLs and run `npm test` after
+changing it. Build tests fail when a topic references a missing note or post.
 
-The topic index is `/topics/`. Article pages link back to every curated topic
-that contains them and show up to three related articles selected only from the
-same topic. Shared tags determine recommendation priority, but they do not
-decide topic membership. Articles not assigned to a topic remain discoverable
-through `/archive/`, which lists every post.
+The topic index is `/topics/` (visible as 「花園」). Article pages link back to every
+curated topic that contains them and show up to three related articles selected only
+from the same topic. Garden notes resolve only their explicit `related` URLs and
+show note backlinks. Shared tags determine recommendation priority for posts, but
+they do not decide topic or note membership. Articles not assigned to a topic remain
+discoverable through `/archive/`, which lists every post; notes intentionally do not
+enter that archive, the homepage newest-post list, or RSS.
 
 ### Navigation
 
@@ -184,7 +221,7 @@ Edit `src/_includes/components/nav.njk`:
 ```html
 <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
   <li><a href="/">首頁</a></li>
-  <li><a href="/topics/">主題</a></li>
+  <li><a href="/topics/">花園</a></li>
   <li><a href="/archive/">文章</a></li>
   <li><a href="/about/">關於</a></li>
   <!-- Add custom links -->

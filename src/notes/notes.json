@@ -1,0 +1,4 @@
+{
+  "layout": "layouts/garden-note.njk",
+  "isGardenNote": true
+}

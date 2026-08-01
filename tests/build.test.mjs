@@ -3,15 +3,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect, beforeAll } from "vitest";
 import { toSlug } from "../lib/filters.mjs";
-import { ROOT, SITE_DIR, loadPosts, newestPost, escapeHtml } from "./helpers.mjs";
+import { ROOT, SITE_DIR, loadNotes, loadPosts, newestPost, escapeHtml } from "./helpers.mjs";
 
 // 跑完整 production build 後對 _site/ 產物做 smoke 檢查
 const posts = loadPosts();
+const notes = loadNotes();
 const topics = JSON.parse(fs.readFileSync(path.join(ROOT, "src", "_data", "topics.json"), "utf8"));
 const read = (p) => fs.readFileSync(path.join(SITE_DIR, p), "utf8");
 const exists = (p) => fs.existsSync(path.join(SITE_DIR, p));
 const postOutputPath = (post) => post.file.replace(/^src\//, "").replace(/\.md$/, "/index.html");
 const postUrl = (post) => `/${postOutputPath(post).replace(/index\.html$/, "")}`;
+const noteOutputPath = (note) => note.file.replace(/^src\//, "").replace(/\.md$/, "/index.html");
+const noteUrl = (note) => `/${noteOutputPath(note).replace(/index\.html$/, "")}`;
 const jsonLd = (html) => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
   .map((match) => JSON.parse(match[1]));
 
@@ -38,6 +41,8 @@ describe("build output", () => {
     for (const topic of topics) {
       expect(topicIndex).toContain(`href="/topics/${topic.slug}/"`);
       expect(topicIndex).toContain(escapeHtml(topic.description));
+      expect(Array.isArray(topic.noteUrls), `主題 ${topic.slug} 缺 noteUrls 陣列`).toBe(true);
+      expect(new Set(topic.noteUrls).size, `主題 ${topic.slug} 的 noteUrls 重複`).toBe(topic.noteUrls.length);
 
       const topicPage = read(`topics/${topic.slug}/index.html`);
       for (const url of topic.postUrls) {
@@ -46,11 +51,46 @@ describe("build output", () => {
         expect(topicPage).toContain(`href="${url}"`);
         expect(topicPage).toContain(escapeHtml(post.data.title));
       }
+      for (const url of topic.noteUrls ?? []) {
+        const note = notes.find((item) => noteUrl(item) === url);
+        expect(note, `主題 ${topic.slug} 引用了不存在的筆記 ${url}`).toBeTruthy();
+        expect(topicPage).toContain(`href="${url}"`);
+        expect(topicPage).toContain(escapeHtml(note.data.title));
+      }
     }
 
     for (const post of posts) {
       expect(archive, `彙整頁缺少 ${postUrl(post)}`).toContain(`href="${postUrl(post)}"`);
     }
+
+    const allUrls = new Set([...posts.map(postUrl), ...notes.map(noteUrl)]);
+    for (const note of notes) {
+      for (const related of note.data.related) {
+        expect(allUrls, `${note.file} 的 related URL 不存在：${related}`).toContain(related);
+      }
+    }
+    const assignedNotes = new Set(topics.flatMap((topic) => topic.noteUrls ?? []));
+    expect(assignedNotes).toEqual(new Set(notes.map(noteUrl)));
+  });
+
+  it("Garden note 頁提供成熟度、TechArticle、相關內容與反向連結", () => {
+    const note = notes.find((item) => noteUrl(item) === "/notes/container-isolation-model/");
+    const html = read(noteOutputPath(note));
+    expect(html).toContain("成長中");
+    expect(html).toContain("@type\": \"TechArticle\"");
+    expect(html).toContain('href="/notes/rootless-containers/"');
+    expect(html).toContain('href="/posts/2026/2026-07-21-what-is-containerization/"');
+    expect(html).toContain("知識花園");
+  });
+
+  it("Garden notes 進入 sitemap 與 llms.txt，但不混入首頁、archive 或 RSS", () => {
+    const noteUrlValue = "/notes/container-isolation-model/";
+    expect(read("sitemap.xml")).toContain(`https://imfw.io${noteUrlValue}`);
+    expect(read("llms.txt")).toContain("## Knowledge Notes");
+    expect(read("llms.txt")).toContain(`https://imfw.io${noteUrlValue}`);
+    expect(read("index.html")).not.toContain(noteUrlValue);
+    expect(read("archive/index.html")).not.toContain(noteUrlValue);
+    expect(read("feed.xml")).not.toContain(noteUrlValue);
   });
 
   it("主題文章會連回主題入口並提供同主題延伸閱讀", () => {
