@@ -65,8 +65,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=5305738">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=5305738">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=656b5c2">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=656b5c2">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -101,6 +101,7 @@
   </script>
   
   
+  
 
   <!-- Google Analytics -->
   
@@ -125,7 +126,7 @@
           <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
         </li>
         <li>
-          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">主題</a>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
         </li>
         <li>
           <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
@@ -645,7 +646,53 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 </section>
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=5305738"></script>
+
+
+<section class="mt-12" aria-labelledby="related-notes-title">
+  <h2 id="related-notes-title" class="text-2xl font-bold mb-6">相關概念</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">成長中</span>
+    
+    <time datetime="2026-08-01T00:00:00.000Z">更新於 2026年08月01日</time>
+    
+  </div>
+  <h3 class="text-2xl font-bold mb-2">
+    <a href="/notes/container-isolation-model/" class="text-gray-900 hover:text-blue-600 transition">
+      容器隔離模型：namespace、cgroup 與 rootfs 各管什麼
+    </a>
+  </h3>
+  
+  <p class="text-gray-700">把容器拆回 Linux kernel 的三個基本機制，先建立能用來除錯的心智模型。</p>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">成長中</span>
+    
+    <time datetime="2026-08-01T00:00:00.000Z">更新於 2026年08月01日</time>
+    
+  </div>
+  <h3 class="text-2xl font-bold mb-2">
+    <a href="/notes/rootless-containers/" class="text-gray-900 hover:text-blue-600 transition">
+      Rootless 容器：少掉 root daemon，不代表沒有權限限制
+    </a>
+  </h3>
+  
+  <p class="text-gray-700">Rootless 讓容器內的 root 在 host 上仍以普通帳號運作，但不會讓 Linux 的權限邊界消失。</p>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=656b5c2"></script>
 
   </main>
 

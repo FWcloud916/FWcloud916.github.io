@@ -13,6 +13,7 @@ Author: FW (https://imfw.io/about/)
 ## Navigation
 
 - Home: https://imfw.io/
+- Knowledge Garden: https://imfw.io/topics/
 - Tags: https://imfw.io/tags/
 - About: https://imfw.io/about/
 
@@ -181,6 +182,63 @@ Author: FW (https://imfw.io/about/)
 - Tags: node, nvm, 工具
 
 - Description: 由於 node 版本越來越多，新舊版本有時候因為套件支援版本不同無法使用，在開發與維護上都是不少人的困擾，所以就有 NVM 誕生，來解決版本切換的問題 MAC NVM 是由大神 Tim Caswell 所開發的一個專案，提供 linus/mac 使用的 Node 版本管理器，是目前最受歡迎的管理器 安裝方式 1.開啟…
+
+
+
+## Knowledge Notes
+
+### Agent 的上下文工程：文件是共享記憶，也是邊界
+
+- Maturity: 成長中
+- Created: 2026-08-01T00:00:00.000Z
+- Updated: 2026-08-01T00:00:00.000Z
+- URL: https://imfw.io/notes/agent-context-engineering/
+- Description: 讓 Agent 做對事情的關鍵，不是把所有內容塞進 prompt，而是把目標、限制與狀態放在可找到的位置。
+
+
+### Agent Skill：把成功做法變成可驗證的工作流
+
+- Maturity: 成長中
+- Created: 2026-08-01T00:00:00.000Z
+- Updated: 2026-08-01T00:00:00.000Z
+- URL: https://imfw.io/notes/agent-skills-as-workflows/
+- Description: 一段 prompt 只有在觸發、資源、權限與驗證都被設計好時，才稱得上可重用的 Agent Skill。
+
+
+### 容器隔離模型：namespace、cgroup 與 rootfs 各管什麼
+
+- Maturity: 成長中
+- Created: 2026-08-01T00:00:00.000Z
+- Updated: 2026-08-01T00:00:00.000Z
+- URL: https://imfw.io/notes/container-isolation-model/
+- Description: 把容器拆回 Linux kernel 的三個基本機制，先建立能用來除錯的心智模型。
+
+
+### Rootless 容器：少掉 root daemon，不代表沒有權限限制
+
+- Maturity: 成長中
+- Created: 2026-08-01T00:00:00.000Z
+- Updated: 2026-08-01T00:00:00.000Z
+- URL: https://imfw.io/notes/rootless-containers/
+- Description: Rootless 讓容器內的 root 在 host 上仍以普通帳號運作，但不會讓 Linux 的權限邊界消失。
+
+
+### 社群 API Token：授權成功不等於可以長期運作
+
+- Maturity: 成長中
+- Created: 2026-08-01T00:00:00.000Z
+- Updated: 2026-08-01T00:00:00.000Z
+- URL: https://imfw.io/notes/social-api-token-lifecycle/
+- Description: Token 的效期、scope、刷新與輪替都會影響自動發文，必須把生命週期當成產品功能。
+
+
+### 社群發布 API：平台能力不同，流程不能假設相同
+
+- Maturity: 成長中
+- Created: 2026-08-01T00:00:00.000Z
+- Updated: 2026-08-01T00:00:00.000Z
+- URL: https://imfw.io/notes/social-publishing-apis/
+- Description: X、Facebook、Instagram 與 Threads 都能自動發布，但權限、媒體、容器與費用邊界並不相同。
 
 
 

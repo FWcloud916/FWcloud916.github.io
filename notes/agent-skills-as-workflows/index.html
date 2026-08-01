@@ -13,14 +13,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#155dfc">
-  <title>AI Agent、Skill 與文件工程 - FW Blog</title>
-  <meta name="description" content="從專案文件、Agent Skill 設計與評測，到用 CI 和 script-gated workflow 把 AI 協作變成可驗證的工程流程。">
+  <title>Agent Skill：把成功做法變成可驗證的工作流 - FW Blog</title>
+  <meta name="description" content="一段 prompt 只有在觸發、資源、權限與驗證都被設計好時，才稱得上可重用的 Agent Skill。">
   <meta name="robots" content="index, follow">
   
   
   <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
   
-  <link rel="canonical" href="https://imfw.io/topics/ai-agent-engineering/">
+  <link rel="canonical" href="https://imfw.io/notes/agent-skills-as-workflows/">
 
   <!-- Brand icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -30,21 +30,24 @@
   <!-- Social sharing -->
   <meta property="og:site_name" content="FW Blog">
   <meta property="og:locale" content="zh_TW">
-  <meta property="og:title" content="AI Agent、Skill 與文件工程 - FW Blog">
-  <meta property="og:description" content="從專案文件、Agent Skill 設計與評測，到用 CI 和 script-gated workflow 把 AI 協作變成可驗證的工程流程。">
-  <meta property="og:url" content="https://imfw.io/topics/ai-agent-engineering/">
+  <meta property="og:title" content="Agent Skill：把成功做法變成可驗證的工作流 - FW Blog">
+  <meta property="og:description" content="一段 prompt 只有在觸發、資源、權限與驗證都被設計好時，才稱得上可重用的 Agent Skill。">
+  <meta property="og:url" content="https://imfw.io/notes/agent-skills-as-workflows/">
   <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
-  <meta property="og:image:alt" content="AI Agent、Skill 與文件工程 - FW Blog">
+  <meta property="og:image:alt" content="Agent Skill：把成功做法變成可驗證的工作流 - FW Blog">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-01T00:00:00.000Z">
+  <meta property="article:modified_time" content="2026-08-01T00:00:00.000Z">
+  
   
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="AI Agent、Skill 與文件工程 - FW Blog">
-  <meta name="twitter:description" content="從專案文件、Agent Skill 設計與評測，到用 CI 和 script-gated workflow 把 AI 協作變成可驗證的工程流程。">
+  <meta name="twitter:title" content="Agent Skill：把成功做法變成可驗證的工作流 - FW Blog">
+  <meta name="twitter:description" content="一段 prompt 只有在觸發、資源、權限與驗證都被設計好時，才稱得上可重用的 Agent Skill。">
   <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
-  <meta name="twitter:image:alt" content="AI Agent、Skill 與文件工程 - FW Blog">
+  <meta name="twitter:image:alt" content="Agent Skill：把成功做法變成可驗證的工作流 - FW Blog">
 
   <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,6 +63,31 @@
 
   
   
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Agent Skill：把成功做法變成可驗證的工作流",
+    "description": "一段 prompt 只有在觸發、資源、權限與驗證都被設計好時，才稱得上可重用的 Agent Skill。",
+    "url": "https://imfw.io/notes/agent-skills-as-workflows/",
+    "mainEntityOfPage": "https://imfw.io/notes/agent-skills-as-workflows/",
+    "datePublished": "2026-08-01T00:00:00.000Z",
+    "dateModified": "2026-08-01T00:00:00.000Z",
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
   
   
 
@@ -102,23 +130,53 @@
 
   <main class="max-w-4xl mx-auto px-4 py-8">
     
-<nav aria-label="麵包屑" class="text-sm text-gray-600 mb-6">
-  <a href="/" class="hover:text-blue-600 transition">首頁</a>
-  <span aria-hidden="true"> / </span>
-  <a href="/topics/" class="hover:text-blue-600 transition">知識花園</a>
-  <span aria-hidden="true"> / </span>
-  <span aria-current="page">Agent 工程</span>
-</nav>
+<article>
+  <nav aria-label="麵包屑" class="text-sm text-gray-600 mb-6">
+    <a href="/" class="hover:text-blue-600 transition">首頁</a>
+    <span aria-hidden="true"> / </span>
+    <a href="/topics/" class="hover:text-blue-600 transition">知識花園</a>
+    <span aria-hidden="true"> / </span>
+    <span aria-current="page">概念筆記</span>
+  </nav>
+  <header class="mb-8">
+    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-4">
+      <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">成長中</span>
+      <span>建立：<time datetime="2026-08-01T00:00:00.000Z">2026年08月01日</time></span>
+      <span>更新：<time datetime="2026-08-01T00:00:00.000Z">2026年08月01日</time></span>
+    </div>
+    <h1 class="text-4xl font-bold mb-4">Agent Skill：把成功做法變成可驗證的工作流</h1>
+    <p class="text-lg text-gray-600">一段 prompt 只有在觸發、資源、權限與驗證都被設計好時，才稱得上可重用的 Agent Skill。</p>
 
-<h1 class="text-3xl font-bold mb-4">AI Agent、Skill 與文件工程</h1>
-<p class="text-lg text-gray-600 mb-8">從專案文件、Agent Skill 設計與評測，到用 CI 和 script-gated workflow 把 AI 協作變成可驗證的工程流程。</p>
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/ai-agent-engineering/" class="text-blue-600 hover:text-blue-800 transition">Agent 工程</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <p>把一段成功的 prompt 存成 <code>SKILL.md</code>，不會自動得到一個好用的 Agent Skill。可重用的 skill 至少要回答四件事：什麼任務會觸發它、應該讀哪些資源、哪些不可變規則不能交給模型自由發揮，以及完成後用什麼證據驗收。</p>
+<p>這也是 prompt 與 workflow 的分界。容易變動的判斷可以留給模型；安全邊界、檔案白名單、格式限制、重試政策與 API 呼叫順序，則應該落在 script 或工具介面。模型負責在路上做判斷，工具負責把懸崖標出來。</p>
+<p>一個 skill 也需要能被新 session 重新理解。觸發描述、漸進式 references、失敗時何時停止，以及可重跑的驗證命令，都是 portability 的一部分；只把作者腦中的背景知識藏在對話裡，下一次就會重新猜。</p>
+<p>評估 skill 不看它寫得多像規格書，而看另一個 context 能不能用它完成同一類任務，並在錯誤時停在正確的位置。</p>
+<p>先讀<a href="/notes/agent-context-engineering/">Agent 的上下文工程</a>，再看<a href="/posts/2026/2026-07-24-agent-skill-evolution/">Agent Skill 不是 Prompt</a>與<a href="/posts/2026/2026-07-29-script-gated-skills/">Script-Gated Skills</a>的實際取捨。</p>
+
+  </div>
+</article>
 
 
 
-<h2 class="text-2xl font-bold mb-6">核心概念</h2>
-<div class="space-y-6 mb-12">
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+<section class="mt-12" aria-labelledby="related-content-title">
+  <h2 id="related-content-title" class="text-2xl font-bold mb-6">相關內容</h2>
+  <div class="space-y-6">
+  
+    
+      
+      <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
     <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">成長中</span>
     
@@ -135,77 +193,11 @@
   
 </article>
 
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
-    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">成長中</span>
     
-    <time datetime="2026-08-01T00:00:00.000Z">更新於 2026年08月01日</time>
-    
-  </div>
-  <h3 class="text-2xl font-bold mb-2">
-    <a href="/notes/agent-skills-as-workflows/" class="text-gray-900 hover:text-blue-600 transition">
-      Agent Skill：把成功做法變成可驗證的工作流
-    </a>
-  </h3>
   
-  <p class="text-gray-700">一段 prompt 只有在觸發、資源、權限與驗證都被設計好時，才稱得上可重用的 Agent Skill。</p>
-  
-</article>
-
-
-</div>
-
-
-<h2 class="text-2xl font-bold mb-6">閱讀路線</h2>
-
-<div class="space-y-6">
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-07-22-documentation-for-ai-agents/" class="text-gray-900 hover:text-blue-600 transition">
-      如何與 AI 合作，我勸你善良：文件是 Agent 不走偏的起點
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-07-22T00:00:00.000Z">2026年07月22日</time>
-    <span>10 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">AI 能把迭代速度拉高，卻不會自動知道專案的目標、限制與歷史；本文拆解文件如何成為人與 agent 共用的邊界、共享記憶與驗證介面，並介紹 doc-architect skill 的實務工作流。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
     
       
-    
-      
-      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai
-      </a>
-      
-    
-      
-      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #agent-skills
-      </a>
-      
-    
-      
-      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #automation
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
     <a href="/posts/2026/2026-07-24-agent-skill-evolution/" class="text-gray-900 hover:text-blue-600 transition">
       Agent Skill 不是 Prompt：從撰寫、評測到自我提煉的工程化方法
@@ -248,8 +240,11 @@
   
 </article>
 
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+    
+  
+    
+      
+      <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
     <a href="/posts/2026/2026-07-29-script-gated-skills/" class="text-gray-900 hover:text-blue-600 transition">
       Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪
@@ -292,52 +287,11 @@
   
 </article>
 
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-07-30-docs-need-ci/" class="text-gray-900 hover:text-blue-600 transition">
-      文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-07-30T00:00:00.000Z">2026年07月30日</time>
-    <span>16 分鐘閱讀</span>
-  </div>
-
+    
   
-  <p class="text-gray-700 mb-4">一次 doc-architect 重構加進整個 CONTEXT.md 模組，SKILL.md 卻從 225 行降到 216 行。拆解文件的三層機器保證——長度預算與棘輪、術語裁決的權限邊界、Fresh Session Test 的獨立驗收。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
     
       
-    
-      
-      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai
-      </a>
-      
-    
-      
-      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #agent-skills
-      </a>
-      
-    
-      
-      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #devops
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
     <a href="/posts/2026/2026-07-31-lottie-maker-agent-skill/" class="text-gray-900 hover:text-blue-600 transition">
       把專用動畫流程抽成 Agent Skill：lottie-maker 如何讓 Lottie 可建立、可診斷、可驗證
@@ -386,8 +340,14 @@
   
 </article>
 
+    
+  
+  </div>
+</section>
 
-</div>
+
+
+
 
   </main>
 
