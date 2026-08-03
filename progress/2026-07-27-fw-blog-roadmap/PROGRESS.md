@@ -87,7 +87,7 @@ source text is retained verbatim enough for row-level audit and future work.
 
 ### 2026-08-03
 
-- Implementation commit pending — added the `/works/` catalog, reusable work card, five-link main
+- Commit `10d08ad` — added the `/works/` catalog, reusable work card, five-link main
   navigation, and validated global data for `agent-skill`／`project`／`tool` entries. Seeded the
   catalog with the public `lottie-maker` repo, install command, responsive poster, and supporting
   article link.
