@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Prompt 紀律派：把 Skill 寫成模型能理解的操作規約
+
+- Published: 2026-08-03T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-03-prompt-discipline-agent-skills/
+- Tags: ai, agent-skills, automation
+
+- Description: 從觸發描述、資訊階層與 progressive disclosure 出發，拆解 Prompt 紀律派如何以少而準的文字讓 Agent 維持可預期的工作流程，以及它不能取代介面保證的地方。
+
+
 ### 把專用動畫流程抽成 Agent Skill：lottie-maker 如何讓 Lottie 可建立、可診斷、可驗證
 
 - Published: 2026-07-31T00:00:00.000Z
