@@ -1,0 +1,224 @@
+---
+title: Prompt 紀律派：把 Skill 寫成模型能理解的操作規約
+date: 2026-08-03
+tags:
+  - ai
+  - agent-skills
+  - automation
+description: 從觸發描述、資訊階層與 progressive disclosure 出發，拆解 Prompt 紀律派如何以少而準的文字讓 Agent 維持可預期的工作流程，以及它不能取代介面保證的地方。
+---
+
+> **查核資訊：** 本文於 2026-08-03 依 Agent Skills 官方規格、Anthropic 官方 context engineering 與 agent 設計文章，以及 `mattpocock/skills` 的 `writing-great-skills` 原文查核。模型能力、Skill runtime 與上游文件可能變動；文中的「Prompt 紀律派」是本文提出的分析框架，不是官方分類。
+
+Prompt 紀律派不是「把 `SKILL.md` 寫得越長越安全」。它真正相信的是：Skill 的主要工作，是把一個開放式任務整理成模型能理解的判斷框架，讓模型知道何時觸發、先做什麼、做到哪裡算完成，以及遇到不確定時要怎麼停下來。
+
+這是一種軟保證。模型仍然要讀懂文字、選對分支、記得完成條件，最後再把工具叫對。文字可以讓這條路變得清楚，也可以讓錯誤的路變得不容易被選到；但它沒有辦法像程式一樣，對每一個輸入都回傳 exit code 1。
+
+前文把 Skill 的設計傾向分成 Prompt 紀律派與介面保證派。這篇只談前者：如果暫時不能改工具、不能加 Script、也還沒有完整的狀態機，怎麼把 Skill 寫成一份不會和模型搶方向盤的操作規約？
+
+## 先把「Prompt」從一段話改看成一個路由系統
+
+很多人把 Prompt 想成送給模型的一段指令。Agent Skill 的實際工作更像一個小型路由系統：先讓模型判斷這個任務是不是自己負責，再把共通步驟放在眼前，最後按這次任務的需要載入參考資料。
+
+Agent Skills 官方規格要求 Skill 至少是含有 `SKILL.md` 的目錄，並把 `scripts/`、`references/`、`assets/` 列為可以搭配的資源。規格也明確說明，模型決定啟用 Skill 後會載入整份 `SKILL.md`，較深的資源則可以按需要讀取。這個結構本身已經暗示了一個上下文階層：metadata 負責發現，`SKILL.md` 負責執行，參考檔案負責細節。[Agent Skills 官方規格](https://agentskills.io/specification)
+
+Prompt 紀律派的第一個判斷，就是不要把這三層混成一張大紙。所有東西都放在頂層，看起來像完整，實際上會讓每一次呼叫都先付一筆不必要的 context 成本；什麼都移到參考檔，又可能讓模型根本不知道該去讀哪一份。
+
+它的目標不是「最短的 Skill」，而是「每一條工作路徑都只帶需要的規則」。這也是我認為 Prompt 紀律派最值得保留的地方：它把文字當成有限的設計資源，而不是把文字當成免費的保險。
+
+![Prompt 紀律派的上下文路徑，從開放式任務經過 description、SKILL.md 與特定 branch 的 references，最後以 completion criterion 和 eval 檢查工作路徑。](/assets/images/prompt-discipline-agent-skills-context-path.png)
+
+## 第一層紀律：description 要負責觸發，不要重述身分
+
+`SKILL.md` 的 frontmatter 至少需要 `name` 與 `description`。其中 `description` 不只是給人看的摘要，它還負責讓相容的 Agent 判斷什麼時候應該載入這個 Skill。官方規格要求它描述 Skill 做什麼、什麼時候使用；因此 description 是整個 Skill 最早被看到，也最容易被拿來路由的區塊。
+
+這裡最常見的錯誤，是把 description 寫成產品文案：
+
+```yaml
+description: |
+  這是一個專業、可靠、完整的發版管理 Skill，會協助你安全地處理各種發版工作，
+  並提供詳細的步驟、檢查與最佳實務。
+```
+
+它聽起來沒有錯，但模型不知道什麼輸入應該觸發它。「各種發版工作」也沒有告訴模型，建立發版、檢查候選版本、回滾失敗部署是不是同一條路徑。
+
+Prompt 紀律派會先把觸發條件寫出來，再決定哪些身分描述可以刪掉：
+
+```yaml
+description: >
+  檢查 release candidate 的版本、變更紀錄、migration 與 rollback 證據。
+  Use when the user asks to audit a release, prepare a deployment review,
+  or verify that a release is ready to publish.
+```
+
+如果建立與稽核需要完全不同的前置條件，描述裡就要讓兩個 branch 可辨識；如果它們只是同一流程的同義說法，就不必把同一個 trigger 寫三次。`mattpocock/skills` 的 `writing-great-skills` 把這個原則叫做每個 branch 一個 trigger，並提醒 description 要優先放入能喚起正確工作的 leading word。[`writing-great-skills` 原文](https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/writing-great-skills/SKILL.md)
+
+這裡的 leading word 不必是特殊咒語。它可以是 `migration`、`rollback`、`fresh session` 或 `two-phase commit` 這種模型已經熟悉的概念。重點是讓一個詞指向一整組已經約定好的判斷，而不是用五句近義形容詞堆出一個模糊的感覺。
+
+description 的實用檢查只有三題：
+
+- 使用者說出哪一類任務時，它應該被觸發？
+- 哪一類相似任務其實不應該觸發？
+- 刪掉這句話後，觸發邊界會不會改變？
+
+第三題答不出來的句子，多半是在付 context load，卻沒有增加路由資訊。
+
+## 第二層紀律：每一步都要有可檢查的完成條件
+
+Prompt 紀律派不是只管開頭。Skill 最容易失控的地方，往往是模型以為「大概做完了」，於是跳過最後一個檢查，或在中途先寫一段總結把任務收掉。
+
+一個模糊的步驟長這樣：
+
+```markdown
+1. 檢查目前的 release 狀態。
+2. 確認一切都正確。
+3. 完成發版準備。
+```
+
+「檢查」、「正確」與「完成」都沒有可觀察的邊界。模型可以讀檔案，也可以執行幾個命令，然後用一句「看起來沒問題」結束。
+
+比較好的寫法，是把工作和證據放在同一個 step：
+
+```markdown
+1. 讀取 release manifest、變更清單與 migration 狀態。
+   Completion criterion: 每一個變更項目都有 owner、測試結果與 rollback 說明；
+   任一欄缺失時，列出缺口並停止發版建議。
+```
+
+完成條件不需要替模型決定每一個細節，但要讓它知道「done」不是一種情緒。`writing-great-skills` 把 premature completion 列為主要 failure mode，並要求 completion criterion 可檢查，必要時還要是 exhaustive，而不是只寫「產生一份清單」。
+
+這個方法有一個重要效果：它把 Prompt 從願望改成觀測點。模型仍然可能判斷錯，但它比較不容易把「我已經看過」誤當成「所有必要證據都存在」。
+
+## 第三層紀律：用 progressive disclosure 管理上下文，而不是管理檔案數量
+
+把長 Skill 拆成多個檔案，不等於完成 progressive disclosure。真正的問題是：哪一份內容只服務某個 branch？它在什麼條件下被載入？指標是否寫得足夠明確？
+
+假設一個部署 Skill 同時支援 fresh setup、coexistence 與 migration。三種路徑共用的內容可以留在 `SKILL.md`：確認目標使用者、先做 read-only preflight、顯示變更計畫。只有 migration 才需要的資料盤點與 rollback 細節，應該移到 `references/migration.md`。
+
+頂層不要只寫：
+
+```markdown
+Migration details are in `references/migration.md`.
+```
+
+這句話對人類是連結，對模型卻可能只是補充說明。更精確的指標會把載入時機和完整性都說出來：
+
+```markdown
+If the user selected migration, read `references/migration.md` in full
+before running any migration command. Do not infer migration steps from
+the summary below.
+```
+
+這不是把文件寫得更兇，而是把 branch 邊界寫得可判斷。官方規格也建議把較長的內容移到 reference，並讓每一份 reference 保持聚焦；`writing-great-skills` 更進一步把「branch 判準」當成拆分的依據：所有 branch 都需要的內容留在頂層，只有一條路徑會用到的內容才往下移。[Agent Skills progressive disclosure 規格](https://agentskills.io/specification)
+
+拆分時還要保留 single source of truth。若 `SKILL.md`、README、subagent 定義與 reference 各自複述一次 migration 規則，真正的風險不是多了幾份文件，而是下一次修改只改到其中三份。Prompt 紀律需要減少模型的上下文負擔，也需要減少維護者的漂移負擔。
+
+## 第四層紀律：刪除 no-op，不要把 no-op 修飾得更漂亮
+
+很多 Skill 的長度是這樣長出來的：每次出現一次錯誤，就在文件補一條「請務必小心」；每次模型答錯，就加一句禁止；每次有人問一個例外，就把整段對話貼進 `SKILL.md`。
+
+其中一部分規則確實有用，另一部分只是把模型本來就會做的事情再說一次。逐句 no-op 測試的問題很簡單：
+
+> 相對於模型的預設行為，這一句改變了什麼？
+
+如果答案是「讓它更重視」、「提醒它要仔細」或「讓它知道這很重要」，但沒有對應到一個具體分支、輸出或停止條件，這句話很可能是 no-op。把它改成「請非常仔細且完整地檢查」通常不會變成更好的規則，只會變成更昂貴的 no-op。
+
+`writing-great-skills` 把 no-op、duplication、sediment、sprawl、premature completion 與 negation 列成一組可以反覆使用的 failure modes。這比單純量行數有用，因為每一種問題的修法不同：
+
+| Failure mode | 表現 | Prompt 層修法 |
+|---|---|---|
+| no-op | 模型本來就會做，規則沒有改變行為 | 刪整句，或改成可觀察的完成條件 |
+| duplication | 同一個意思出現在 description、正文與 README | 保留一個權威來源，其餘改成精準指標 |
+| sediment | 舊事故留下的規則，背景已經消失 | 找出原始證據；沒有用途就刪，仍重要就補理由 |
+| sprawl | 每句都合理，但每次都載入太多 | 按 branch 或 sequence 做 progressive disclosure |
+| premature completion | 模型太早宣布完成 | 先補 completion criterion，再考慮拆 sequence |
+| negation | 「不要做 X」反而讓 X 更容易被想到 | 改寫成正向目標；不可替代時加上替代動作 |
+
+這裡有一個不太舒服、但很實用的判斷：刪除不是把規則變得不負責任；如果那條規則沒有改變行為，留下它才是不負責任。它會和真正重要的規則競爭注意力，也會讓未來維護者不敢碰附近的文字。
+
+## Prompt 紀律派如何處理「讓模型使用判斷力」
+
+Anthropic 在 2026-07-24 的文章中表示，他們針對 Claude Opus 5 與 Claude Fable 5，移除了 Claude Code 超過 80% 的 system prompt，並在自己的 coding evaluations 中沒有觀察到可測量的損失。文章的重點不是「所有規則都該刪」，而是新模型能更常依照周邊上下文與使用者意圖做判斷，也因此不必再用大量品味規則預防舊模型的最壞行為。[Anthropic：The new rules of context engineering for Claude 5 generation models](https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models)
+
+這個結論有兩個不能省略的限定詞：特定模型，以及特定 evaluation。它不是跨模型、跨任務、跨風險等級的定理。
+
+Prompt 紀律派真正要學的，不是把每條指令都換成「請自行判斷」，而是把文字分成三類：
+
+1. **意圖規則**：使用者要的是稽核、建立、修復，還是教學？這通常需要模型理解自然語言。
+2. **品味規則**：註解密度、段落風格、命名偏好、輸出順序等，通常應該讓模型參考 repo 與任務脈絡。
+3. **邊界規則**：不能刪資料、不能在核准前發布、只能操作指定範圍。這些不是品味，不應只靠模型記得。
+
+前兩種是 Prompt 紀律派的主場。它用清楚的路由、步驟、參考資料與正向目標，讓模型保留足夠的判斷空間。第三種如果失敗的代價不可逆，就應該移到介面與 Script；這會是下一篇的主題。
+
+## 一個可讀的 Skill，不等於一個可靠的 Skill
+
+Prompt 紀律派最容易被誤解的地方，是把「可讀」當成「可靠」。一份 Skill 可以寫得像很好的工程手冊，卻仍然在模型換代、上下文變長或任務稍微偏離時失效。
+
+因此，文字重構也需要 eval。最小的測試矩陣可以包含：
+
+| 測試面向 | 要問的問題 |
+|---|---|
+| 觸發 | 使用者用同義說法時，Skill 會不會被找到？相鄰 Skill 會不會誤觸發？ |
+| 分支 | fresh setup、update、audit、close out 是否各走到正確路徑？ |
+| 完成 | 模型是否在缺證據時停下，而不是用摘要代替驗證？ |
+| 載入 | 只有 migration 才需要的 reference，是否真的不會污染其他路徑？ |
+| 變更 | 刪掉一句規則後，哪些情境的行為改變？是否只是刪掉 no-op？ |
+| 模型 | 在不同模型或不同 context 長度下，錯誤類型是否改變？ |
+
+最好保留一個 fresh session test：不要把前一輪對話的記憶當成 Skill 寫得好的證據。用一個新的工作階段，給它只有 description、`SKILL.md` 和必要的檔案，觀察它是否能自己找到路徑。這個測試不會證明 Skill 正確，但能抓出「作者知道脈絡、模型不知道」的盲點。
+
+評估也不應只看最後輸出。對 Agent 而言，中間路徑同樣重要：是否先做 read-only 檢查、是否在缺資料時停下、是否讀了正確的 reference、是否跳過了要求的驗證。輸出剛好對了，可能只是運氣；流程證據才比較接近可重複性。
+
+Anthropic 在較早的 agent 設計文章中也把工具、環境回饋、停止條件與測試放在 agent 可靠性的核心位置；它強調的是清楚的 Agent-Computer Interface，而不是只靠一段總 Prompt 解決所有問題。[Anthropic：Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)
+
+## 哪些規則不能留在 Prompt 層？
+
+判斷邊界的問題可以縮成一句話：**如果模型違反這條規則，最壞結果只是輸出不合口味，還是資料與權限會回不來？**
+
+適合留在 Prompt 層的例子：
+
+- 文章要採用哪種語氣與讀者高度。
+- 同一個問題有多條合理解法時，要先比較 trade-off。
+- 遇到不完整需求時，先整理假設再提出最小澄清問題。
+- 某個 branch 應該先讀哪一份 reference。
+- 完成報告要包含哪些觀察與未解決事項。
+
+不應只留在 Prompt 層的例子：
+
+- 發布前一定要有明確核准，否則不得呼叫外部 API。
+- 狀態只能從 `draft` 進入 `review`，不能直接跳到 `published`。
+- 來源檔與複製檔必須逐 byte 相同。
+- `--scope` 不能接受會被靜默拆解的歧義輸入。
+- 不能把 production secrets、token 或 `.env` 寫入提交內容。
+
+Prompt 可以解釋為什麼這些規則重要，也可以提醒模型選擇正確的命令；但真正的 gate 應該由 parser、schema、Script、權限和測試來承擔。否則「不得發布」只是模型下一輪可能還記得的一句話。
+
+## Prompt 紀律派的實作清單
+
+如果要從一份已經過長的 `SKILL.md` 開始重構，可以照這個順序做：
+
+1. 先把每個使用情境列成 branch，不要一開始就按段落長短切檔案。
+2. 重寫 `description`：一個 branch 一個 trigger，刪掉正文已經說過的身分介紹。
+3. 把每個 step 改成「動作＋證據＋completion criterion」。
+4. 逐句跑 no-op 測試；答不出行為差異就刪整句，不要只換成更漂亮的形容詞。
+5. 把只服務單一 branch 的細節移到 reference，並把載入條件寫成明確的 context pointer。
+6. 每個概念只留一個 canonical source；其他位置只負責連到它，不要複述一份會漂移的副本。
+7. 用正向行為描述替代「不要」；若是不可逆的硬限制，就不要假裝 Prompt 已經足夠。
+8. 建立 trigger、branch、fresh session 與完成條件的 eval，再開始大幅刪減。
+
+最後再量行數。行數下降是結果，不是目標；如果刪完後模型更常漏掉必要 reference、少做一步驗證，短了也只是把問題藏起來。
+
+## 收尾：Prompt 的工作是給模型空間，也給模型方向
+
+Prompt 紀律派最成熟的版本，不是用更多句子把模型綁住，而是用更好的資訊階層讓模型知道什麼必須先做、什麼可以自己判斷、什麼只在特定 branch 才需要載入。
+
+它把 Skill 寫成一份「判斷規約」：description 負責路由，step 負責流程，completion criterion 負責收尾，reference 負責按需展開，eval 負責確認刪除之後沒有改壞路徑。
+
+但這份規約終究是給模型讀的。遇到不可逆操作、安全邊界、狀態轉移與資料一致性時，不能因為 Prompt 寫得很有說服力，就把它誤稱為保證。Prompt 可以說服模型選一條路；介面保證要做的是把其他危險的路封起來。
+
+## 參考資料
+
+- [Agent Skills 官方規格](https://agentskills.io/specification)
+- [Anthropic：The new rules of context engineering for Claude 5 generation models](https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models)
+- [Anthropic：Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)
+- [`mattpocock/skills`：`writing-great-skills`](https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/writing-great-skills/SKILL.md)
