@@ -87,15 +87,16 @@ source text is retained verbatim enough for row-level audit and future work.
 
 ### 2026-08-03
 
-- Commit `10d08ad` — added the `/works/` catalog, reusable work card, five-link main
+- Commit `10d08ad` plus follow-up — added the `/works/` catalog, reusable work card, five-link main
   navigation, and validated global data for `agent-skill`／`project`／`tool` entries. Seeded the
-  catalog with the public `lottie-maker` repo, install command, responsive poster, and supporting
-  article link.
+  catalog with the public `lottie-maker` repo, then added `progress-tracker`, `doc-architect`, and
+  `rootless-docker-setup` with their GitHub links, responsive article visuals, and supporting article
+  links. Install commands are included only where the Blog records an explicit command.
 - Added content/build regressions for the catalog schema, HTTPS actions, related posts, responsive
   images, empty-category hiding, sitemap／llms discovery, and exclusion from editorial collections.
   Documentation impact reviewed and synchronized across the agent guide, design system,
   architecture overview, and content-management guide.
-- Verification: `npm test` passes 92/92 and `npm run build` passes. Browser QA passed at desktop
+- Verification: `npm test` passes 96/96 and `npm run build` passes. Browser QA passed at desktop
   and 390×844: the poster remains uncropped, the five-link nav and work card have no page-level
   horizontal overflow, the install command scrolls within its own surface, and the console has no
   warnings or errors.

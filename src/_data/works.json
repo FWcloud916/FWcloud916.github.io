@@ -36,6 +36,65 @@
         "url": "https://github.com/FWcloud916/skill-lottie-maker"
       },
       "relatedPost": "/posts/2026/2026-07-31-lottie-maker-agent-skill/"
+    },
+    {
+      "id": "progress-tracker",
+      "category": "agent-skill",
+      "title": "progress-tracker",
+      "description": "用 script gate、可重播 eval 與兩階段流程管理進度與 migration，讓 Skill 的重構在每個 commit 都留下可驗證的結果。",
+      "tags": [
+        "Agent Skills",
+        "進度管理",
+        "Eval",
+        "Migration"
+      ],
+      "image": "/assets/images/script-gated-skills-gate-anchor-placement.png",
+      "imageAlt": "三個檔案共用逐 byte 相同的 migration gate，並由 verify.sh 以雜湊檢查保護流程邊界。",
+      "primaryAction": {
+        "label": "查看 GitHub",
+        "url": "https://github.com/FWcloud916/skill-progress-tracker"
+      },
+      "relatedPost": "/posts/2026/2026-07-29-script-gated-skills/"
+    },
+    {
+      "id": "doc-architect",
+      "category": "agent-skill",
+      "title": "doc-architect",
+      "description": "把 README、AGENTS.md、project overview 與可選文件模組組成可維護的專案文件架構，並以 Fresh Session Test 與 CI 守住品質。",
+      "tags": [
+        "Agent Skills",
+        "文件工程",
+        "AI 協作",
+        "CI"
+      ],
+      "image": "/assets/images/documentation-for-ai-agents-documentation-router-v5.png",
+      "imageAlt": "以 AGENTS.md 為路由器的專案文件架構，導向核心文件、實作、驗證與進度更新。",
+      "installCommand": "npx skills add FWcloud916/skill-doc-architect",
+      "primaryAction": {
+        "label": "查看 GitHub",
+        "url": "https://github.com/FWcloud916/skill-doc-architect"
+      },
+      "relatedPost": "/posts/2026/2026-07-22-documentation-for-ai-agents/"
+    },
+    {
+      "id": "rootless-docker-setup",
+      "category": "agent-skill",
+      "title": "rootless-docker-setup",
+      "description": "先做唯讀 preflight、變更計畫與明確核准，再以目標使用者安裝並完成端到端驗證的 Rootless Docker 流程。",
+      "tags": [
+        "Agent Skills",
+        "Docker",
+        "Rootless Docker",
+        "安全部署"
+      ],
+      "image": "/assets/images/production-rootless-docker-deployment-workflow.png",
+      "imageAlt": "Rootless Docker 安全部署流程，從唯讀 preflight、變更計畫、明確核准到端對端驗證。",
+      "installCommand": "npx skills add FWcloud916/skill-rootless-docker --skill rootless-docker-setup",
+      "primaryAction": {
+        "label": "查看 GitHub",
+        "url": "https://github.com/FWcloud916/skill-rootless-docker"
+      },
+      "relatedPost": "/posts/2026/2026-07-21-production-rootless-docker/"
     }
   ]
 }
