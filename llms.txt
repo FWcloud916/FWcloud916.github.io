@@ -266,6 +266,32 @@ Author: FW (https://imfw.io/about/)
 - Related article: https://imfw.io/posts/2026/2026-07-31-lottie-maker-agent-skill/
 
 
+### progress-tracker
+
+- Type: Agent Skills
+- Description: 用 script gate、可重播 eval 與兩階段流程管理進度與 migration，讓 Skill 的重構在每個 commit 都留下可驗證的結果。
+- Source: https://github.com/FWcloud916/skill-progress-tracker
+- Related article: https://imfw.io/posts/2026/2026-07-29-script-gated-skills/
+
+
+### doc-architect
+
+- Type: Agent Skills
+- Description: 把 README、AGENTS.md、project overview 與可選文件模組組成可維護的專案文件架構，並以 Fresh Session Test 與 CI 守住品質。
+- Source: https://github.com/FWcloud916/skill-doc-architect
+- Install: `npx skills add FWcloud916/skill-doc-architect`
+- Related article: https://imfw.io/posts/2026/2026-07-22-documentation-for-ai-agents/
+
+
+### rootless-docker-setup
+
+- Type: Agent Skills
+- Description: 先做唯讀 preflight、變更計畫與明確核准，再以目標使用者安裝並完成端到端驗證的 Rootless Docker 流程。
+- Source: https://github.com/FWcloud916/skill-rootless-docker
+- Install: `npx skills add FWcloud916/skill-rootless-docker --skill rootless-docker-setup`
+- Related article: https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/
+
+
 
 
 
