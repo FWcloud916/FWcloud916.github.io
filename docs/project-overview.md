@@ -2,7 +2,7 @@
 
 > **Type:** Explanation
 > **Audience:** Developers, AI assistants, and any tooling that needs project context
-> **Last updated:** 2026-08-01
+> **Last updated:** 2026-08-03
 >
 > Static personal blog (imfw.io) built with Eleventy 3 and Tailwind CSS v4, deployed to GitHub Pages. Related docs: [README.md](README.md) (how-tos), [../DESIGN.md](../DESIGN.md) (design system), [../AGENTS.md](../AGENTS.md) (agent guide).
 
@@ -18,6 +18,8 @@
 - Progressively enhance approved article figures with local, same-origin Lottie JSON while retaining a static poster for no-JavaScript, reduced-motion, and error fallbacks.
 - Publish small, public Digital Garden concept notes at stable `/notes/<slug>/` URLs. Notes complement
   posts with explicit maturity and relations; they are not shortened articles.
+- Publish a structured `/works/` catalog for reusable Agent Skills, projects, and tools, with direct
+  source／install actions and optional links back to supporting articles.
 
 ### 1.2 Relationship with Other Systems
 
@@ -90,6 +92,9 @@ gh-pages branch → GitHub Pages → https://imfw.io
 - **Explicit note relations**: a note's `related` frontmatter contains canonical root-relative
   `/notes/` or `/posts/` URLs. Templates resolve only those URLs and derive backlinks from other
   notes; tags never create note relations.
+- **Works stay independent from editorial collections**: [src/_data/works.json](../src/_data/works.json)
+  explicitly orders catalog categories and items. Works appear on `/works/`, `/sitemap.xml`, and
+  `/llms.txt`; they MUST NOT become posts, Garden notes, archive entries, or Atom feed entries.
 - **CSS builds after Eleventy**: `npm run build` runs `build:11ty` then `build:css` because Tailwind writes directly into `_site/assets/css/`.
 
 ## 4. Directory Structure
@@ -119,10 +124,11 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   ├── _data/site.json        # global site metadata ({{ site.* }} in templates)
 │   ├── _data/build.mjs        # build version ({{ build.version }}): git short hash for CSS cache-busting
 │   ├── _data/topics.json      # curated topic metadata + ordered canonical note/post URLs
+│   ├── _data/works.json       # ordered Agent Skill/project/tool catalog and direct-use actions
 │   ├── _includes/
 │   │   ├── layouts/base.njk   # HTML shell: SEO/social metadata, JSON-LD, nav, footer, optional integrations
 │   │   ├── layouts/post.njk   # article layout: title, date, reading time, tag chips
-│   │   └── components/        # nav.njk (top bar), post-card.njk (list-item card)
+│   │   └── components/        # nav and reusable post, note, and work cards
 │   ├── assets/
 │   │   ├── css/input.css      # Tailwind v4 entry + prose/Prism overrides (THE Tailwind config)
 │   │   ├── icons/             # favicon SVG/ICO + Apple Touch Icon (copied to site root)
@@ -140,6 +146,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   ├── topics-list.njk        # curated topic index at /topics/
 │   ├── topics.njk             # paginated topic detail pages with notes + posts
 │   ├── about.njk              # /about/ — hero band, tech chips, featured posts, contact CTA
+│   ├── works.njk              # /works/ — reusable Agent Skills, projects, and tools
 │   ├── 404.md                 # /404.html (GitHub Pages picks it up)
 │   ├── tags.njk               # paginated per-tag pages at /tags/<slug>/
 │   ├── tags-list.njk          # all-tags index at /tags/
@@ -202,6 +209,12 @@ note relations remain explicit and are not inferred from tags.
 Maturity values are `seedling`（萌芽）, `growing`（成長中）, and `evergreen`（常青）. Notes use
 `/notes/<slug>/` and are included in sitemap／llms surfaces but not the article archive or Atom feed.
 
+**Work** — an ordered item in [src/_data/works.json](../src/_data/works.json), grouped under one of
+`agent-skill`, `project`, or `tool`. Every item has a unique kebab-case `id`, `title`, `description`,
+non-empty unique `tags`, and an HTTPS `primaryAction`; it MAY add a local `image` plus required
+`imageAlt`, an `installCommand`, and a canonical `relatedPost`. Works are global data rather than an
+Eleventy collection, so adding one does not change article, Garden, archive, or feed inventories.
+
 **Site metadata** — [src/_data/site.json](../src/_data/site.json): site and author identity, display values, browser `themeColor`, IndexNow key, Google/Bing verification tokens, and analytics ID. Empty optional verification/analytics values keep their snippets disabled.
 
 **Build version** — [src/_data/build.mjs](../src/_data/build.mjs): exposes `{{ build.version }}` (git short hash of HEAD; falls back to a timestamp when git is unavailable). `base.njk` appends it as `?v=` to both CSS links so a deploy bypasses the CDN's 4-hour `max-age` cache; rebuilding the same commit keeps the same URL.
@@ -220,6 +233,7 @@ Static HTML site — the "interface" is the generated URL surface:
 | `/topics/` | src/topics-list.njk | manually curated topic index |
 | `/topics/<slug>/` | src/topics.njk | ordered reading path for one curated topic |
 | `/notes/<slug>/` | src/notes/*.md | public Digital Garden concept note |
+| `/works/` | src/works.njk + src/_data/works.json | reusable Agent Skills, projects, and tools with direct source/install actions |
 | `/tags/` | src/tags-list.njk | all tags with post counts |
 | `/tags/<slug>/` | src/tags.njk | per-tag post list (pagination over `tagList`, size 1) |
 | `/about/` | src/about.njk | about page — hero, principles, topics, tech chips, featured posts, contact CTA |
@@ -242,7 +256,7 @@ Static HTML site — the "interface" is the generated URL surface:
 Template helpers registered in [eleventy.config.mjs](../eleventy.config.mjs): filters `dateDisplay`,
 `dateIso`, `readingTime` (CJK-aware: 400 CJK chars/min + 200 words/min), `seoDescription`
 (Markdown/HTML to a 160-character search snippet), `seoTags`, `safeJson` (script-safe JSON-LD
-serialization), `filterByTag`, `filterByUrls`, `topicsForPost`, `topicsForNote`, `relatedPosts`,
+serialization), `filterByTag`, `filterByCategory`, `filterByUrls`, `topicsForPost`, `topicsForNote`, `relatedPosts`,
 `relatedContent`, `backlinksForTarget`, `maturityLabel`, `limit`, `slug` (pinyin override); plugin
 `eleventyImageTransformPlugin` (responsive images from plain `<img>`/markdown). Filter logic lives in
 [lib/filters.mjs](../lib/filters.mjs).
@@ -267,7 +281,7 @@ The deployed pages make no runtime API calls other than GA and same-origin Lotti
 
 ## 9. Database / Data Stores
 
-N/A — static site, no datastore. Content lives in Markdown files in the repo; the only cache is `.cache/` (eleventy-img, 1-day duration, gitignored).
+N/A — static site, no datastore. Content lives in Markdown and JSON files in the repo; the only cache is `.cache/` (eleventy-img, 1-day duration, gitignored).
 
 ## 10. Environments & Deployment
 
@@ -284,7 +298,7 @@ No staging environment; no env files or secrets beyond the implicit `GITHUB_TOKE
 
 Push to `main` (or manual `workflow_dispatch`) → GitHub Actions: full-history checkout → Node 22 setup (npm cache) → `npm ci` → `npm test` → `npm run build` (`NODE_ENV=production`) → `peaceiris/actions-gh-pages@v4` publishes `_site/` to the `gh-pages` branch with `cname: imfw.io` → non-blocking IndexNow notification for affected public URLs.
 
-The verification gate is `npm test` (vitest): unit tests for [lib/filters.mjs](../lib/filters.mjs), frontmatter content rules for every post, and a build smoke suite that runs `npm run build` and asserts on `_site/` (CNAME, feed order, compiled CSS, tag pages, SEO metadata/JSON-LD, sitemap/robots, and social-image dimensions). A failing test blocks the deploy. There is still no linter.
+The verification gate is `npm test` (vitest): unit tests for [lib/filters.mjs](../lib/filters.mjs), content rules for posts, notes, and works, and a build smoke suite that runs `npm run build` and asserts on `_site/` (CNAME, feed order, compiled CSS, discovery pages, SEO metadata/JSON-LD, sitemap/robots, and social-image dimensions). A failing test blocks the deploy. There is still no linter.
 
 ### Configuration Hierarchy
 

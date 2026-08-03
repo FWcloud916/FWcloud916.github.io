@@ -3,11 +3,12 @@ import path from "node:path";
 import { describe, it, expect } from "vitest";
 import { assertNoSlugCollisions } from "../lib/filters.mjs";
 import { hasUnsafeAssets } from "../src/assets/js/article-lottie.js";
-import { ROOT, loadNotes, loadPosts } from "./helpers.mjs";
+import { ROOT, loadNotes, loadPosts, loadWorks } from "./helpers.mjs";
 
 // 對 src/posts/**/*.md 的 frontmatter 做全量檢查（AGENTS.md 硬性約束的可執行版）
 const posts = loadPosts();
 const notes = loadNotes();
+const works = loadWorks();
 
 function findRedundantTerminalHolds(value, outPoint, pathParts = [], findings = []) {
   if (Array.isArray(value)) {
@@ -91,6 +92,53 @@ describe("Garden note frontmatter", () => {
     expect(note.data.layout, "layout 由 notes.json 供給").toBeUndefined();
     expect(note.data.permalink, "permalink 由檔案路徑供給").toBeUndefined();
     expect(new Date(note.data.updated).valueOf()).toBeGreaterThanOrEqual(new Date(note.data.created).valueOf());
+  });
+});
+
+describe("作品庫資料", () => {
+  const allowedCategories = ["agent-skill", "project", "tool"];
+  const categoryIds = works.categories.map((category) => category.id);
+  const postUrls = new Set(posts.map((post) =>
+    `/${post.file.replace(/^src\//, "").replace(/\.md$/, "/")}`
+  ));
+
+  it("分類與作品識別碼合法且不重複", () => {
+    expect(works.categories.length, "至少需要一個作品分類").toBeGreaterThan(0);
+    expect(categoryIds).toEqual([...new Set(categoryIds)]);
+    expect(categoryIds.every((id) => allowedCategories.includes(id))).toBe(true);
+    for (const category of works.categories) {
+      expect(category.title, `分類 ${category.id} 缺 title`).toBeTruthy();
+      expect(category.description, `分類 ${category.id} 缺 description`).toBeTruthy();
+    }
+
+    expect(works.items.length, "至少需要一筆公開作品").toBeGreaterThan(0);
+    const itemIds = works.items.map((work) => work.id);
+    expect(itemIds).toEqual([...new Set(itemIds)]);
+  });
+
+  it.each(works.items.map((work) => [work.id, work]))("%s", (_id, work) => {
+    expect(work.id).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    expect(categoryIds, "category 必須指向已定義分類").toContain(work.category);
+    expect(work.title, "缺 title").toBeTruthy();
+    expect(work.description, "缺 description").toBeTruthy();
+    expect(Array.isArray(work.tags), "tags 必須是陣列").toBe(true);
+    expect(work.tags.length, "tags 不可為空").toBeGreaterThan(0);
+    expect(work.tags, "tags 不得重複").toEqual([...new Set(work.tags)]);
+    expect(work.primaryAction?.label, "缺 primaryAction.label").toBeTruthy();
+    expect(work.primaryAction?.url, "primaryAction.url 必須是 HTTPS").toMatch(/^https:\/\//);
+
+    if (work.installCommand !== undefined) {
+      expect(work.installCommand.trim(), "installCommand 不可為空").toBeTruthy();
+    }
+    if (work.relatedPost) {
+      expect(work.relatedPost).toMatch(/^\/posts\/[A-Za-z0-9_./-]+\/$/);
+      expect(postUrls, `relatedPost 不存在：${work.relatedPost}`).toContain(work.relatedPost);
+    }
+    if (work.image) {
+      expect(work.image).toMatch(/^\/assets\/images\/[A-Za-z0-9][A-Za-z0-9._/-]*\.(?:jpe?g|png|webp)$/);
+      expect(fs.existsSync(path.join(ROOT, "src", work.image.replace(/^\//, ""))), `缺少 ${work.image}`).toBe(true);
+      expect(work.imageAlt, "圖片必須提供 imageAlt").toBeTruthy();
+    }
   });
 });
 

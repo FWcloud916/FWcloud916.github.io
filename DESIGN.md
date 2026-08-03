@@ -28,6 +28,7 @@ components:
   nav: { background: "{colors.surface}", shadow: "shadow-sm", link-color: "{colors.text-secondary}", link-hover: "{colors.text-primary}", mobile-gap: "1rem", desktop-gap: "1.5rem" }
   card: { background: "{colors.surface}", rounded: "{rounded.lg}", shadow: "shadow-md", shadow-hover: "shadow-lg", padding: "{spacing.lg}" }
   topic-card: { extends: "{components.card}", body: "description + article count link" }
+  work-card: { extends: "{components.card}", layout: "stacked → 16rem image + body at md", body: "type + description + tags + optional install command + actions" }
   tag-chip-post: { background: "{colors.accent-surface}", color: "{colors.accent-text}", rounded: "{rounded.full}", padding: "{spacing.xs} 0.75rem", hover-background: "#bedbff" }
   tag-chip-card: { background: "{colors.chip-neutral-surface}", color: "{colors.text-muted}", rounded: "{rounded.sm}", padding: "{spacing.xs} {spacing.sm}", hover-background: "{colors.border}" }
   tag-chip-index: { background: "{colors.accent-surface}", color: "{colors.accent-text}", rounded: "{rounded.lg}", padding: "{spacing.sm} {spacing.md}", hover-background: "#bedbff" }
@@ -82,11 +83,12 @@ Three levels only: `shadow-sm` (nav bar) → `shadow-md` (cards, code blocks) �
 
 ## Components
 
-- **Nav** ([nav.njk](src/_includes/components/nav.njk)): white bar, `shadow-sm`, site title bold left, links right; hover transitions `text-gray-600 → text-gray-900` (title → `text-blue-600`). The four links are 首頁／花園／文章／關於; mobile uses `gap-4 text-sm`, returning to `gap-6 text-base` at `sm`.
+- **Nav** ([nav.njk](src/_includes/components/nav.njk)): white bar, `shadow-sm`, site title bold left, links right; hover transitions `text-gray-600 → text-gray-900` (title → `text-blue-600`). The five links are 首頁／花園／文章／作品／關於; mobile uses `gap-4 text-sm`, returning to `gap-6 text-base` at `sm`.
 - **Post card** ([post-card.njk](src/_includes/components/post-card.njk)): white, `rounded-lg shadow-md hover:shadow-lg transition`, `p-6`; title, date + reading-time row, description (or 150-char truncation), neutral tag chips.
 - **Topic card** ([topics-list.njk](src/topics-list.njk)): reuses the post-card surface/elevation and presents a curated topic description plus its current concept and article counts. Topic detail pages show `garden-note-card.njk` core concepts before the existing `post-card.njk` reading route.
 - **Garden note card** ([garden-note-card.njk](src/_includes/components/garden-note-card.njk)): reuses the white card, gray text hierarchy, and blue link accent; it adds one restrained maturity chip (`bg-gray-100 text-gray-700`) and the note description without introducing a new color family.
 - **Garden note page** ([garden-note.njk](src/_includes/layouts/garden-note.njk)): uses the same `max-w-4xl` article column and prose rhythm as posts. Breadcrumbs, maturity, created/updated dates, topic links, explicit related content, and note backlinks stay in the existing gray + blue system.
+- **Work card** ([work-card.njk](src/_includes/components/work-card.njk)): a full-width white card that stacks on mobile and becomes a `16rem` image/body split at `md`. It shows a blue type kicker, neutral tags, an optional One Dark install-command block, and the existing primary/secondary CTA pair. Local images use the shared responsive image transform; cards without images omit the media column.
 - **Related posts** ([post.njk](src/_includes/layouts/post.njk)): a separate `延伸閱讀` section after the article body, containing up to three existing post cards from the same curated topic.
 - **Tag chips**: three context variants (see `components` tokens); all get `transition` and a slightly darker background on hover; label is `#{{ tag }}`.
 - **Code block**: One Dark background, `rounded-lg shadow-md`, `padding: 1rem` — enforced with `!important` in `input.css` to beat `.prose`; do not restyle via prose classes.
@@ -104,7 +106,7 @@ Three levels only: `shadow-sm` (nav bar) → `shadow-md` (cards, code blocks) �
 
 ## Responsive Behavior
 
-Mobile-first with Tailwind defaults; the layout is a fluid single column capped at `max-w-4xl`, so there are almost no breakpoint utilities in the templates. Images from the image transform are responsive (300/600/1200 px, `sizes` attribute). Article Lottie stages keep a fluid 16:9 aspect ratio and never require horizontal scrolling.
+Mobile-first with Tailwind defaults; the layout is a fluid single column capped at `max-w-4xl`, so there are almost no breakpoint utilities in the templates. Images from the image transform are responsive (300/600/1200 px, `sizes` attribute). Work cards stack before `md`, and their install command MAY scroll inside its own code surface without widening the page. Article Lottie stages keep a fluid 16:9 aspect ratio and never require horizontal scrolling.
 
 ## Do's and Don'ts
 

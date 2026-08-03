@@ -9,7 +9,7 @@ workflow.
 
 | Status | Item | Folder | Scope | Ticket | Plan | Created | Notes |
 |---|---|---|---|---|---|---|---|
-| `in-progress` | FW Blog Roadmap | `progress/2026-07-27-fw-blog-roadmap/` | `site` | N/A | [fw-blog-roadmap-PROGRESS.md](_plans/fw-blog-roadmap-PROGRESS.md) | 2026-07-27 | Lottie replay/spacing `210451e`; tests 75/75; roadmap continues |
+| `in-progress` | FW Blog Roadmap | `progress/2026-07-27-fw-blog-roadmap/` | `site` | N/A | [fw-blog-roadmap-PROGRESS.md](_plans/fw-blog-roadmap-PROGRESS.md) | 2026-07-27 | Works catalog implementation pending; tests 92/92; roadmap continues |
 | `done` | Article Lottie Runtime | `progress/2026-07-30-article-lottie/` | `site` | N/A | N/A | 2026-07-30 | Runtime `4cf5400`; pilot `2875bea`; tests/build pass; not deployed |
 | `done` | About Page Redesign | `progress/2026-07-30-about-page-redesign/` | `site` | N/A | N/A | 2026-07-30 | /about/ 全新視覺實驗;深色 hero + chip 牆 + 精選文章;測試 69/69 |
 

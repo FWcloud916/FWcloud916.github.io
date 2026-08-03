@@ -1,0 +1,41 @@
+{
+  "categories": [
+    {
+      "id": "agent-skill",
+      "title": "Agent Skills",
+      "description": "把實際工作流程整理成可安裝、可重播，也能被驗證的 Agent 能力。"
+    },
+    {
+      "id": "project",
+      "title": "作品專案",
+      "description": "從問題、設計到交付結果都能公開檢查的實作專案。"
+    },
+    {
+      "id": "tool",
+      "title": "開發工具",
+      "description": "為了減少重複工作而做的小工具與自動化。"
+    }
+  ],
+  "items": [
+    {
+      "id": "lottie-maker",
+      "category": "agent-skill",
+      "title": "lottie-maker",
+      "description": "從 motion brief 建立 Lottie bundle，檢查 portable profile，產生預覽並用固定環境驗證輸出。",
+      "tags": [
+        "Agent Skills",
+        "Lottie",
+        "自動化",
+        "決定性驗證"
+      ],
+      "image": "/assets/images/lottie-maker-agent-skill-skill-improvement-cycle-poster.jpg",
+      "imageAlt": "三個互相咬合的齒輪呈現 Observe、Refine、Verify、Repeat 的 Skill 改善循環。",
+      "installCommand": "npx skills add FWcloud916/skill-lottie-maker --skill lottie-maker",
+      "primaryAction": {
+        "label": "查看 GitHub",
+        "url": "https://github.com/FWcloud916/skill-lottie-maker"
+      },
+      "relatedPost": "/posts/2026/2026-07-31-lottie-maker-agent-skill/"
+    }
+  ]
+}

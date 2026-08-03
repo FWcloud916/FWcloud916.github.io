@@ -18,6 +18,7 @@ Author: {{ site.author }} ({{ site.authorUrl }})
 
 - Home: {{ site.url }}/
 - Knowledge Garden: {{ site.url }}/topics/
+- Works and Agent Skills: {{ site.url }}/works/
 - Tags: {{ site.url }}/tags/
 - About: {{ site.url }}/about/
 
@@ -45,6 +46,21 @@ Author: {{ site.author }} ({{ site.authorUrl }})
 {% endif %}- URL: {{ note.url | absoluteUrl(site.url) }}
 - Description: {{ note.data.description or (note.rawInput | seoDescription) }}
 
+{% endfor %}
+
+## Works and Agent Skills
+{% for category in works.categories %}
+{% set categoryWorks = works.items | filterByCategory(category.id) %}
+{% for work in categoryWorks %}
+### {{ work.title }}
+
+- Type: {{ category.title }}
+- Description: {{ work.description }}
+- Source: {{ work.primaryAction.url }}
+{% if work.installCommand %}- Install: `{{ work.installCommand }}`
+{% endif %}{% if work.relatedPost %}- Related article: {{ work.relatedPost | absoluteUrl(site.url) }}
+{% endif %}
+{% endfor %}
 {% endfor %}
 
 ## All Tags

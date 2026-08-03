@@ -3,11 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect, beforeAll } from "vitest";
 import { toSlug } from "../lib/filters.mjs";
-import { ROOT, SITE_DIR, loadNotes, loadPosts, newestPost, escapeHtml } from "./helpers.mjs";
+import { ROOT, SITE_DIR, loadNotes, loadPosts, loadWorks, newestPost, escapeHtml } from "./helpers.mjs";
 
 // 跑完整 production build 後對 _site/ 產物做 smoke 檢查
 const posts = loadPosts();
 const notes = loadNotes();
+const works = loadWorks();
 const topics = JSON.parse(fs.readFileSync(path.join(ROOT, "src", "_data", "topics.json"), "utf8"));
 const read = (p) => fs.readFileSync(path.join(SITE_DIR, p), "utf8");
 const exists = (p) => fs.existsSync(path.join(SITE_DIR, p));
@@ -35,6 +36,7 @@ describe("build output", () => {
     const home = read("index.html");
     expect(home).toContain('href="/topics/"');
     expect(home).toContain('href="/archive/"');
+    expect(home).toContain('href="/works/"');
 
     const topicIndex = read("topics/index.html");
     const archive = read("archive/index.html");
@@ -71,6 +73,56 @@ describe("build output", () => {
     }
     const assignedNotes = new Set(topics.flatMap((topic) => topic.noteUrls ?? []));
     expect(assignedNotes).toEqual(new Set(notes.map(noteUrl)));
+  });
+
+  it("作品庫提供可直接使用的入口，並隱藏空分類", () => {
+    const html = read("works/index.html");
+    const populatedCategories = new Set(works.items.map((work) => work.category));
+
+    for (const category of works.categories) {
+      if (populatedCategories.has(category.id)) {
+        expect(html).toContain(escapeHtml(category.title));
+        expect(html).toContain(escapeHtml(category.description));
+      } else {
+        expect(html).not.toContain(`id="works-${category.id}"`);
+      }
+    }
+
+    for (const work of works.items) {
+      expect(html).toContain(`data-work-id="${work.id}"`);
+      expect(html).toContain(escapeHtml(work.title));
+      expect(html).toContain(escapeHtml(work.description));
+      expect(html).toContain(`href="${work.primaryAction.url}"`);
+      expect(html).toContain('target="_blank"');
+      expect(html).toContain('rel="noopener"');
+      for (const tag of work.tags) {
+        expect(html).toContain(escapeHtml(tag));
+      }
+      if (work.installCommand) {
+        expect(html).toContain(escapeHtml(work.installCommand));
+      }
+      if (work.relatedPost) {
+        expect(html).toContain(`href="${work.relatedPost}"`);
+      }
+      if (work.image) {
+        expect(html).toContain("<picture>");
+        expect(html).toContain(`alt="${escapeHtml(work.imageAlt)}"`);
+      }
+    }
+  });
+
+  it("作品庫進入 sitemap 與 llms.txt，但不成為文章或 Garden 內容", () => {
+    expect(read("sitemap.xml")).toContain("<loc>https://imfw.io/works/</loc>");
+    const llms = read("llms.txt");
+    expect(llms).toContain("## Works and Agent Skills");
+    expect(llms).toContain("https://imfw.io/works/");
+    for (const work of works.items) {
+      expect(llms).toContain(`### ${work.title}`);
+      expect(llms).toContain(work.primaryAction.url);
+      expect(read("index.html")).not.toContain(`data-work-id="${work.id}"`);
+      expect(read("archive/index.html")).not.toContain(`data-work-id="${work.id}"`);
+      expect(read("feed.xml")).not.toContain(`data-work-id="${work.id}"`);
+    }
   });
 
   it("Garden note 頁提供成熟度、TechArticle、相關內容與反向連結", () => {
@@ -271,6 +323,7 @@ describe("build output", () => {
     expect(sitemap).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(sitemap).toContain("<loc>https://imfw.io/</loc>");
     expect(sitemap).toContain("<loc>https://imfw.io/about/</loc>");
+    expect(sitemap).toContain("<loc>https://imfw.io/works/</loc>");
     for (const tag of new Set(posts.flatMap((post) => post.data.tags ?? []))) {
       expect(sitemap).toContain(`<loc>https://imfw.io/tags/${toSlug(tag)}/</loc>`);
     }
@@ -327,6 +380,10 @@ describe("build output", () => {
       expect(llms).toContain(`### ${post.data.title}`);
       expect(llms).toContain(`https://imfw.io/${postOutputPath(post).replace(/index\.html$/, "")}`);
       expect(llms).toContain("- Description:");
+    }
+    for (const work of works.items) {
+      expect(llms).toContain(`### ${work.title}`);
+      expect(llms).toContain(`- Source: ${work.primaryAction.url}`);
     }
   });
 });

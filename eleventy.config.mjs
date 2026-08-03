@@ -121,6 +121,10 @@ export default function(eleventyConfig) {
     });
   });
 
+  eleventyConfig.addFilter("filterByCategory", (items, category) => {
+    return items.filter(item => item.category === category);
+  });
+
   eleventyConfig.addFilter("limit", (array, limit) => {
     return array.slice(0, limit);
   });

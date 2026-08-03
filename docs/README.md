@@ -2,7 +2,7 @@
 
 > **Type:** How-to guides
 > **Audience:** Developers and AI assistants working on the blog
-> **Last updated:** 2026-08-01
+> **Last updated:** 2026-08-03
 
 Complete documentation for the FW Blog.
 
@@ -70,6 +70,7 @@ The `eleventy.config.mjs` file (ESM) contains all 11ty-specific configuration:
 - **seoTags**: Removes Eleventy's internal `posts` tag from public metadata
 - **safeJson**: Serializes JSON-LD values without allowing content to close the script element
 - **filterByTag**: Filters posts by specific tag
+- **filterByCategory**: Selects ordered work items for one works-catalog category
 - **limit**: Limits array to specified number of items
 - **slug**: Overrides the built-in slugifier — transliterates Chinese to pinyin (via pinyin-pro) so CJK tags get valid URLs (e.g. 工具 → `gong-ju`)
 - **topicsForNote**／**relatedContent**／**backlinksForTarget**: Resolve explicit Garden topic and
@@ -214,6 +215,39 @@ they do not decide topic or note membership. Articles not assigned to a topic re
 discoverable through `/archive/`, which lists every post; notes intentionally do not
 enter that archive, the homepage newest-post list, or RSS.
 
+### Works and Agent Skills
+
+Reusable Agent Skills, projects, and tools live in `src/_data/works.json` and render at `/works/`.
+They are global Eleventy data, not a collection: adding a work MUST NOT add it to the homepage,
+article archive, Garden notes, or Atom feed. Category and item array order is the visible order;
+categories without items are hidden.
+
+Supported category IDs are `agent-skill`, `project`, and `tool`. Add an item like this:
+
+```json
+{
+  "id": "example-skill",
+  "category": "agent-skill",
+  "title": "example-skill",
+  "description": "一句說明它解決的問題與可觀察成果。",
+  "tags": ["Agent Skills", "automation"],
+  "image": "/assets/images/example-skill-card.png",
+  "imageAlt": "具體描述作品圖片所表達的內容。",
+  "installCommand": "npx skills add owner/repo --skill example-skill",
+  "primaryAction": {
+    "label": "查看 GitHub",
+    "url": "https://github.com/owner/repo"
+  },
+  "relatedPost": "/posts/2026/2026-08-03-example-skill/"
+}
+```
+
+`id`, `category`, `title`, `description`, non-empty unique `tags`, and the HTTPS
+`primaryAction` are required. `image`, `installCommand`, and `relatedPost` are optional; when
+`image` is present, `imageAlt` is required, the file MUST live under `/assets/images/`, and the
+shared image transform will generate responsive output. A `relatedPost` MUST be an existing
+canonical `/posts/.../` URL. Run `npm test` after every catalog change.
+
 ### Navigation
 
 Edit `src/_includes/components/nav.njk`:
@@ -223,6 +257,7 @@ Edit `src/_includes/components/nav.njk`:
   <li><a href="/">首頁</a></li>
   <li><a href="/topics/">花園</a></li>
   <li><a href="/archive/">文章</a></li>
+  <li><a href="/works/">作品</a></li>
   <li><a href="/about/">關於</a></li>
   <!-- Add custom links -->
 </ul>
@@ -253,6 +288,8 @@ Edit `src/assets/css/input.css`:
 Modify component files in `src/_includes/components/`:
 - **nav.njk**: Navigation bar
 - **post-card.njk**: Post preview cards
+- **garden-note-card.njk**: Garden note preview cards
+- **work-card.njk**: Work catalog cards with source/install actions
 
 #### Layout Styles
 

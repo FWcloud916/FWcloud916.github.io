@@ -5,7 +5,7 @@
 **Ticket:** N/A
 **Related plan:** [fw-blog-roadmap-PROGRESS.md](../_plans/fw-blog-roadmap-PROGRESS.md)
 **Created:** 2026-07-27
-**Updated:** 2026-08-01
+**Updated:** 2026-08-03
 
 ---
 
@@ -80,9 +80,25 @@ source text is retained verbatim enough for row-level audit and future work.
 - [x] Plan a second content pillar cluster. _(commit `627c6b8`: manually curated Docker/containers, AI Agent engineering, and social API automation reading paths now make the three existing pillars explicit; future posts extend the ordered URL lists)_
 - [x] Fix article Lottie replay and control spacing. _(commit `210451e`: removed redundant terminal hold keyframes that prevented gear rotation from resetting; enforced the design-system 16px stage-to-control gap; added a content regression)_
 - [x] Add a test-guarded Digital Garden surface for six pilot concept notes. _(local `feature/digital-garden` branch; stable `/notes/<slug>/` pages, explicit topic `noteUrls`, maturity/relations, sitemap + llms discovery, and no homepage/archive/RSS mixing; not deployed)_
+- [x] Add a reusable works catalog. _(`/works/` groups Agent Skills/projects/tools from validated global data; first item is `lottie-maker` with install, GitHub, and supporting-article actions; sitemap + llms discovery without article/Garden/RSS mixing)_
 - [ ] Update matching `tests/build.test.mjs` assertions with every SEO implementation. _(standing practice, not a one-off item — no existing assertions found for any of the unimplemented items above, so nothing to reconcile yet)_
 
 ## Work log
+
+### 2026-08-03
+
+- Implementation commit pending — added the `/works/` catalog, reusable work card, five-link main
+  navigation, and validated global data for `agent-skill`／`project`／`tool` entries. Seeded the
+  catalog with the public `lottie-maker` repo, install command, responsive poster, and supporting
+  article link.
+- Added content/build regressions for the catalog schema, HTTPS actions, related posts, responsive
+  images, empty-category hiding, sitemap／llms discovery, and exclusion from editorial collections.
+  Documentation impact reviewed and synchronized across the agent guide, design system,
+  architecture overview, and content-management guide.
+- Verification: `npm test` passes 92/92 and `npm run build` passes. Browser QA passed at desktop
+  and 390×844: the poster remains uncropped, the five-link nav and work card have no page-level
+  horizontal overflow, the install command scrolls within its own surface, and the console has no
+  warnings or errors.
 
 ### 2026-08-01
 

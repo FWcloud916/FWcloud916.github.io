@@ -10,6 +10,8 @@ Personal blog at [imfw.io](https://imfw.io), a static site built with Eleventy 3
 - New posts MUST go under `src/posts/<year>/`; do NOT set `layout` or a `posts` tag in post frontmatter — `src/posts/posts.json` directory data supplies both (source: src/posts/posts.json)
 - Garden notes MUST go under `src/notes/<slug>.md`; `src/notes/notes.json` supplies the shared
   `garden-note.njk` layout and `isGardenNote` flag. Notes use stable `/notes/<slug>/` URLs.
+- Works, Agent Skills, and tools MUST be added to `src/_data/works.json`; they remain global data
+  rather than posts or Garden notes and MUST keep HTTPS primary actions.
 - MUST NOT break the `CNAME` passthrough copy — the custom domain dies without it (source: eleventy.config.mjs, deploy.yml `cname: imfw.io`)
 - Pushing to `main` deploys straight to production — MUST see `npm test` pass locally first (source: .github/workflows/deploy.yml)
 
@@ -24,6 +26,7 @@ edits) can skip; do not pre-load all docs.
 | UI changes: styling, layouts, components, colors | [DESIGN.md](DESIGN.md) |
 | Configuration or content-management how-tos (posts, tags, images, RSS) | [docs/README.md](docs/README.md) |
 | Garden notes, maturity labels, relations, and topic membership | [docs/README.md](docs/README.md), [docs/project-overview.md](docs/project-overview.md) |
+| Works, Agent Skills, projects, and tools | [docs/README.md](docs/README.md), [DESIGN.md](DESIGN.md) |
 
 ## Commands
 
@@ -59,6 +62,9 @@ There is no linter yet.
   `src/_data/topics.json` `noteUrls`, never inferred from tags.
 - Garden notes are public concept nodes, not shortened posts. They MUST remain out of `/archive/`,
   `/feed.xml`, and homepage post lists while remaining in `/sitemap.xml` and `/llms.txt`.
+- Work items MUST have a unique kebab-case `id`, a supported category, non-empty unique tags, and
+  an HTTPS primary action. A local image requires meaningful `imageAlt`; `relatedPost`, when set,
+  MUST resolve to an existing canonical `/posts/` URL. Works remain out of article and Garden lists.
 
 ## Docs maintenance
 
