@@ -14,6 +14,7 @@ Author: FW (https://imfw.io/about/)
 
 - Home: https://imfw.io/
 - Knowledge Garden: https://imfw.io/topics/
+- Works and Agent Skills: https://imfw.io/works/
 - Tags: https://imfw.io/tags/
 - About: https://imfw.io/about/
 
@@ -239,6 +240,27 @@ Author: FW (https://imfw.io/about/)
 - Updated: 2026-08-01T00:00:00.000Z
 - URL: https://imfw.io/notes/social-publishing-apis/
 - Description: X、Facebook、Instagram 與 Threads 都能自動發布，但權限、媒體、容器與費用邊界並不相同。
+
+
+
+## Works and Agent Skills
+
+
+
+### lottie-maker
+
+- Type: Agent Skills
+- Description: 從 motion brief 建立 Lottie bundle，檢查 portable profile，產生預覽並用固定環境驗證輸出。
+- Source: https://github.com/FWcloud916/skill-lottie-maker
+- Install: `npx skills add FWcloud916/skill-lottie-maker --skill lottie-maker`
+- Related article: https://imfw.io/posts/2026/2026-07-31-lottie-maker-agent-skill/
+
+
+
+
+
+
+
 
 
 
