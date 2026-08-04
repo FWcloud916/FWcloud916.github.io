@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 介面保證派：把 Skill 的不變量編進工具與 Script
+
+- Published: 2026-08-03T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-03-interface-guarantee-agent-skills/
+- Tags: ai, agent-skills, security
+
+- Description: 從 schema、工具參數、狀態機、dry-run 與驗證閘門出發，拆解介面保證派如何在程式中落實 Skill 的不可逆邊界，以及這些保證仍然無法涵蓋的地方。
+
+
 ### Prompt 紀律派：把 Skill 寫成模型能理解的操作規約
 
 - Published: 2026-08-03T00:00:00.000Z
