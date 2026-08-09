@@ -281,6 +281,21 @@ describe("build output", () => {
     expect(about).toMatch(/srcset="\/assets\/img\/[^\"]+-300\.webp 300w, \/assets\/img\/[^\"]+-600\.webp 600w, \/assets\/img\/[^\"]+-1024\.webp 1024w"/);
   });
 
+  it("Email 只出現在關於我頁的聯絡按鈕與 ProfilePage JSON-LD", () => {
+    const about = read("about/index.html");
+    expect(about, "關於我頁缺 mailto 連結").toContain(`href="mailto:${site.authorEmail}"`);
+
+    const profile = jsonLd(about).find((entry) => entry["@type"] === "ProfilePage");
+    expect(profile.mainEntity.email).toBe(site.authorEmail);
+    expect(profile.mainEntity.sameAs, "email 不得混進 sameAs").not.toContain(site.authorEmail);
+
+    // 文章頁的 author 區塊刻意不帶 email，避免每頁都暴露地址給爬蟲
+    const postHtml = read(postOutputPath(newestPost(posts)));
+    const posting = jsonLd(postHtml).find((entry) => entry["@type"] === "BlogPosting");
+    expect(posting.author.email, "文章 JSON-LD 不應帶 email").toBeUndefined();
+    expect(postHtml, "文章頁不應出現 email").not.toContain(site.authorEmail);
+  });
+
   it("社群連結出現在關於我頁的圖示列與全站頁尾", () => {
     const about = read("about/index.html");
     // 關於我頁的圖示列略過 GitHub（已是上方主按鈕），其餘社群都要有無障礙名稱

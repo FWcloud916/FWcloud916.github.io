@@ -32,6 +32,7 @@ All global site settings are stored in `src/_data/site.json`:
   "author": "Your Name",
   "authorUrl": "https://example.com/about/",
   "authorDescription": "Your public author bio",
+  "authorEmail": "hi@example.com",
   "authorSameAs": ["https://github.com/your-account"],
   "social": [
     { "id": "github", "label": "GitHub", "url": "https://github.com/your-account", "handle": "@your-account" }
@@ -70,6 +71,24 @@ global footer). To add one:
    to `social-links.njk`. Use [Simple Icons](https://simpleicons.org/) (CC0) for
    brand marks. A missing branch renders an empty circle, so
    `tests/content.test.mjs` fails when an `id` has no icon.
+
+#### Contact email
+
+`authorEmail` holds a plain address (no `mailto:` prefix) and is deliberately
+**not** part of `social` or `authorSameAs` — `sameAs` means "other profile pages
+for this entity", which an email is not. The correct structured-data home is the
+`Person.email` property.
+
+Exposure is intentionally narrow: the address renders only in the About page's
+contact button and in that page's `ProfilePage` JSON-LD. It is kept out of the
+per-article `BlogPosting`/`TechArticle` author blocks so it does not appear on
+every page for scrapers to harvest; `tests/build.test.mjs` asserts both halves of
+this and will fail if the address leaks onto an article page.
+
+Prefer an alias on your own domain over a personal mailbox. A public `mailto:`
+will be scraped no matter how it is encoded, and an alias can be rotated or
+retired without touching the real inbox. This site's `hi@imfw.io` is a Cloudflare
+Email Routing alias forwarding to a personal account.
 
 A template MAY hide specific entries by setting `socialSkip` before the include,
 e.g. `{% set socialSkip = ["github"] %}`. Because a page's content renders to a

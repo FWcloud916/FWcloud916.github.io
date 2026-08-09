@@ -153,7 +153,8 @@
       "name": {{ site.author | safeJson | safe }},
       "url": {{ site.authorUrl | safeJson | safe }},
       "description": {{ site.authorDescription | safeJson | safe }},
-      "sameAs": {{ site.authorSameAs | safeJson | safe }}
+      {% if site.authorEmail %}"email": {{ site.authorEmail | safeJson | safe }},
+      {% endif %}"sameAs": {{ site.authorSameAs | safeJson | safe }}
     }
   }
   </script>

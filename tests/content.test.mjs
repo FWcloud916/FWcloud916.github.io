@@ -159,6 +159,21 @@ describe("site social", () => {
     }
   });
 
+  it("authorEmail 是有效地址，且不得混進 sameAs 或 social", () => {
+    expect(site.authorEmail, "缺 authorEmail").toBeTruthy();
+    expect(site.authorEmail, "authorEmail 必須是純地址，不含 mailto:").toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+
+    // sameAs 的語意是「同一實體的其他個人檔案頁」，mailto: 不屬於這類；
+    // Person.email 才是 email 的正確欄位。
+    for (const url of site.authorSameAs) {
+      expect(url, "authorSameAs 不得包含 mailto:").not.toMatch(/^mailto:/i);
+    }
+    expect(
+      site.social.some((item) => item.url.includes(site.authorEmail)),
+      "email 不得成為 social 項目",
+    ).toBe(false);
+  });
+
   it("每個社群 id 在 social-links.njk 都有對應圖示", () => {
     const partial = fs.readFileSync(
       path.join(ROOT, "src", "_includes", "components", "social-links.njk"),
