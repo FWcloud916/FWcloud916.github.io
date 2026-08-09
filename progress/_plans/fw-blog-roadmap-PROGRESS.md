@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-07-21 · commit `595c4dd` · tests: passing (51/51)
+> **Last session:** 2026-08-10 · tests: passing (101/101) · 本機 commit 未 push
 
 ## Now (WIP = 1)
 
@@ -24,6 +24,7 @@ _Nothing in progress — pick up the next item from "Next steps" below._
 
 ## Done
 
+- 2026-08-10 — 社群連結資料化 + 圖示列：`src/_data/site.json` 新增 `social` 陣列（github/linkedin/facebook/instagram/threads，各含 `id`/`label`/`url`，GitHub 另有 `handle`），`authorSameAs` 同步補上四個新網址，四個 JSON-LD 區塊的 `sameAs` 因此自動涵蓋全部五個帳號。新增共用 partial [social-links.njk](src/_includes/components/social-links.njk)（48×48 圓形圖示、Simple Icons CC0 路徑、`aria-label`、focus ring），由「關於我」聯絡區（`socialSkip = ["github"]`，GitHub 已是主按鈕）與 `base.njk` 全站頁尾共用。about.njk 的 GitHub 按鈕改讀 `site.social` 不再寫死網址。測試：`tests/helpers.mjs` 加 `loadSite()`；build 的兩處 `sameAs` 改比對 `site.authorSameAs`；新增「社群連結出現在關於我頁與頁尾」build 斷言與 content 端的 social 結構／圖示齊備檢查（缺圖示的 id 會讓測試紅）。DESIGN.md、docs/README.md、docs/project-overview.md 同步。Tests 101/101。
 - 2026-07-21 — 圖片改純 markdown + 關閉 markdown 的 nunjucks 前處理（`595c4dd`）：`eleventy.config.mjs` 移除 `image` shortcode，改註冊 `eleventyImageTransformPlugin`（widths/formats/urlPath/defaultAttributes 與原 shortcode 相同，輸出 byte-equivalent `<picture>`）；`markdownTemplateEngine: "njk"` → `false`。遷移 2 篇文章的 4 個 shortcode 為 `![alt](/assets/images/…)`，移除 podman 文兩對 `{% raw %}`。新增 2 個 build 斷言（responsive picture 輸出、全站無 nunjucks 殘留）。docs/README.md、QUICKSTART.md、docs/sample-post.md、docs/project-overview.md、README.md 同步。Tests 51/51。
 - 2026-07-21 — CSS cache-busting(`247c395`):新增 [src/_data/build.mjs](src/_data/build.mjs) 輸出 `{{ build.version }}`(git short HEAD hash,取不到 git 時退回時間戳),`base.njk` 的 `styles.css` 與 `prism-one-dark.css` 連結加上 `?v=` 版本參數,繞過正式站 CDN 的 4 小時快取(max-age=14400;Huninn 字型部署時實際延遲 4 小時)。同 commit 重建 URL 不變。新增 build smoke 斷言驗證兩個連結帶版本參數。docs/project-overview.md 同步。Tests 48/48。
 - 2026-07-21 — 全站預設字型改為 **Huninn(粉圓體)**(`3abaf07`):`base.njk` 加入 Google Fonts preconnect + `display=swap` stylesheet;`input.css` 以 `@theme` 覆寫 `--font-sans`(Huninn 置頂、系統堆疊 fallback);程式碼區塊等寬字型不受影響。瀏覽器驗證 body computed font 為 Huninn、`document.fonts.check` 通過。DESIGN.md typography 章節同步。注意 Huninn 僅 400 字重,粗體為瀏覽器合成。Tests 47/47。

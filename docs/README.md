@@ -2,7 +2,7 @@
 
 > **Type:** How-to guides
 > **Audience:** Developers and AI assistants working on the blog
-> **Last updated:** 2026-08-03
+> **Last updated:** 2026-08-10
 
 Complete documentation for the FW Blog.
 
@@ -33,6 +33,9 @@ All global site settings are stored in `src/_data/site.json`:
   "authorUrl": "https://example.com/about/",
   "authorDescription": "Your public author bio",
   "authorSameAs": ["https://github.com/your-account"],
+  "social": [
+    { "id": "github", "label": "GitHub", "url": "https://github.com/your-account", "handle": "@your-account" }
+  ],
   "currentYear": "2026",
   "themeColor": "#155dfc",
   "socialImage": "/assets/images/og-default.png",
@@ -49,6 +52,29 @@ These values are accessible in all templates via `{{ site.property }}`. Leave th
 The favicon source files live in `src/assets/icons/` and build to
 `/favicon.svg`, `/favicon.ico`, and `/apple-touch-icon.png`; keep all three in
 sync when replacing the site mark.
+
+#### Adding a social link
+
+Social profiles are declared once in `site.json` and rendered by
+`src/_includes/components/social-links.njk` (About page contact section and the
+global footer). To add one:
+
+1. Append an entry to `social` with a unique kebab-case `id`, a `label`, and an
+   HTTPS `url`. Add the optional `handle` only when a template shows the account
+   name as text — today just the About page's GitHub CTA button.
+2. Append the same `url` to `authorSameAs`. This feeds the `sameAs` property of
+   the four JSON-LD blocks in `layouts/base.njk`, letting search engines tie the
+   accounts to one person. `tests/content.test.mjs` MUST see every `social.url`
+   present in `authorSameAs`.
+3. Add a matching `{% elif item.id == "<id>" %}` branch with a 24×24 SVG `<path>`
+   to `social-links.njk`. Use [Simple Icons](https://simpleicons.org/) (CC0) for
+   brand marks. A missing branch renders an empty circle, so
+   `tests/content.test.mjs` fails when an `id` has no icon.
+
+A template MAY hide specific entries by setting `socialSkip` before the include,
+e.g. `{% set socialSkip = ["github"] %}`. Because a page's content renders to a
+string before the layout runs, `socialSkip` set in a page never leaks into the
+footer.
 
 ### 11ty Configuration
 

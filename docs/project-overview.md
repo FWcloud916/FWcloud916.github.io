@@ -2,7 +2,7 @@
 
 > **Type:** Explanation
 > **Audience:** Developers, AI assistants, and any tooling that needs project context
-> **Last updated:** 2026-08-03
+> **Last updated:** 2026-08-10
 >
 > Static personal blog (imfw.io) built with Eleventy 3 and Tailwind CSS v4, deployed to GitHub Pages. Related docs: [README.md](README.md) (how-tos), [../DESIGN.md](../DESIGN.md) (design system), [../AGENTS.md](../AGENTS.md) (agent guide).
 
@@ -128,7 +128,7 @@ gh-pages branch → GitHub Pages → https://imfw.io
 │   ├── _includes/
 │   │   ├── layouts/base.njk   # HTML shell: SEO/social metadata, JSON-LD, nav, footer, optional integrations
 │   │   ├── layouts/post.njk   # article layout: title, date, reading time, tag chips
-│   │   └── components/        # nav and reusable post, note, and work cards
+│   │   └── components/        # nav, social links, and reusable post, note, and work cards
 │   ├── assets/
 │   │   ├── css/input.css      # Tailwind v4 entry + prose/Prism overrides (THE Tailwind config)
 │   │   ├── icons/             # favicon SVG/ICO + Apple Touch Icon (copied to site root)

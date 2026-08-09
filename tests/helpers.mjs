@@ -6,6 +6,7 @@ export const ROOT = path.resolve(import.meta.dirname, "..");
 export const POSTS_DIR = path.join(ROOT, "src", "posts");
 export const NOTES_DIR = path.join(ROOT, "src", "notes");
 export const WORKS_FILE = path.join(ROOT, "src", "_data", "works.json");
+export const SITE_FILE = path.join(ROOT, "src", "_data", "site.json");
 export const SITE_DIR = path.join(ROOT, "_site");
 
 // 讀出所有文章的 frontmatter，回傳 [{ file, data, content }]（file 為相對 repo root 路徑）
@@ -37,6 +38,10 @@ export function loadNotes() {
 
 export function loadWorks() {
   return JSON.parse(fs.readFileSync(WORKS_FILE, "utf8"));
+}
+
+export function loadSite() {
+  return JSON.parse(fs.readFileSync(SITE_FILE, "utf8"));
 }
 
 // Nunjucks autoescape 對應：斷言 HTML 內容時要先做同樣的跳脫

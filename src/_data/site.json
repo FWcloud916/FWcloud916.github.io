@@ -6,7 +6,18 @@
   "authorUrl": "https://imfw.io/about/",
   "authorDescription": "Web 開發者，記錄實際開發、API 整合、自動化與基礎設施的研究和踩坑經驗。",
   "authorSameAs": [
-    "https://github.com/FWcloud916"
+    "https://github.com/FWcloud916",
+    "https://www.linkedin.com/in/imfw0916",
+    "https://www.facebook.com/imfw.io",
+    "https://www.instagram.com/imfw.io/",
+    "https://www.threads.com/@imfw.io"
+  ],
+  "social": [
+    { "id": "github", "label": "GitHub", "url": "https://github.com/FWcloud916", "handle": "@FWcloud916" },
+    { "id": "linkedin", "label": "LinkedIn", "url": "https://www.linkedin.com/in/imfw0916" },
+    { "id": "facebook", "label": "Facebook", "url": "https://www.facebook.com/imfw.io" },
+    { "id": "instagram", "label": "Instagram", "url": "https://www.instagram.com/imfw.io/" },
+    { "id": "threads", "label": "Threads", "url": "https://www.threads.com/@imfw.io" }
   ],
   "currentYear": "2026",
   "themeColor": "#155dfc",

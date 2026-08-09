@@ -3,12 +3,13 @@ import path from "node:path";
 import { describe, it, expect } from "vitest";
 import { assertNoSlugCollisions } from "../lib/filters.mjs";
 import { hasUnsafeAssets } from "../src/assets/js/article-lottie.js";
-import { ROOT, loadNotes, loadPosts, loadWorks } from "./helpers.mjs";
+import { ROOT, loadNotes, loadPosts, loadSite, loadWorks } from "./helpers.mjs";
 
 // 對 src/posts/**/*.md 的 frontmatter 做全量檢查（AGENTS.md 硬性約束的可執行版）
 const posts = loadPosts();
 const notes = loadNotes();
 const works = loadWorks();
+const site = loadSite();
 
 function findRedundantTerminalHolds(value, outPoint, pathParts = [], findings = []) {
   if (Array.isArray(value)) {
@@ -138,6 +139,33 @@ describe("作品庫資料", () => {
       expect(work.image).toMatch(/^\/assets\/images\/[A-Za-z0-9][A-Za-z0-9._/-]*\.(?:jpe?g|png|webp)$/);
       expect(fs.existsSync(path.join(ROOT, "src", work.image.replace(/^\//, ""))), `缺少 ${work.image}`).toBe(true);
       expect(work.imageAlt, "圖片必須提供 imageAlt").toBeTruthy();
+    }
+  });
+});
+
+describe("site social", () => {
+  it("social 結構完整，且每筆網址都列入 authorSameAs", () => {
+    expect(Array.isArray(site.social), "social 必須是陣列").toBe(true);
+    expect(site.social.length, "至少需要一筆社群連結").toBeGreaterThan(0);
+
+    const ids = site.social.map((item) => item.id);
+    expect(ids, "social id 不得重複").toEqual([...new Set(ids)]);
+
+    for (const item of site.social) {
+      expect(item.id, `${item.id} 必須是 kebab-case`).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+      expect(item.label, `${item.id} 缺 label`).toBeTruthy();
+      expect(item.url, `${item.id} 的 url 必須是 HTTPS`).toMatch(/^https:\/\//);
+      expect(site.authorSameAs, `${item.id} 的 url 必須列入 authorSameAs`).toContain(item.url);
+    }
+  });
+
+  it("每個社群 id 在 social-links.njk 都有對應圖示", () => {
+    const partial = fs.readFileSync(
+      path.join(ROOT, "src", "_includes", "components", "social-links.njk"),
+      "utf8",
+    );
+    for (const item of site.social) {
+      expect(partial, `social-links.njk 缺 ${item.id} 的圖示`).toContain(`item.id == "${item.id}"`);
     }
   });
 });

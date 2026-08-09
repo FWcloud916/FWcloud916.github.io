@@ -3,12 +3,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect, beforeAll } from "vitest";
 import { toSlug } from "../lib/filters.mjs";
-import { ROOT, SITE_DIR, loadNotes, loadPosts, loadWorks, newestPost, escapeHtml } from "./helpers.mjs";
+import { ROOT, SITE_DIR, loadNotes, loadPosts, loadSite, loadWorks, newestPost, escapeHtml } from "./helpers.mjs";
 
 // 跑完整 production build 後對 _site/ 產物做 smoke 檢查
 const posts = loadPosts();
 const notes = loadNotes();
 const works = loadWorks();
+const site = loadSite();
 const topics = JSON.parse(fs.readFileSync(path.join(ROOT, "src", "_data", "topics.json"), "utf8"));
 const read = (p) => fs.readFileSync(path.join(SITE_DIR, p), "utf8");
 const exists = (p) => fs.existsSync(path.join(SITE_DIR, p));
@@ -214,7 +215,7 @@ describe("build output", () => {
         "@id": "https://imfw.io/about/#person",
         name: "FW",
         url: "https://imfw.io/about/",
-        sameAs: ["https://github.com/FWcloud916"],
+        sameAs: site.authorSameAs,
       },
     });
     expect(schema.dateModified).toBe(schema.datePublished);
@@ -272,12 +273,27 @@ describe("build output", () => {
         "@type": "Person",
         "@id": "https://imfw.io/about/#person",
         name: "FW",
-        sameAs: ["https://github.com/FWcloud916"],
+        sameAs: site.authorSameAs,
       },
     });
     expect(about).toContain('<picture>');
     expect(about).toContain('alt="FW 戴著橘色帽兜與眼鏡，坐在筆電前撰寫程式。"');
     expect(about).toMatch(/srcset="\/assets\/img\/[^\"]+-300\.webp 300w, \/assets\/img\/[^\"]+-600\.webp 600w, \/assets\/img\/[^\"]+-1024\.webp 1024w"/);
+  });
+
+  it("社群連結出現在關於我頁的圖示列與全站頁尾", () => {
+    const about = read("about/index.html");
+    // 關於我頁的圖示列略過 GitHub（已是上方主按鈕），其餘社群都要有無障礙名稱
+    for (const item of site.social.filter((entry) => entry.id !== "github")) {
+      expect(about, `關於我頁缺 ${item.label} 連結`).toContain(`href="${item.url}" rel="me noopener"`);
+      expect(about, `關於我頁的 ${item.label} 缺 aria-label`).toContain(`aria-label="FW 的 ${item.label}"`);
+    }
+
+    // 頁尾在每一頁都渲染完整清單（含 GitHub）
+    const home = read("index.html");
+    for (const item of site.social) {
+      expect(home, `首頁頁尾缺 ${item.label} 連結`).toContain(`href="${item.url}" rel="me noopener"`);
+    }
   });
 
   it("feed.xml 是 Atom feed，且第一個 entry 是最新文章", () => {
