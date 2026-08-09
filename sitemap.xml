@@ -220,6 +220,13 @@
   </url>
   
 
+  
+  <url>
+    <loc>https://imfw.io/posts/2026/2026-08-10-why-llm-security-matters/</loc>
+    <lastmod>2026-08-10T00:00:00.000Z</lastmod>
+  </url>
+  
+
 
   <url>
     <loc>https://imfw.io/tags/container/</loc>
@@ -259,6 +266,10 @@
 
   <url>
     <loc>https://imfw.io/tags/ai/</loc>
+  </url>
+
+  <url>
+    <loc>https://imfw.io/tags/ai-security/</loc>
   </url>
 
   <url>
