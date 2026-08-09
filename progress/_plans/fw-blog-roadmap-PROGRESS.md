@@ -1,6 +1,6 @@
 # FW Blog — Progress
 
-> **Last session:** 2026-08-10 · tests: passing (101/101) · 本機 commit 未 push
+> **Last session:** 2026-08-10 · commit `e27ed2b` · tests: passing (101/101) · 未 push
 
 ## Now (WIP = 1)
 
