@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 傳統資安 vs LLM 資安：到底哪裡不一樣
+
+- Published: 2026-08-11T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-11-traditional-vs-llm-security/
+- Tags: ai-security, ai, security
+
+- Description: 從 SQL Injection、XSS 與一次本機 Prompt Injection 實驗，拆解 LLM 資安延續了哪些既有原則，又因模型不確定性多了哪些工程難題。
+
+
 ### 我從模型的不確定性開始理解 LLM 應用資安
 
 - Published: 2026-08-10T00:00:00.000Z
