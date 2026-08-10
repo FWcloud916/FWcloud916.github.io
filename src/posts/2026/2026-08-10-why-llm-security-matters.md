@@ -125,6 +125,6 @@ LLM 輸出不是可信內容，而是下一個元件的不可信輸入；安全�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 1／30 篇**
 
-系列起點 · 下一篇：傳統資安 vs LLM 資安：到底哪裡不一樣
+系列起點 · [下一篇：傳統資安 vs LLM 資安：到底哪裡不一樣](https://imfw.io/posts/2026/2026-08-11-traditional-vs-llm-security/)
 
 <!-- series-nav:end -->
