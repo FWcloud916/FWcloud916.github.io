@@ -4,12 +4,342 @@
   <subtitle>FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。</subtitle>
   <link href="https://imfw.io/feed.xml" rel="self"/>
   <link href="https://imfw.io/"/>
-  <updated>2026-08-11T00:00:00Z</updated>
+  <updated>2026-08-12T00:00:00Z</updated>
   <id>https://imfw.io/</id>
   <author>
     <name>FW</name>
   </author>
   
+  
+  <entry>
+    <title>OWASP Top 10 for LLM Applications 全覽</title>
+    <link href="https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/"/>
+    <updated>2026-08-12T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/</id>
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-08-05 依 OWASP GenAI Security Project 官方文件初次查核，並於 &lt;strong&gt;2026-08-12 完成最終查核&lt;/strong&gt;。內容以官方資源頁提供的 &lt;strong&gt;OWASP Top 10 for LLM Applications 2026&lt;/strong&gt; 為準。資源頁標示 August 3, 2026；初次查核時的封面縮圖顯示 Version 2026、August 4th, 2026。最終查核時，官方 PDF 的 publication date 欄位已改為待定，因此日期差異只代表官方網站版本交接時的歷史快照，8 月 4 日不是唯一可驗證的正式發布日。初次與最終查核時，官方 &lt;code&gt;genai.owasp.org/llm-top-10/&lt;/code&gt; 著陸頁仍停留在 2025 版，且明說沒有新版；2026 版則由資源頁提供。條目與緩解建議會隨版本演進，引用前請自行確認當下版本。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;查 OWASP 清單之前，我先逼自己回答一個問題：不看任何資料，我認為 LLM 應用最重要的風險是什麼？&lt;/p&gt;
+&lt;p&gt;我列出三條：prompt 注入、權限過大、透露過多資訊。並且預測：官方十條裡，大概七條會落在前兩篇的結論——最小權限、後端授權、sink 驗證——這個範疇。（sink 指資料最後真正被使用的地方，例如送進 SQL、瀏覽器或交給人閱讀；本文用到的專有名詞，下面有一張對照表。）&lt;/p&gt;
+&lt;p&gt;然後我去對答案，先撞到一件跟內容無關、但更值得先講的事。&lt;/p&gt;
+&lt;h2&gt;查核資訊時，官方網站正處於版本交接&lt;/h2&gt;
+&lt;p&gt;我一開始查的是官方著陸頁。著陸頁列出 2025 十條，還明白告訴我沒有更新版本，所有單一條目頁也都是 2025。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/owasp-llm-top-10-overview-landing-page-still-2025.png&quot; alt=&quot;OWASP GenAI Security Project 的 LLM Top 10 著陸頁截圖，於 2026-08-05 擷取。主標題為「2025 Top 10 Risk &amp;amp; Mitigations for LLMs and Gen AI Apps」，內文寫著這是最新的 Top 10，封面縮圖標示 Version 2025、November 18, 2024，頁面提供的另一個版本連結只有 2023-24。下方十張卡片依序為 LLM01:2025 Prompt Injection 到 LLM10:2025 Unbounded Consumption，沒有任何 2026 版的痕跡。&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;同一時間，&lt;strong&gt;2026 版已經出現在官方資源頁&lt;/strong&gt;，但著陸頁還沒跟上。資源頁標示 August 3, 2026；我在 2026-08-05 擷取的頁面中，封面縮圖顯示 Version 2026、August 4th, 2026。我是在追別的問題時才撞見那個網址，回頭抓 PDF 才發現整份清單重排過。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/owasp-llm-top-10-overview-resource-page-2026-release.png&quot; alt=&quot;OWASP 官方資源頁截圖，同樣於 2026-08-05 擷取。標題為「OWASP GenAI LLM Top 10 2026」，頁面日期 August 3, 2026，說明文字寫著這是最新的社群版本，並提到依據數千筆真實 AI 資安事件的新研究。右側封面縮圖的版本區塊經放大後可讀出 Version 2026、August 4th, 2026。&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;兩張截圖是同一天、同一個官方網站，相隔幾次點選。著陸頁那張用肯定句告訴你這是最新版，資源頁的頁面日期與封面縮圖日期卻不一致。2026-08-12 最終查核時，官方 PDF 的 publication date 欄位又改為待定。這些日期只能說明當時頁面的呈現狀態，不能單獨當成唯一正式發布日。&lt;/p&gt;
+&lt;p&gt;如果我只信著陸頁，這篇文章會建立在一份已被資源頁上 2026 版取代的清單上，而且會附帶一句「官方沒有預告新版」的錯誤保證。這次的落差本身就是可帶走的教訓：**查框架版本時，著陸頁可能落後正式發布，而且著陸頁會用肯定句告訴你沒有新版。**讀者要查的是發布清單，不能只看導覽頁。&lt;/p&gt;
+&lt;h2&gt;先把名詞講清楚&lt;/h2&gt;
+&lt;p&gt;接下來的十條會密集出現幾個專有名詞。這些名詞在後面二十幾篇還會反覆用到，所以先在這裡一次講清楚，讀者不必為了看懂一條風險而中斷去查別的資料。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名詞&lt;/th&gt;
+&lt;th&gt;在這篇文章裡的意思&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;sink&lt;/td&gt;
+&lt;td&gt;資料最後真正被使用的地方，例如送進 SQL、HTML、shell、Email，或直接交給人閱讀。資安上的通則是：不可信資料抵達 sink 之前，必須先依那個 sink 的規則處理過。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;token&lt;/td&gt;
+&lt;td&gt;模型讀寫文字的最小單位。模型看到的是一長串 token，system prompt、使用者輸入與檢索到的文件在這一串裡沒有型別上的差別。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;context&lt;/td&gt;
+&lt;td&gt;這一次請求交給模型的全部文字，包含 system prompt、對話紀錄、檢索到的資料與工具說明。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;system prompt&lt;/td&gt;
+&lt;td&gt;開發者預先寫好、每次請求都附在最前面的指示，用來規定模型的角色與行為。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;RAG&lt;/td&gt;
+&lt;td&gt;檢索增強生成。系統先從外部知識庫查出相關片段，再連同使用者問題一起交給模型作答。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;embedding&lt;/td&gt;
+&lt;td&gt;把文字轉成一串數字向量，讓系統能用數學上的距離找出語意相近的內容，是 RAG 檢索的基礎。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;向量資料庫&lt;/td&gt;
+&lt;td&gt;專門存放 embedding 並執行相似度檢索的資料庫。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;adapter&lt;/td&gt;
+&lt;td&gt;疊在既有模型之上的小型微調權重（例如 LoRA），可以改變模型行為而不必重新訓練整個模型。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;agentic&lt;/td&gt;
+&lt;td&gt;模型不只回話，還能自行呼叫工具、連續執行多個步驟的用法。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MCP&lt;/td&gt;
+&lt;td&gt;Model Context Protocol，把 AI 應用串接到外部資料、工具與流程的開放標準。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;schema&lt;/td&gt;
+&lt;td&gt;描述資料或工具參數長什麼樣子的結構定義。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;provenance&lt;/td&gt;
+&lt;td&gt;來源履歷：一個模型、資料集或套件從哪裡來、經過誰的手、中途有沒有被改過。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;parameterized query&lt;/td&gt;
+&lt;td&gt;把 SQL 的語法結構與參數分開送給資料庫的寫法，資料因此不可能被當成語法執行。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;XSS／SSRF／RCE&lt;/td&gt;
+&lt;td&gt;跨站腳本、伺服器端請求偽造、遠端程式碼執行。在本文討論的情境中，三種結果都可能出現在下游元件沒有依實際 sink 處理不可信內容，讓不可信內容被當成程式碼、指令或資源位置使用。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Denial of Wallet&lt;/td&gt;
+&lt;td&gt;攻擊者刻意觸發大量昂貴的推論，把按用量計費的帳單推到無法負擔的程度。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2&gt;官方十條，先對答案&lt;/h2&gt;
+&lt;p&gt;十條沒有增減，但順序大幅重排。最右欄是對照我事前清單的結果：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;2026 條目&lt;/th&gt;
+&lt;th&gt;一句話講什麼&lt;/th&gt;
+&lt;th&gt;我的直覺&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM01 Prompt Injection&lt;/td&gt;
+&lt;td&gt;輸入改變模型行為；官方明講模型不區分指令與資料，指令與資料是同一串 token&lt;/td&gt;
+&lt;td&gt;命中&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM02 Sensitive Information Disclosure&lt;/td&gt;
+&lt;td&gt;個資、營業秘密、憑證經由輸出或訓練資料外洩&lt;/td&gt;
+&lt;td&gt;命中（透露過多資訊）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM03 Excessive Agency&lt;/td&gt;
+&lt;td&gt;功能、權限或自主性超過需要，模型做出破壞性動作&lt;/td&gt;
+&lt;td&gt;命中（權限過大）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM04 Supply Chain&lt;/td&gt;
+&lt;td&gt;預訓練模型、adapter、套件與資料集的來源風險&lt;/td&gt;
+&lt;td&gt;完全沒想到&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM05 Data and Model Poisoning&lt;/td&gt;
+&lt;td&gt;預訓練、微調或 embedding 資料被投毒，可植入後門&lt;/td&gt;
+&lt;td&gt;完全沒想到&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM06 Unbounded Consumption&lt;/td&gt;
+&lt;td&gt;推論資源不設限：服務中斷、Denial of Wallet 與模型抽取&lt;/td&gt;
+&lt;td&gt;沒想到&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM07 Misinformation&lt;/td&gt;
+&lt;td&gt;模型產出看似可信的錯誤內容，被人或下游流程當真並據以行動&lt;/td&gt;
+&lt;td&gt;沒想到&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM08 Hidden Context Exposure&lt;/td&gt;
+&lt;td&gt;隱藏的系統指令與 operational context 被提取、推論或重建&lt;/td&gt;
+&lt;td&gt;命中（透露過多資訊）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM09 Vector and Embedding Weaknesses&lt;/td&gt;
+&lt;td&gt;RAG 的檢索越權、跨租戶洩漏、embedding 反推與知識庫污染&lt;/td&gt;
+&lt;td&gt;沒想到&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM10 Improper Output Handling&lt;/td&gt;
+&lt;td&gt;模型輸出未經驗證就送進下游，導致 XSS、SSRF、RCE&lt;/td&gt;
+&lt;td&gt;沒列，但前篇結論講的就是這條&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;三條直覺對上四條官方條目。「透露過多資訊」拆成兩條：LLM02 是洩漏的內容，LLM08 是特別常見的洩漏位置。&lt;/p&gt;
+&lt;p&gt;我的直覺剛好撞上這一版最具影響的調整。Excessive Agency 從第 6 升到第 3，官方理由是 agentic 部署才是損害真正發生的地方。而 2025 年的 System Prompt Leakage 改名並擴大成 &lt;strong&gt;Hidden Context Exposure&lt;/strong&gt;，範圍從 system prompt 延伸到開發者指令、RAG 取回的政策文字、工具與函式 schema。官方要求開發者&lt;strong&gt;假設隱藏 context 必然會被發現&lt;/strong&gt;，不要在隱藏 context 裡嵌憑證，也不要單獨拿隱藏 context 當授權邊界。&lt;/p&gt;
+&lt;h2&gt;我的直覺涵蓋的是「請求路徑」&lt;/h2&gt;
+&lt;p&gt;第二個預測得用數的。我把十條的緩解策略逐條讀過，看有幾條最後回到最小權限、後端授權與 sink 驗證。&lt;/p&gt;
+&lt;p&gt;答案是六條：LLM01 要求最小權限與高風險動作的人工核准；LLM02 要求對資料來源套最小權限；LLM03 的三個根因——功能過多、權限過大、自主性過高——整條就是最小權限的反面清單；LLM08 明確寫著不得把隱藏 context 當成授權或政策執行的邊界；LLM09 的核心緩解策略是 permission-aware 的向量資料庫與 fine-grained 存取控制；LLM10 要求依下游 context 重新編碼，並使用 parameterized query。&lt;/p&gt;
+&lt;p&gt;第七條要看怎麼算：LLM05 的緩解策略包含沙箱與異常偵測，勉強沾邊，但主體是資料治理。所以我的「七條」預測，嚴格說是六條半。&lt;/p&gt;
+&lt;p&gt;數字接近不是因為我懂 OWASP，而是因為這六條有共同的形狀：&lt;strong&gt;這六條的主要防線都能放回一次請求的路徑上&lt;/strong&gt;。不可信輸入進來、模型讀到不該讀的資料、模型說了或做了不該做的事。前兩篇建立的原則本來就是為請求路徑設計的，所以這套原則能處理這六條落在請求路徑上的部分，不能取代資料攝取、模型更新等生命週期控制。&lt;/p&gt;
+&lt;h2&gt;盲點不在數量，在軸線&lt;/h2&gt;
+&lt;p&gt;預測失準的四條，錯法比數字有趣。&lt;/p&gt;
+&lt;p&gt;LLM04 與 LLM05 暴露的是只盯著請求路徑時看不到的風險。LLM04 的模型、adapter、套件與資料集在取得、建置或更新時就可能被掉包；LLM05 則可能發生在預訓練、微調、embedding 建立、RAG 資料攝取與持續學習。LLM04 與 LLM05 的共同點不是都發生在部署前，而是風險會污染跨請求保留的模型、資料或元件，單次請求上的權限控制無法取代來源驗證與資料治理。這兩條構成生命週期軸。&lt;/p&gt;
+&lt;p&gt;LLM07 的 sink 不是程式，是&lt;strong&gt;人的信任&lt;/strong&gt;，或者信任模型輸出的下游流程。摘要器捏造一段內容不需要任何權限，也不經過任何工具呼叫；只要有人信了、或有流程據以行動，損害就成立。官方把 LLM07 定位成系統層級的失效，而不是使用者不夠謹慎。&lt;/p&gt;
+&lt;p&gt;LLM06 攻擊的是&lt;strong&gt;資源&lt;/strong&gt;。官方對這條的定性是「成本不對稱」：攻擊者用極低代價觸發不成比例的昂貴運算。官方也點名 MCP 這類工具協定會把單一請求放大成連鎖的下游操作，並直言傳統的請求速率限制已經不夠。&lt;/p&gt;
+&lt;p&gt;所以這張地圖不是十條平行的風險，而是三條軸線：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;請求路徑&lt;/strong&gt;：LLM01、02、03、08、09、10——最小權限、後端授權、sink 驗證在這裡有效。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;生命週期&lt;/strong&gt;：LLM04、05——防線是來源驗證、provenance 與資料治理，從部署前延伸到上線後的資料攝取、更新與持續學習流程。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;資源與信任&lt;/strong&gt;：LLM06、07——防線是額度、成本上限、輸出查證與介面設計，對象是帳單和人。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2&gt;同一份清單，兩種分法&lt;/h2&gt;
+&lt;p&gt;我把十條分完三軸才發現，2026 版自己也附了一張分類圖，而且分法跟我不一樣。&lt;/p&gt;
+&lt;p&gt;我的三軸問的是「這條風險該在系統的哪一層防」。官方那張圖問的是另一個問題：「這條風險在一次攻擊裡負責哪個環節」。官方因此把十條排成同心圓，外圈是攻擊的&lt;strong&gt;進入向量&lt;/strong&gt;，中圈是把災害放大的&lt;strong&gt;放大器&lt;/strong&gt;，正中央是最終造成的&lt;strong&gt;影響&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/owasp-llm-top-10-overview-official-concentric-threat-flow.png&quot; alt=&quot;OWASP Top 10 for LLM Applications 2026 的官方結構圖，標題為 Concentric Threat Flow。最外層「Entry Vectors」放 LLM01 Prompt Injection、LLM04 Supply Chain、LLM05 Data and Model Poisoning；中層「Amplifiers / Machinery」放 LLM08 Hidden Context Exposure、LLM09 Vector and Embedding Weaknesses，以及下緣的 LLM03 Excessive Agency 與 LLM10 Improper Output Handling，四者皆為虛線框；核心「Impacts」放 LLM02 Sensitive Information Disclosure、LLM06 Unbounded Consumption、LLM07 Misinformation。圖下註明攻擊由外向內流動、防禦由內向外推，虛線代表該條目橫跨多層。&quot; /&gt;&lt;/p&gt;
+&lt;h2&gt;官方那張圖有三個訊息不在條目清單裡&lt;/h2&gt;
+&lt;p&gt;這張圖值得多花一分鐘讀，因為只看十條的名稱看不到下面三件事。&lt;/p&gt;
+&lt;p&gt;**第一，攻擊與防禦的方向相反。**圖的下緣寫著攻擊由外向內流、防禦由內向外推。攻擊者從最外圈任何一個入口進來，一路往核心推進；防守方的順序剛好倒過來，先確定核心那三種影響絕對不能發生，再往外決定每一層要擋掉什麼。這個方向感回答了一個常見問題：十條該先修哪一條沒有標準答案，因為要先決定的不是條目順序，而是你這套系統最不能承受哪一種影響。&lt;/p&gt;
+&lt;p&gt;**第二，中間那一圈是把小事變成大事的機制。**LLM08、LLM09、LLM03 與 LLM10 通常不是攻擊的起點。這四條的作用是放大：把一次成功的注入從「模型講錯話」，變成「資料被送出去」或「危險動作被執行」。官方對 LLM08 的描述就直接寫著，隱藏 context 外洩經常放大 LLM01、LLM02、LLM03 與 LLM10。換句話說，同一次注入最後有多嚴重，取決於中圈這四條被打開了幾條。&lt;/p&gt;
+&lt;p&gt;**第三，虛線代表這一條同時待在不只一層。**中圈那四條全是虛線框。以 LLM03 過度代理為例，LLM03 既可以是放大器，也可以是入口。官方在 LLM03 的內文裡列出幾種觸發情境，其中一種是「先前呼叫過的惡意或已被攻陷的工具」——被攻陷的那個工具本身，就是攻擊起點。&lt;/p&gt;
+&lt;p&gt;圖說還補了一個例外：不是每一次 LLM04 供應鏈攻擊都要由外往內走，有些直接造成影響。官方沒有舉例。不過 LLM04 涵蓋的狀況包含「取得的模型工件並不是宣稱的那一個」，據此推斷，最直接的情形就是下載到的模型或 adapter 本身已被動過手腳。這種攻擊不需要任何注入，惡意行為在元件裡就已經內建好了。&lt;/p&gt;
+&lt;h2&gt;兩種分法交叉起來&lt;/h2&gt;
+&lt;p&gt;用 LLM02 敏感資訊洩漏當例子最清楚。我把 LLM02 放進請求路徑軸，因為擋住 LLM02 的手段是限制模型讀得到什麼、輸出前再驗證一次，那些手段全都落在一次請求的路徑上。官方把 LLM02 放進最內圈，因為資料真的被洩漏出去時，那已經是攻擊的最終結果，不是攻擊的手法。同一條風險，我問「在哪防」得到請求路徑，官方問「是什麼環節」得到最終影響，兩個答案都對。&lt;/p&gt;
+&lt;p&gt;把兩種分法交叉排開，十條的落點如下：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;我的軸線＼官方環節&lt;/th&gt;
+&lt;th&gt;進入向量&lt;/th&gt;
+&lt;th&gt;放大器&lt;/th&gt;
+&lt;th&gt;最終影響&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;請求路徑&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;LLM01&lt;/td&gt;
+&lt;td&gt;LLM03、LLM08、LLM09、LLM10&lt;/td&gt;
+&lt;td&gt;LLM02&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;生命週期&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;LLM04、LLM05&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;資源與信任&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;td&gt;LLM06、LLM07&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;生命週期軸的兩條全部落在進入向量，資源與信任軸的兩條全部落在最終影響。我當初分這兩軸時並沒有看過官方這張圖，兩種分法卻把同樣的條目放進同一組，所以這兩軸不是我硬湊出來的分類。&lt;/p&gt;
+&lt;p&gt;真正分開的只有請求路徑那一軸：這一軸的六條散落在官方的三個環節裡。原因就是 LLM02 那個例子講的——&lt;strong&gt;防線位置相同的風險，在攻擊鏈上可以分別是入口、放大器和結果。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;兩種分法我都會留著，但使用時機不同。決定要把防禦人力和預算投到哪一層時，我用自己的三軸，因為三軸的每一格都能直接對應到要改的程式或設定。事後要理解一起已經發生的事故時，我用官方那張圖，因為同心圓能較快指出攻擊從哪個環節進來、又在哪裡被放大。&lt;/p&gt;
+&lt;h2&gt;「注入是模型問題」只對了一半&lt;/h2&gt;
+&lt;p&gt;診斷時我把 prompt 注入歸給「模型本身」，其他歸給「系統整合」。讀完官方條目，這個二分法站不住。&lt;/p&gt;
+&lt;p&gt;LLM01 的成因確實在模型，而且 2026 版把理由講得比我預期更直白：模型在架構上不區分「指令」與「資料」，指令與資料是同一串 token，因此&lt;strong&gt;沒有乾淨對應 parameterized query 的機制&lt;/strong&gt;。前一篇實驗沒有觀察到語意上的攻擊服從，卻撞到另一個量測陷阱：&lt;code&gt;&amp;lt;untrusted_document&amp;gt;&lt;/code&gt; 內的 marker 五次都被模型摘要或引用，exact matcher 因而誤報 5／5。這表示自然語言標記與單一字串 matcher 都不能取代系統層的確定性邊界；LLM01 的通用風險判斷仍應以官方條目與更多適應性測試為準，不能由這十次結果單獨推出。&lt;/p&gt;
+&lt;p&gt;但往下看 LLM01 的緩解策略：限制模型行為、驗證輸出格式、過濾輸入輸出、最小權限、人工核准、隔離標記不可信內容、對抗性測試——沒有一項是「把模型修好」，全部是系統層手段。&lt;/p&gt;
+&lt;p&gt;修正後的講法是：**成因可以在模型，防線一定在系統。**歸類一個風險時，問「這是誰的錯」沒有行動價值；要問的是「防線放得回哪一層」。&lt;/p&gt;
+&lt;h2&gt;這一版第一次拿事件紀錄檢驗自己的清單&lt;/h2&gt;
+&lt;p&gt;前面幾版排序靠的是從業者投票。2026 版第一次把投票拿去對照真實事件紀錄：蒐集 7,714 筆事件，其中 6,639 筆細節足以分類，最後投票佔四分之三權重、事件資料佔四分之一。&lt;/p&gt;
+&lt;p&gt;有意思的是分歧出現在哪裡。&lt;strong&gt;Prompt Injection 若只按原始事件數排名，會掉出前十。&lt;/strong&gt; 官方判定這是「防禦效應」——大家防得兇，乾淨的成功利用比較少進到公開資料庫，公開數字因此低估了風險。官方選擇讓投票壓過資料，把 Prompt Injection 留在第一。Misinformation 則相反：投票偏低、事件紀錄偏高，是落差最大的一條，因此往上移。&lt;/p&gt;
+&lt;p&gt;這個推論陷阱我上一篇才踩過。當時固定 payload 連測五次都失敗，很容易把「這個 payload 沒成功」誤讀成「這個邊界有效」；OWASP 遇到的是同一個陷阱，只是規模放到七千多筆事件。&lt;strong&gt;低數字可能代表防守有效，也可能代表你根本沒測到會成功的那一面&lt;/strong&gt;——分辨這兩種可能，比拿到數字本身更難。&lt;/p&gt;
+&lt;h2&gt;把十條掛回示範應用&lt;/h2&gt;
+&lt;p&gt;地圖要有用，得掛在具體的系統上。我目前的示範應用只有前篇那個最小摘要器：本機 Ollama 跑 &lt;code&gt;gemma4:latest&lt;/code&gt;，system prompt 指定摘要任務，輸入是一份不可信文件，輸出是給人讀的純文字。沒有工具、沒有 RAG、沒有機敏資料。&lt;/p&gt;
+&lt;p&gt;我原本以為這麼小的應用只沾得上一兩條。逐條掛完，六條已經存在或部分存在：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;條目&lt;/th&gt;
+&lt;th&gt;摘要器現況&lt;/th&gt;
+&lt;th&gt;系列深入篇&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM01&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;已實測但未觀察語意服從&lt;/strong&gt;：兩組各五次皆為 0／5；標記內 payload 的 exact 5／5 全是摘要或引用造成的誤報&lt;/td&gt;
+&lt;td&gt;第二週整組注入主題&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM02&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;刻意排除&lt;/strong&gt;：context 裡沒放機敏資料，無東西可洩；這是控制，不是免疫&lt;/td&gt;
+&lt;td&gt;〈敏感資料防護：PII 偵測與遮罩〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM03&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;刻意排除&lt;/strong&gt;：不給工具，所以沒有代理可以過度&lt;/td&gt;
+&lt;td&gt;〈Excessive Agency：Agent 的過度代理風險〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM04&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;存在且未處理&lt;/strong&gt;：&lt;code&gt;gemma4&lt;/code&gt; 是從 Ollama registry 拉下來的，我沒有驗證過來源與完整性&lt;/td&gt;
+&lt;td&gt;〈供應鏈風險：模型、套件與 MCP Server〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM05&lt;/td&gt;
+&lt;td&gt;尚未涵蓋：沒有訓練、微調或 embedding 流程&lt;/td&gt;
+&lt;td&gt;〈資料投毒與知識庫污染〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM06&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;部分存在&lt;/strong&gt;：本機推論沒有帳單，但有算力可被榨取；換成雲端 API 就是 Denial of Wallet&lt;/td&gt;
+&lt;td&gt;〈濫用與成本攻擊：DoS、Token 榨取與速率限制〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM07&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;存在&lt;/strong&gt;：摘要器可能捏造文件裡沒有的內容，讀者信任就是 sink&lt;/td&gt;
+&lt;td&gt;系列沒有專篇，先併入輸出端防禦與觀測性兩篇&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM08&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;存在但低影響&lt;/strong&gt;：system prompt 只有任務描述，沒有秘密——正好符合官方「風險取決於你放了什麼」的定性&lt;/td&gt;
+&lt;td&gt;〈Hidden Context Exposure：外洩的不只是 system prompt〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM09&lt;/td&gt;
+&lt;td&gt;尚未涵蓋：沒有 RAG 與向量資料庫&lt;/td&gt;
+&lt;td&gt;〈向量資料庫與 Embedding 的安全議題〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LLM10&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;部分存在&lt;/strong&gt;：輸出只給人讀，還沒有 HTML 或 SQL 下游；但「給人讀」本身就是 sink&lt;/td&gt;
+&lt;td&gt;〈輸出端防禦：過濾、審核與安全渲染〉&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;這張表修正了我的第三個誤判。我以為「掛不上去」代表應用太小，實際上掛完發現兩件事。&lt;/p&gt;
+&lt;p&gt;第一，&lt;strong&gt;LLM04 已經在系統裡了&lt;/strong&gt;。我下載模型時完全沒想過供應鏈——這正是「完全沒想到」的條目會咬人的方式：供應鏈風險不在我的威脅模型裡，所以我連「沒驗證」這個狀態都沒意識到。&lt;/p&gt;
+&lt;p&gt;第二，「尚未涵蓋」和「刻意排除」是兩回事。LLM03 掛不上去，是因為我依前兩篇的結論選擇不給工具；LLM05 掛不上去，只是因為還沒做到那裡。地圖的價值就在讓每一個「沒有」變成「刻意沒有」，其餘的標成待辦。&lt;/p&gt;
+&lt;p&gt;順帶一提，LLM10 的官方條件清單裡有一項值得畫線：&lt;strong&gt;會自動抓取模型輸出中外部資源的用戶端渲染器&lt;/strong&gt;——瀏覽器、聊天介面、IDE、終端機——Markdown 圖片、連結預覽或 iframe 都算，這些渲染器會透過對外請求把 context 資料送出去。也就是說，把輸出「變好看」這個看起來純屬介面的決定，官方直接列為外流條件。&lt;/p&gt;
+&lt;h2&gt;這份清單管到哪裡為止&lt;/h2&gt;
+&lt;p&gt;2026 版還畫了一條我原本沒意識到的邊界：**模型作為應用裡的「元件」時，風險歸這份清單；一旦模型成為「行動者」——能呼叫工具、跨 session 攜帶記憶、在下游造成後果——風險就移交給 OWASP 的 Agentic 清單。**那是另一份獨立的十條，2025 年 12 月公布，涵蓋目標劫持、工具濫用、身分與權限濫用、記憶與 context 污染、代理間通訊、連鎖失效等。&lt;/p&gt;
+&lt;p&gt;這條邊界剛好把現在的摘要器留在 LLM 清單這一側。但只要哪天我給摘要器工具或記憶，我就得同時看兩份清單，而不是等這一份長出對應的條目。&lt;/p&gt;
+&lt;h2&gt;帶走的判斷&lt;/h2&gt;
+&lt;p&gt;下次拿到任何 LLM 應用——自己的或別人的——我會沿三條軸線問：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;請求路徑&lt;/strong&gt;：輸入從哪裡進來、模型讀得到什麼、輸出流向哪些 sink、每個動作誰重新授權？（LLM01、02、03、08、09、10）&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;生命週期&lt;/strong&gt;：模型、adapter、套件、訓練與檢索資料各自從哪來，來源驗證過沒有？（LLM04、05）&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;資源與信任&lt;/strong&gt;：推論的用量與成本有沒有上限？誰會不經查證就相信輸出？（LLM06、07）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;然後再加一個這次學到的前置動作：&lt;strong&gt;先確認手上這份清單是不是最新版&lt;/strong&gt;，而且不要只問導覽頁。&lt;/p&gt;
+&lt;p&gt;清單掛完，最大的未解問題是：目前的示範應用小到只能觀察十條裡的一部分。下一篇把實驗環境正式建起來，讓後面的攻擊與防禦每一條都有地方跑。&lt;/p&gt;
+&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/&quot;&gt;OWASP Top 10 for LLM Applications 2026（官方 PDF，Version 2026）&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://genai.owasp.org/llm-top-10/&quot;&gt;OWASP Top 10 for LLM Applications 著陸頁（查核當下仍為 2025 版）&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/&quot;&gt;OWASP Top 10 for Agentic Applications 發布說明&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://genai.owasp.org/initiatives/agentic-security-initiative/&quot;&gt;OWASP Agentic Security Initiative&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://owasp.org/www-project-top-10-for-large-language-model-applications/&quot;&gt;OWASP Top 10 for LLM Applications 2023／24（版本比較用）&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://owasp.org/www-community/controls/Static_Code_Analysis&quot;&gt;OWASP Static Code Analysis — taint analysis 與 sink 的說明&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://modelcontextprotocol.io/docs/getting-started/intro&quot;&gt;Model Context Protocol — 官方介紹&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;文中兩張網頁截圖擷取自 &lt;a href=&quot;https://genai.owasp.org/&quot;&gt;genai.owasp.org&lt;/a&gt;，擷取時間為 2026-08-05；同心圓結構圖為《OWASP Top 10 for LLM Applications 2026》（Version 2026）第 9 頁的 Figure 2，自官方 PDF 原樣取出，未修改圖說或標籤。OWASP 文件與網站內容除另有標示外採 &lt;a href=&quot;https://creativecommons.org/licenses/by-sa/4.0/&quot;&gt;Creative Commons Attribution-ShareAlike 4.0&lt;/a&gt; 授權；OWASP 與其標誌為 OWASP Foundation, Inc. 的商標。兩張網頁截圖僅移除第三方朗讀外掛的浮動元件，未修改頁面文字，其中資源頁那張的版本區塊另加放大標示。&lt;/p&gt;
+&lt;!-- ironman-cross-publication:start --&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本文同步刊載於 &lt;a href=&quot;https://ithelp.ithome.com.tw/articles/10402547&quot;&gt;iThome 鐵人賽&lt;/a&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!-- ironman-cross-publication:end --&gt;
+&lt;!-- series-nav:start --&gt;
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 3／30 篇&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-11-traditional-vs-llm-security/&quot;&gt;上一篇：傳統資安 vs LLM 資安：到底哪裡不一樣&lt;/a&gt; · 下一篇：打造你的資安實驗室：環境建置&lt;/p&gt;
+&lt;!-- series-nav:end --&gt;
+</content>
+  </entry>
   
   <entry>
     <title>傳統資安 vs LLM 資安：到底哪裡不一樣</title>
@@ -151,7 +481,7 @@
 &lt;!-- series-nav:start --&gt;
 &lt;hr /&gt;
 &lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 2／30 篇&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-10-why-llm-security-matters/&quot;&gt;上一篇：我從模型的不確定性開始理解 LLM 應用資安&lt;/a&gt; · 下一篇：OWASP Top 10 for LLM Applications 全覽&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-10-why-llm-security-matters/&quot;&gt;上一篇：我從模型的不確定性開始理解 LLM 應用資安&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/&quot;&gt;下一篇：OWASP Top 10 for LLM Applications 全覽&lt;/a&gt;&lt;/p&gt;
 &lt;!-- series-nav:end --&gt;
 </content>
   </entry>
@@ -1733,196 +2063,6 @@ Use $doc-architect to audit the current docs for drift. Report first; do not fix
 &lt;li&gt;&lt;a href=&quot;https://dora.dev/capabilities/documentation-quality/&quot;&gt;DORA — Documentation quality&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://dora.dev/research/2021/dora-report/&quot;&gt;2021 Accelerate State of DevOps Report&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://arxiv.org/abs/2307.03172&quot;&gt;Lost in the Middle: How Language Models Use Long Contexts&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</content>
-  </entry>
-  
-  <entry>
-    <title>Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制</title>
-    <link href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/"/>
-    <updated>2026-07-21T00:00:00Z</updated>
-    <id>https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/</id>
-    <content type="html">&lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-07-21 依 Podman 與 Docker 官方文件查核。Podman networking、Quadlet、Linux kernel 與各發行版的預設值可能變動，部署前請再次確認實際安裝版本的文件與主機設定。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;上一篇談&lt;a href=&quot;https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/&quot;&gt;正式環境為什麼需要 Rootless Docker&lt;/a&gt;後，有人問了一個很合理的問題：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;Podman 本來就主打 rootless，又沒有 Docker daemon，它還會有一樣的問題嗎？&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;短答案是：&lt;strong&gt;有些會，有些不會。&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;Podman 的 daemonless 架構，確實避開了傳統 Docker 最醒目的風險：一般使用者不必使用 &lt;code&gt;/var/run/docker.sock&lt;/code&gt; 控制一個以 host root 執行的常駐 daemon。但 Rootless Podman 和 Rootless Docker 都建立在 Linux user namespace、非特權網路與 cgroup delegation 上，因此 UID/GID、低號連接埠、device、storage 與資源限制等問題仍然存在。&lt;/p&gt;
-&lt;p&gt;判斷 Podman 是否適合 production，不能只看「daemonless」這個標籤。要先把兩種問題拆開：一種來自 container engine 的架構，另一種來自 Linux rootless 本身。&lt;/p&gt;
-&lt;h2&gt;先分清楚兩層問題&lt;/h2&gt;
-&lt;p&gt;傳統 rootful Docker 的控制路徑大致是：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;Docker CLI
-    │
-    ▼
-/var/run/docker.sock
-    │
-    ▼
-dockerd（host root）
-    │
-    ▼
-containers&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;只要使用者能操作這個 socket，就能要求 root daemon 建立 container、掛載 host 目錄或啟動高權限 workload。因此加入 &lt;code&gt;docker&lt;/code&gt; group 並不是單純取得「執行 Docker」的權限，而是取得 rootful daemon 的控制權。&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman.1.html&quot;&gt;Podman 官方把 Podman 定義為 daemonless container engine&lt;/a&gt;。在 Linux 上直接執行本機 rootless Podman CLI 時，命令會以目前使用者的權限建立和管理 container，不必先把要求交給一個常駐的 root daemon：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;Podman CLI（一般使用者）
-    │
-    ▼
-OCI runtime＋user namespace
-    │
-    ▼
-containers（不超過該使用者的 host 權限）&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/podman-rootless-production-engine-privilege-paths.png&quot; alt=&quot;Rootful Docker、Rootless Docker 與 Rootless Podman 的權限路徑比較，顯示 root daemon、user namespace 與 daemonless 本機操作的差異。&quot; /&gt;&lt;/p&gt;
-&lt;p&gt;這是實質的安全差異。如果 deployment account 被入侵，攻擊者不會因為該帳號能執行 rootless Podman，就自動取得 host root。&lt;/p&gt;
-&lt;p&gt;不過 daemonless 解決的是控制面架構，不是移除 Linux kernel 對非 root process 的限制。Rootless Podman 仍然是 rootless process，不能憑空取得 host 上原本沒有的權限。&lt;/p&gt;
-&lt;h2&gt;Rootless Podman 仍然有的六個限制&lt;/h2&gt;
-&lt;h3&gt;1. 仍需要 subordinate UID/GID&lt;/h3&gt;
-&lt;p&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode&quot;&gt;Podman rootless 文件&lt;/a&gt;說明，rootless 使用者需要在 &lt;code&gt;/etc/subuid&lt;/code&gt; 與 &lt;code&gt;/etc/subgid&lt;/code&gt; 取得可用的 subordinate ID range，Podman 再利用 user namespace 映射 container 內的 UID/GID。&lt;/p&gt;
-&lt;p&gt;這會帶來和 Rootless Docker 類似的實務問題：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;不同使用者的 subordinate range 不應重疊。&lt;/li&gt;
-&lt;li&gt;Container 內看起來是 UID 0，不等於 host root。&lt;/li&gt;
-&lt;li&gt;既有 bind mount 的 ownership 可能不符合映射後的 UID/GID。&lt;/li&gt;
-&lt;li&gt;Image 使用超出 mapping range 的高 UID/GID 時，pull、build 或啟動可能失敗。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Podman 提供 &lt;code&gt;--userns=keep-id&lt;/code&gt; 等工具改善部分 volume 使用情境，但它不會自動替所有既有資料目錄找出正確的 ownership 策略。Production migration 前仍應用實際 workload 測試，不要對大範圍目錄遞迴 &lt;code&gt;chown&lt;/code&gt; 或直接放寬權限。&lt;/p&gt;
-&lt;h3&gt;2. 特權連接埠與 rootless networking 仍需設計&lt;/h3&gt;
-&lt;p&gt;非 root process 預設不能直接綁定 Linux 的特權連接埠（1024 以下），Rootless Podman 也不例外。&lt;a href=&quot;https://github.com/containers/podman/blob/main/rootless.md&quot;&gt;Podman 的 rootless 限制文件&lt;/a&gt;建議使用 reverse proxy、firewall redirect，或經審核後調整 &lt;code&gt;net.ipv4.ip_unprivileged_port_start&lt;/code&gt;。&lt;/p&gt;
-&lt;p&gt;最容易說明與稽核的 production 架構通常是：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;Internet
-   │ 80 / 443
-   ▼
-host reverse proxy 或 load balancer
-   │ 8080 / 8443
-   ▼
-rootless Podman container&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;新版 Podman 以 &lt;code&gt;pasta&lt;/code&gt; 作為 rootless networking 的主要工具；rootless bridge 的連接埠轉送也可能經過 &lt;code&gt;rootlessport&lt;/code&gt;。官方文件指出，不同 forwarder 對原始 client IP 的保留方式不同，部分選項仍標示為 experimental。因此不能只看到 &lt;code&gt;podman run -p 8080:80&lt;/code&gt; 成功，就假設 firewall path、source IP、container-to-host 與 container-to-container 行為都和 rootful bridge 一樣。&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-create.1.html#network-mode-net&quot;&gt;Podman create networking&lt;/a&gt;&lt;/p&gt;
-&lt;h3&gt;3. cgroup limit 不一定真的生效&lt;/h3&gt;
-&lt;p&gt;Compose 或 CLI 寫了 CPU、memory、pids 與 I/O limit，不代表 kernel 一定執行了這些限制。&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-update.1.html&quot;&gt;Podman 的 resource limit 文件&lt;/a&gt;標示，多個 CPU 與 block I/O 選項不支援 rootless cgroup v1，在部分系統上非 root 使用者也可能沒有修改資源限制的權限。Podman 的 Quadlet 同樣要求 cgroup v2。&lt;/p&gt;
-&lt;p&gt;需要嚴格 resource control 時，至少要確認：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; info &lt;span class=&quot;token parameter variable&quot;&gt;--format&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&#39;{{.Host.CgroupsVersion}}&#39;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;接著對真實 container 製造可控制的負載，從 host cgroup 狀態或監控資料證明限制有效。設定檔存在，只能證明你提出了要求，不能證明 kernel 已 enforcement。&lt;/p&gt;
-&lt;h3&gt;4. &lt;code&gt;--privileged&lt;/code&gt; 也不會把 rootless 變成 host root&lt;/h3&gt;
-&lt;p&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-create.1.html#privileged&quot;&gt;Podman 官方文件&lt;/a&gt;明確說明：位於 user namespace 的 container，無法擁有超過啟動者的權限。&lt;/p&gt;
-&lt;p&gt;這是一個安全優點，也是一個相容性邊界。即使加上 &lt;code&gt;--privileged&lt;/code&gt;，rootless container 仍可能無法建立 device node、操作特定 host device、載入 kernel module，或完成需要真正 host capability 的工作。&lt;/p&gt;
-&lt;p&gt;如果 workload 必須使用 GPU、TUN/TAP、USB、FUSE 或其他 device，不應先假設「加 &lt;code&gt;--device&lt;/code&gt; 就好」。要檢查啟動者的 host 權限、supplementary groups、SELinux/AppArmor policy、OCI runtime 與實際 device 行為。&lt;/p&gt;
-&lt;h3&gt;5. Storage 不只是換一個目錄&lt;/h3&gt;
-&lt;p&gt;Rootless Podman 的 image 與 container storage 預設位於使用者的 &lt;code&gt;$HOME/.local/share/containers/storage&lt;/code&gt;。這讓不同使用者的 container 資料自然分開，但也讓 home filesystem 成為 production 設計的一部分。&lt;/p&gt;
-&lt;p&gt;Podman 官方指出，rootless storage 不支援直接放在 NFS、Lustre、GPFS 等不理解 user namespace 的分散式檔案系統；這類環境應把 &lt;code&gt;graphroot&lt;/code&gt; 指向 local storage。較舊的 kernel 也可能需要 &lt;code&gt;fuse-overlayfs&lt;/code&gt; 才能在 user namespace 使用 OverlayFS。&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman.1.html#note-unsupported-file-systems-in-rootless-mode&quot;&gt;Podman rootless storage&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;因此 production 上至少要確認：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;graphroot&lt;/code&gt; 實際位於哪個 filesystem；&lt;/li&gt;
-&lt;li&gt;容量、inode、備份與監控是否涵蓋該路徑；&lt;/li&gt;
-&lt;li&gt;home directory 是否有 &lt;code&gt;noexec&lt;/code&gt;、&lt;code&gt;nodev&lt;/code&gt; 或集中式 storage policy；&lt;/li&gt;
-&lt;li&gt;database 與 persistent volume 如何備份，而不是只備份 image layer。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;6. 登出與 reboot 後仍要能恢復&lt;/h3&gt;
-&lt;p&gt;Daemonless 不等於 container lifecycle 會自動符合 production 需求。直接在 SSH session 執行 &lt;code&gt;podman run -d&lt;/code&gt;，不代表服務一定能跨過 logout 與 reboot。&lt;/p&gt;
-&lt;p&gt;Podman 官方建議交給 systemd 管理 production container；目前的宣告式做法是 Quadlet。Rootless Quadlet 放在 &lt;code&gt;~/.config/containers/systemd/&lt;/code&gt; 等 user unit 路徑，不能只在 system-wide unit 加上 &lt;code&gt;User=deployer&lt;/code&gt; 就當作 rootless service。&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html&quot;&gt;Podman Quadlet systemd unit&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;一個最小的 rootless Web service 可以是：&lt;/p&gt;
-&lt;pre class=&quot;language-ini&quot;&gt;&lt;code class=&quot;language-ini&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;# ~/.config/containers/systemd/web.container&lt;/span&gt;
-&lt;span class=&quot;token section&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token section-name selector&quot;&gt;Unit&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;/span&gt;
-&lt;span class=&quot;token key attr-name&quot;&gt;Description&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token value attr-value&quot;&gt;Rootless web service&lt;/span&gt;
-
-&lt;span class=&quot;token section&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token section-name selector&quot;&gt;Container&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;/span&gt;
-&lt;span class=&quot;token key attr-name&quot;&gt;Image&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token value attr-value&quot;&gt;docker.io/library/nginx:alpine&lt;/span&gt;
-&lt;span class=&quot;token key attr-name&quot;&gt;PublishPort&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token value attr-value&quot;&gt;8080:80&lt;/span&gt;
-
-&lt;span class=&quot;token section&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token section-name selector&quot;&gt;Service&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;/span&gt;
-&lt;span class=&quot;token key attr-name&quot;&gt;Restart&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token value attr-value&quot;&gt;always&lt;/span&gt;
-
-&lt;span class=&quot;token section&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token section-name selector&quot;&gt;Install&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;/span&gt;
-&lt;span class=&quot;token key attr-name&quot;&gt;WantedBy&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token value attr-value&quot;&gt;default.target&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;systemctl &lt;span class=&quot;token parameter variable&quot;&gt;--user&lt;/span&gt; daemon-reload
-systemctl &lt;span class=&quot;token parameter variable&quot;&gt;--user&lt;/span&gt; start web.service
-loginctl show-user &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;&lt;span class=&quot;token variable&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-un&lt;/span&gt;&lt;span class=&quot;token variable&quot;&gt;)&lt;/span&gt;&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-p&lt;/span&gt; Linger&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;正式環境應把 image pin 到已審核的 digest，並確認 user manager 是否需要使用 &lt;code&gt;loginctl enable-linger&lt;/code&gt; 在沒有登入 session 時持續運作。Linger 是 host policy 變更，不應被安裝 script 靜默開啟。&lt;/p&gt;
-&lt;h2&gt;&lt;code&gt;podman.socket&lt;/code&gt; 會把熟悉的 socket 風險帶回來&lt;/h2&gt;
-&lt;p&gt;Podman 本機 CLI 是 daemonless，但 Podman 仍提供 API service，讓 Docker API 工具、remote client、CI 或 dashboard 透過 socket 操作它。&lt;/p&gt;
-&lt;p&gt;Rootless socket 通常位於：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;/run/user/&lt;uid&gt;/podman/podman.sock&lt;/uid&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Rootful socket 則通常位於：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;/run/podman/podman.sock&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-system-service.1.html#security&quot;&gt;Podman system service 的 security 文件&lt;/a&gt;直接指出，API 會授予完整 Podman 功能，可以用 service 執行身分任意執行程式，且 API 本身沒有細粒度限制或稽核能力。&lt;/p&gt;
-&lt;p&gt;所以掛載 rootless &lt;code&gt;podman.sock&lt;/code&gt; 的 container，應視為該 deployment account 的 container administrator；若接觸的是 rootful socket，風險就上升到 host root。把 socket 以 &lt;code&gt;:ro&lt;/code&gt; 掛載也不會讓 API request 變成唯讀。&lt;/p&gt;
-&lt;p&gt;這裡最容易犯的錯，是為了讓既有 &lt;code&gt;docker-compose&lt;/code&gt; 或 dashboard 無痛相容，就長期開啟 Podman Docker-compatible API，卻仍把「Podman 是 daemonless」當成完整的威脅模型。相容層有它的價值，但開啟後就要把 socket 當成高權限控制面保護。&lt;/p&gt;
-&lt;h2&gt;Production 應該怎麼選？&lt;/h2&gt;
-&lt;p&gt;Podman 並不是「完全沒有 Rootless Docker 問題的 Docker 替代品」。更準確的定位是：它移除了常駐 root daemon 這個預設依賴，但保留了 Linux rootless 必然存在的限制。&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;情境&lt;/th&gt;
-&lt;th&gt;判斷&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;單機 Linux、一般 Web/API、可由 reverse proxy 接 80/443&lt;/td&gt;
-&lt;td&gt;Rootless Podman 很適合列為預設候選&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;希望避免 deployment account 控制 root daemon&lt;/td&gt;
-&lt;td&gt;本機 rootless Podman CLI 有明確架構優勢&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;既有工具強依賴 Docker API socket&lt;/td&gt;
-&lt;td&gt;可以啟用 rootless &lt;code&gt;podman.socket&lt;/code&gt;，但仍視為該帳號完整管理權&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;需要嚴格 CPU、memory 或 I/O enforcement&lt;/td&gt;
-&lt;td&gt;先驗證 cgroup v2、delegation 與真實負載&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;Home 位於 NFS 或平行檔案系統&lt;/td&gt;
-&lt;td&gt;把 Podman &lt;code&gt;graphroot&lt;/code&gt; 放到 local storage，再做容量與備份設計&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;需要 host device、特殊網路或真正 privileged workload&lt;/td&gt;
-&lt;td&gt;做 workload-specific review，不要強套 rootless&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;需要 production lifecycle 與依賴管理&lt;/td&gt;
-&lt;td&gt;優先評估 rootless Quadlet＋systemd user service&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/podman-rootless-production-production-verification-v2.png&quot; alt=&quot;Rootless Podman 正式環境驗證流程，從 workload 盤點與 host privilege 判斷，依序檢查 UID/GID、網路、cgroup、storage、service lifecycle 與外部驗證。&quot; /&gt;&lt;/p&gt;
-&lt;h2&gt;上線前的驗證清單&lt;/h2&gt;
-&lt;p&gt;安裝成功不是完成。至少用 target user 的真實 login session 驗證：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; info
-&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; unshare &lt;span class=&quot;token function&quot;&gt;cat&lt;/span&gt; /proc/self/uid_map
-&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; info &lt;span class=&quot;token parameter variable&quot;&gt;--format&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&#39;{{.Host.CgroupsVersion}}&#39;&lt;/span&gt;
-&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; info &lt;span class=&quot;token parameter variable&quot;&gt;--format&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&#39;{{.Store.GraphRoot}}&#39;&lt;/span&gt;
-systemctl &lt;span class=&quot;token parameter variable&quot;&gt;--user&lt;/span&gt; status web.service
-loginctl show-user &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;&lt;span class=&quot;token variable&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-un&lt;/span&gt;&lt;span class=&quot;token variable&quot;&gt;)&lt;/span&gt;&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-p&lt;/span&gt; Linger
-&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; run &lt;span class=&quot;token parameter variable&quot;&gt;--rm&lt;/span&gt; docker.io/library/alpine:latest &lt;span class=&quot;token function&quot;&gt;id&lt;/span&gt;
-&lt;span class=&quot;token function&quot;&gt;podman&lt;/span&gt; port&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;再從外部 client 測試真實服務，確認：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;80/443 到高號連接埠的路徑符合設計；&lt;/li&gt;
-&lt;li&gt;firewall 與 source IP 行為符合監控、rate limit 和稽核需求；&lt;/li&gt;
-&lt;li&gt;volume 的 UID/GID、SELinux/AppArmor 與讀寫權限正確；&lt;/li&gt;
-&lt;li&gt;resource limits 確實生效；&lt;/li&gt;
-&lt;li&gt;登出或 reboot 後 service 能自動恢復；&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;podman.socket&lt;/code&gt; 只有在必要時啟用，且權限與暴露範圍正確。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;收尾：Daemonless 是優勢，不是豁免證明&lt;/h2&gt;
-&lt;p&gt;Rootless Podman 的確少掉傳統 rootful Docker daemon 這個高價值攻擊面，這不是行銷文字，而是權限架構上的實際差異。&lt;/p&gt;
-&lt;p&gt;但 daemonless 不會改寫 Linux 的權限規則。User namespace、低號連接埠、網路轉送、cgroup、device、storage 和 user service lifecycle，仍然要逐項驗證。若再啟用 Podman API socket，也必須把它當成該帳號的完整 container control plane。&lt;/p&gt;
-&lt;p&gt;Production 真正需要的不是「Podman 比 Docker 安全」這句結論，而是一套能回答下列問題的證據：誰能啟動 container、誰能碰 socket、container 能存取哪些 host 資料、限制是否真的生效，以及主機重啟後會回到什麼狀態。&lt;/p&gt;
-&lt;h2&gt;參考資料&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman.1.html&quot;&gt;Podman Docs — Podman CLI and rootless mode&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-system-service.1.html&quot;&gt;Podman Docs — Podman system service and API security&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-create.1.html&quot;&gt;Podman Docs — Podman create networking and privileges&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-update.1.html&quot;&gt;Podman Docs — Resource limit updates&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html&quot;&gt;Podman Docs — Quadlet and systemd units&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/containers/podman/blob/main/rootless.md&quot;&gt;Podman Project — Rootless limitations&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md&quot;&gt;Podman Project — Rootless tutorial&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/engine/security/rootless/&quot;&gt;Docker Docs — Rootless mode&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.docker.com/engine/security/rootless/tips/&quot;&gt;Docker Docs — Rootless mode tips&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </content>
   </entry>

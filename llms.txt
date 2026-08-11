@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### OWASP Top 10 for LLM Applications 全覽
+
+- Published: 2026-08-12T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/
+- Tags: ai-security, ai, security
+
+- Description: 先自己列出 LLM 應用的風險清單，再對照 OWASP 2026 版找出盲點，把十條掛回一個最小示範應用，並拿自己畫的三軸地圖跟官方的靶心圖互相檢查。
+
+
 ### 傳統資安 vs LLM 資安：到底哪裡不一樣
 
 - Published: 2026-08-11T00:00:00.000Z

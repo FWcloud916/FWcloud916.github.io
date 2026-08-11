@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>OWASP Top 10 for LLM Applications 全覽 - FW Blog</title>
+  <meta name="description" content="先自己列出 LLM 應用的風險清單，再對照 OWASP 2026 版找出盲點，把十條掛回一個最小示範應用，並拿自己畫的三軸地圖跟官方的靶心圖互相檢查。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="OWASP Top 10 for LLM Applications 全覽 - FW Blog">
+  <meta property="og:description" content="先自己列出 LLM 應用的風險清單，再對照 OWASP 2026 版找出盲點，把十條掛回一個最小示範應用，並拿自己畫的三軸地圖跟官方的靶心圖互相檢查。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="OWASP Top 10 for LLM Applications 全覽 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-12T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="OWASP Top 10 for LLM Applications 全覽 - FW Blog">
+  <meta name="twitter:description" content="先自己列出 LLM 應用的風險清單，再對照 OWASP 2026 版找出盲點，把十條掛回一個最小示範應用，並拿自己畫的三軸地圖跟官方的靶心圖互相檢查。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="OWASP Top 10 for LLM Applications 全覽 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=b31d00e">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=b31d00e">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "OWASP Top 10 for LLM Applications 全覽",
+    "description": "先自己列出 LLM 應用的風險清單，再對照 OWASP 2026 版找出盲點，把十條掛回一個最小示範應用，並拿自己畫的三軸地圖跟官方的靶心圖互相檢查。",
+    "url": "https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/",
+    "datePublished": "2026-08-12T00:00:00.000Z",
+    "dateModified": "2026-08-12T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">OWASP Top 10 for LLM Applications 全覽</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-12T00:00:00.000Z">2026年08月12日</time></span>
+      
+      <span>19 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-05 依 OWASP GenAI Security Project 官方文件初次查核，並於 <strong>2026-08-12 完成最終查核</strong>。內容以官方資源頁提供的 <strong>OWASP Top 10 for LLM Applications 2026</strong> 為準。資源頁標示 August 3, 2026；初次查核時的封面縮圖顯示 Version 2026、August 4th, 2026。最終查核時，官方 PDF 的 publication date 欄位已改為待定，因此日期差異只代表官方網站版本交接時的歷史快照，8 月 4 日不是唯一可驗證的正式發布日。初次與最終查核時，官方 <code>genai.owasp.org/llm-top-10/</code> 著陸頁仍停留在 2025 版，且明說沒有新版；2026 版則由資源頁提供。條目與緩解建議會隨版本演進，引用前請自行確認當下版本。</p>
+</blockquote>
+<p>查 OWASP 清單之前，我先逼自己回答一個問題：不看任何資料，我認為 LLM 應用最重要的風險是什麼？</p>
+<p>我列出三條：prompt 注入、權限過大、透露過多資訊。並且預測：官方十條裡，大概七條會落在前兩篇的結論——最小權限、後端授權、sink 驗證——這個範疇。（sink 指資料最後真正被使用的地方，例如送進 SQL、瀏覽器或交給人閱讀；本文用到的專有名詞，下面有一張對照表。）</p>
+<p>然後我去對答案，先撞到一件跟內容無關、但更值得先講的事。</p>
+<h2>查核資訊時，官方網站正處於版本交接</h2>
+<p>我一開始查的是官方著陸頁。著陸頁列出 2025 十條，還明白告訴我沒有更新版本，所有單一條目頁也都是 2025。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/gH-ehzk-oP-300.webp 300w, /assets/img/gH-ehzk-oP-600.webp 600w, /assets/img/gH-ehzk-oP-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/gH-ehzk-oP-300.jpeg" alt="OWASP GenAI Security Project 的 LLM Top 10 著陸頁截圖，於 2026-08-05 擷取。主標題為「2025 Top 10 Risk &amp; Mitigations for LLMs and Gen AI Apps」，內文寫著這是最新的 Top 10，封面縮圖標示 Version 2025、November 18, 2024，頁面提供的另一個版本連結只有 2023-24。下方十張卡片依序為 LLM01:2025 Prompt Injection 到 LLM10:2025 Unbounded Consumption，沒有任何 2026 版的痕跡。" width="1200" height="1306" srcset="/assets/img/gH-ehzk-oP-300.jpeg 300w, /assets/img/gH-ehzk-oP-600.jpeg 600w, /assets/img/gH-ehzk-oP-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>同一時間，<strong>2026 版已經出現在官方資源頁</strong>，但著陸頁還沒跟上。資源頁標示 August 3, 2026；我在 2026-08-05 擷取的頁面中，封面縮圖顯示 Version 2026、August 4th, 2026。我是在追別的問題時才撞見那個網址，回頭抓 PDF 才發現整份清單重排過。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/jUozGTFa4P-300.webp 300w, /assets/img/jUozGTFa4P-600.webp 600w, /assets/img/jUozGTFa4P-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/jUozGTFa4P-300.jpeg" alt="OWASP 官方資源頁截圖，同樣於 2026-08-05 擷取。標題為「OWASP GenAI LLM Top 10 2026」，頁面日期 August 3, 2026，說明文字寫著這是最新的社群版本，並提到依據數千筆真實 AI 資安事件的新研究。右側封面縮圖的版本區塊經放大後可讀出 Version 2026、August 4th, 2026。" width="1200" height="995" srcset="/assets/img/jUozGTFa4P-300.jpeg 300w, /assets/img/jUozGTFa4P-600.jpeg 600w, /assets/img/jUozGTFa4P-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>兩張截圖是同一天、同一個官方網站，相隔幾次點選。著陸頁那張用肯定句告訴你這是最新版，資源頁的頁面日期與封面縮圖日期卻不一致。2026-08-12 最終查核時，官方 PDF 的 publication date 欄位又改為待定。這些日期只能說明當時頁面的呈現狀態，不能單獨當成唯一正式發布日。</p>
+<p>如果我只信著陸頁，這篇文章會建立在一份已被資源頁上 2026 版取代的清單上，而且會附帶一句「官方沒有預告新版」的錯誤保證。這次的落差本身就是可帶走的教訓：**查框架版本時，著陸頁可能落後正式發布，而且著陸頁會用肯定句告訴你沒有新版。**讀者要查的是發布清單，不能只看導覽頁。</p>
+<h2>先把名詞講清楚</h2>
+<p>接下來的十條會密集出現幾個專有名詞。這些名詞在後面二十幾篇還會反覆用到，所以先在這裡一次講清楚，讀者不必為了看懂一條風險而中斷去查別的資料。</p>
+<table>
+<thead>
+<tr>
+<th>名詞</th>
+<th>在這篇文章裡的意思</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sink</td>
+<td>資料最後真正被使用的地方，例如送進 SQL、HTML、shell、Email，或直接交給人閱讀。資安上的通則是：不可信資料抵達 sink 之前，必須先依那個 sink 的規則處理過。</td>
+</tr>
+<tr>
+<td>token</td>
+<td>模型讀寫文字的最小單位。模型看到的是一長串 token，system prompt、使用者輸入與檢索到的文件在這一串裡沒有型別上的差別。</td>
+</tr>
+<tr>
+<td>context</td>
+<td>這一次請求交給模型的全部文字，包含 system prompt、對話紀錄、檢索到的資料與工具說明。</td>
+</tr>
+<tr>
+<td>system prompt</td>
+<td>開發者預先寫好、每次請求都附在最前面的指示，用來規定模型的角色與行為。</td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>檢索增強生成。系統先從外部知識庫查出相關片段，再連同使用者問題一起交給模型作答。</td>
+</tr>
+<tr>
+<td>embedding</td>
+<td>把文字轉成一串數字向量，讓系統能用數學上的距離找出語意相近的內容，是 RAG 檢索的基礎。</td>
+</tr>
+<tr>
+<td>向量資料庫</td>
+<td>專門存放 embedding 並執行相似度檢索的資料庫。</td>
+</tr>
+<tr>
+<td>adapter</td>
+<td>疊在既有模型之上的小型微調權重（例如 LoRA），可以改變模型行為而不必重新訓練整個模型。</td>
+</tr>
+<tr>
+<td>agentic</td>
+<td>模型不只回話，還能自行呼叫工具、連續執行多個步驟的用法。</td>
+</tr>
+<tr>
+<td>MCP</td>
+<td>Model Context Protocol，把 AI 應用串接到外部資料、工具與流程的開放標準。</td>
+</tr>
+<tr>
+<td>schema</td>
+<td>描述資料或工具參數長什麼樣子的結構定義。</td>
+</tr>
+<tr>
+<td>provenance</td>
+<td>來源履歷：一個模型、資料集或套件從哪裡來、經過誰的手、中途有沒有被改過。</td>
+</tr>
+<tr>
+<td>parameterized query</td>
+<td>把 SQL 的語法結構與參數分開送給資料庫的寫法，資料因此不可能被當成語法執行。</td>
+</tr>
+<tr>
+<td>XSS／SSRF／RCE</td>
+<td>跨站腳本、伺服器端請求偽造、遠端程式碼執行。在本文討論的情境中，三種結果都可能出現在下游元件沒有依實際 sink 處理不可信內容，讓不可信內容被當成程式碼、指令或資源位置使用。</td>
+</tr>
+<tr>
+<td>Denial of Wallet</td>
+<td>攻擊者刻意觸發大量昂貴的推論，把按用量計費的帳單推到無法負擔的程度。</td>
+</tr>
+</tbody>
+</table>
+<h2>官方十條，先對答案</h2>
+<p>十條沒有增減，但順序大幅重排。最右欄是對照我事前清單的結果：</p>
+<table>
+<thead>
+<tr>
+<th>2026 條目</th>
+<th>一句話講什麼</th>
+<th>我的直覺</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM01 Prompt Injection</td>
+<td>輸入改變模型行為；官方明講模型不區分指令與資料，指令與資料是同一串 token</td>
+<td>命中</td>
+</tr>
+<tr>
+<td>LLM02 Sensitive Information Disclosure</td>
+<td>個資、營業秘密、憑證經由輸出或訓練資料外洩</td>
+<td>命中（透露過多資訊）</td>
+</tr>
+<tr>
+<td>LLM03 Excessive Agency</td>
+<td>功能、權限或自主性超過需要，模型做出破壞性動作</td>
+<td>命中（權限過大）</td>
+</tr>
+<tr>
+<td>LLM04 Supply Chain</td>
+<td>預訓練模型、adapter、套件與資料集的來源風險</td>
+<td>完全沒想到</td>
+</tr>
+<tr>
+<td>LLM05 Data and Model Poisoning</td>
+<td>預訓練、微調或 embedding 資料被投毒，可植入後門</td>
+<td>完全沒想到</td>
+</tr>
+<tr>
+<td>LLM06 Unbounded Consumption</td>
+<td>推論資源不設限：服務中斷、Denial of Wallet 與模型抽取</td>
+<td>沒想到</td>
+</tr>
+<tr>
+<td>LLM07 Misinformation</td>
+<td>模型產出看似可信的錯誤內容，被人或下游流程當真並據以行動</td>
+<td>沒想到</td>
+</tr>
+<tr>
+<td>LLM08 Hidden Context Exposure</td>
+<td>隱藏的系統指令與 operational context 被提取、推論或重建</td>
+<td>命中（透露過多資訊）</td>
+</tr>
+<tr>
+<td>LLM09 Vector and Embedding Weaknesses</td>
+<td>RAG 的檢索越權、跨租戶洩漏、embedding 反推與知識庫污染</td>
+<td>沒想到</td>
+</tr>
+<tr>
+<td>LLM10 Improper Output Handling</td>
+<td>模型輸出未經驗證就送進下游，導致 XSS、SSRF、RCE</td>
+<td>沒列，但前篇結論講的就是這條</td>
+</tr>
+</tbody>
+</table>
+<p>三條直覺對上四條官方條目。「透露過多資訊」拆成兩條：LLM02 是洩漏的內容，LLM08 是特別常見的洩漏位置。</p>
+<p>我的直覺剛好撞上這一版最具影響的調整。Excessive Agency 從第 6 升到第 3，官方理由是 agentic 部署才是損害真正發生的地方。而 2025 年的 System Prompt Leakage 改名並擴大成 <strong>Hidden Context Exposure</strong>，範圍從 system prompt 延伸到開發者指令、RAG 取回的政策文字、工具與函式 schema。官方要求開發者<strong>假設隱藏 context 必然會被發現</strong>，不要在隱藏 context 裡嵌憑證，也不要單獨拿隱藏 context 當授權邊界。</p>
+<h2>我的直覺涵蓋的是「請求路徑」</h2>
+<p>第二個預測得用數的。我把十條的緩解策略逐條讀過，看有幾條最後回到最小權限、後端授權與 sink 驗證。</p>
+<p>答案是六條：LLM01 要求最小權限與高風險動作的人工核准；LLM02 要求對資料來源套最小權限；LLM03 的三個根因——功能過多、權限過大、自主性過高——整條就是最小權限的反面清單；LLM08 明確寫著不得把隱藏 context 當成授權或政策執行的邊界；LLM09 的核心緩解策略是 permission-aware 的向量資料庫與 fine-grained 存取控制；LLM10 要求依下游 context 重新編碼，並使用 parameterized query。</p>
+<p>第七條要看怎麼算：LLM05 的緩解策略包含沙箱與異常偵測，勉強沾邊，但主體是資料治理。所以我的「七條」預測，嚴格說是六條半。</p>
+<p>數字接近不是因為我懂 OWASP，而是因為這六條有共同的形狀：<strong>這六條的主要防線都能放回一次請求的路徑上</strong>。不可信輸入進來、模型讀到不該讀的資料、模型說了或做了不該做的事。前兩篇建立的原則本來就是為請求路徑設計的，所以這套原則能處理這六條落在請求路徑上的部分，不能取代資料攝取、模型更新等生命週期控制。</p>
+<h2>盲點不在數量，在軸線</h2>
+<p>預測失準的四條，錯法比數字有趣。</p>
+<p>LLM04 與 LLM05 暴露的是只盯著請求路徑時看不到的風險。LLM04 的模型、adapter、套件與資料集在取得、建置或更新時就可能被掉包；LLM05 則可能發生在預訓練、微調、embedding 建立、RAG 資料攝取與持續學習。LLM04 與 LLM05 的共同點不是都發生在部署前，而是風險會污染跨請求保留的模型、資料或元件，單次請求上的權限控制無法取代來源驗證與資料治理。這兩條構成生命週期軸。</p>
+<p>LLM07 的 sink 不是程式，是<strong>人的信任</strong>，或者信任模型輸出的下游流程。摘要器捏造一段內容不需要任何權限，也不經過任何工具呼叫；只要有人信了、或有流程據以行動，損害就成立。官方把 LLM07 定位成系統層級的失效，而不是使用者不夠謹慎。</p>
+<p>LLM06 攻擊的是<strong>資源</strong>。官方對這條的定性是「成本不對稱」：攻擊者用極低代價觸發不成比例的昂貴運算。官方也點名 MCP 這類工具協定會把單一請求放大成連鎖的下游操作，並直言傳統的請求速率限制已經不夠。</p>
+<p>所以這張地圖不是十條平行的風險，而是三條軸線：</p>
+<ol>
+<li><strong>請求路徑</strong>：LLM01、02、03、08、09、10——最小權限、後端授權、sink 驗證在這裡有效。</li>
+<li><strong>生命週期</strong>：LLM04、05——防線是來源驗證、provenance 與資料治理，從部署前延伸到上線後的資料攝取、更新與持續學習流程。</li>
+<li><strong>資源與信任</strong>：LLM06、07——防線是額度、成本上限、輸出查證與介面設計，對象是帳單和人。</li>
+</ol>
+<h2>同一份清單，兩種分法</h2>
+<p>我把十條分完三軸才發現，2026 版自己也附了一張分類圖，而且分法跟我不一樣。</p>
+<p>我的三軸問的是「這條風險該在系統的哪一層防」。官方那張圖問的是另一個問題：「這條風險在一次攻擊裡負責哪個環節」。官方因此把十條排成同心圓，外圈是攻擊的<strong>進入向量</strong>，中圈是把災害放大的<strong>放大器</strong>，正中央是最終造成的<strong>影響</strong>。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/kK1jMRzBhg-300.webp 300w, /assets/img/kK1jMRzBhg-600.webp 600w, /assets/img/kK1jMRzBhg-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/kK1jMRzBhg-300.jpeg" alt="OWASP Top 10 for LLM Applications 2026 的官方結構圖，標題為 Concentric Threat Flow。最外層「Entry Vectors」放 LLM01 Prompt Injection、LLM04 Supply Chain、LLM05 Data and Model Poisoning；中層「Amplifiers / Machinery」放 LLM08 Hidden Context Exposure、LLM09 Vector and Embedding Weaknesses，以及下緣的 LLM03 Excessive Agency 與 LLM10 Improper Output Handling，四者皆為虛線框；核心「Impacts」放 LLM02 Sensitive Information Disclosure、LLM06 Unbounded Consumption、LLM07 Misinformation。圖下註明攻擊由外向內流動、防禦由內向外推，虛線代表該條目橫跨多層。" width="1200" height="1299" srcset="/assets/img/kK1jMRzBhg-300.jpeg 300w, /assets/img/kK1jMRzBhg-600.jpeg 600w, /assets/img/kK1jMRzBhg-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<h2>官方那張圖有三個訊息不在條目清單裡</h2>
+<p>這張圖值得多花一分鐘讀，因為只看十條的名稱看不到下面三件事。</p>
+<p>**第一，攻擊與防禦的方向相反。**圖的下緣寫著攻擊由外向內流、防禦由內向外推。攻擊者從最外圈任何一個入口進來，一路往核心推進；防守方的順序剛好倒過來，先確定核心那三種影響絕對不能發生，再往外決定每一層要擋掉什麼。這個方向感回答了一個常見問題：十條該先修哪一條沒有標準答案，因為要先決定的不是條目順序，而是你這套系統最不能承受哪一種影響。</p>
+<p>**第二，中間那一圈是把小事變成大事的機制。**LLM08、LLM09、LLM03 與 LLM10 通常不是攻擊的起點。這四條的作用是放大：把一次成功的注入從「模型講錯話」，變成「資料被送出去」或「危險動作被執行」。官方對 LLM08 的描述就直接寫著，隱藏 context 外洩經常放大 LLM01、LLM02、LLM03 與 LLM10。換句話說，同一次注入最後有多嚴重，取決於中圈這四條被打開了幾條。</p>
+<p>**第三，虛線代表這一條同時待在不只一層。**中圈那四條全是虛線框。以 LLM03 過度代理為例，LLM03 既可以是放大器，也可以是入口。官方在 LLM03 的內文裡列出幾種觸發情境，其中一種是「先前呼叫過的惡意或已被攻陷的工具」——被攻陷的那個工具本身，就是攻擊起點。</p>
+<p>圖說還補了一個例外：不是每一次 LLM04 供應鏈攻擊都要由外往內走，有些直接造成影響。官方沒有舉例。不過 LLM04 涵蓋的狀況包含「取得的模型工件並不是宣稱的那一個」，據此推斷，最直接的情形就是下載到的模型或 adapter 本身已被動過手腳。這種攻擊不需要任何注入，惡意行為在元件裡就已經內建好了。</p>
+<h2>兩種分法交叉起來</h2>
+<p>用 LLM02 敏感資訊洩漏當例子最清楚。我把 LLM02 放進請求路徑軸，因為擋住 LLM02 的手段是限制模型讀得到什麼、輸出前再驗證一次，那些手段全都落在一次請求的路徑上。官方把 LLM02 放進最內圈，因為資料真的被洩漏出去時，那已經是攻擊的最終結果，不是攻擊的手法。同一條風險，我問「在哪防」得到請求路徑，官方問「是什麼環節」得到最終影響，兩個答案都對。</p>
+<p>把兩種分法交叉排開，十條的落點如下：</p>
+<table>
+<thead>
+<tr>
+<th>我的軸線＼官方環節</th>
+<th>進入向量</th>
+<th>放大器</th>
+<th>最終影響</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>請求路徑</strong></td>
+<td>LLM01</td>
+<td>LLM03、LLM08、LLM09、LLM10</td>
+<td>LLM02</td>
+</tr>
+<tr>
+<td><strong>生命週期</strong></td>
+<td>LLM04、LLM05</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>資源與信任</strong></td>
+<td>—</td>
+<td>—</td>
+<td>LLM06、LLM07</td>
+</tr>
+</tbody>
+</table>
+<p>生命週期軸的兩條全部落在進入向量，資源與信任軸的兩條全部落在最終影響。我當初分這兩軸時並沒有看過官方這張圖，兩種分法卻把同樣的條目放進同一組，所以這兩軸不是我硬湊出來的分類。</p>
+<p>真正分開的只有請求路徑那一軸：這一軸的六條散落在官方的三個環節裡。原因就是 LLM02 那個例子講的——<strong>防線位置相同的風險，在攻擊鏈上可以分別是入口、放大器和結果。</strong></p>
+<p>兩種分法我都會留著，但使用時機不同。決定要把防禦人力和預算投到哪一層時，我用自己的三軸，因為三軸的每一格都能直接對應到要改的程式或設定。事後要理解一起已經發生的事故時，我用官方那張圖，因為同心圓能較快指出攻擊從哪個環節進來、又在哪裡被放大。</p>
+<h2>「注入是模型問題」只對了一半</h2>
+<p>診斷時我把 prompt 注入歸給「模型本身」，其他歸給「系統整合」。讀完官方條目，這個二分法站不住。</p>
+<p>LLM01 的成因確實在模型，而且 2026 版把理由講得比我預期更直白：模型在架構上不區分「指令」與「資料」，指令與資料是同一串 token，因此<strong>沒有乾淨對應 parameterized query 的機制</strong>。前一篇實驗沒有觀察到語意上的攻擊服從，卻撞到另一個量測陷阱：<code>&lt;untrusted_document&gt;</code> 內的 marker 五次都被模型摘要或引用，exact matcher 因而誤報 5／5。這表示自然語言標記與單一字串 matcher 都不能取代系統層的確定性邊界；LLM01 的通用風險判斷仍應以官方條目與更多適應性測試為準，不能由這十次結果單獨推出。</p>
+<p>但往下看 LLM01 的緩解策略：限制模型行為、驗證輸出格式、過濾輸入輸出、最小權限、人工核准、隔離標記不可信內容、對抗性測試——沒有一項是「把模型修好」，全部是系統層手段。</p>
+<p>修正後的講法是：**成因可以在模型，防線一定在系統。**歸類一個風險時，問「這是誰的錯」沒有行動價值；要問的是「防線放得回哪一層」。</p>
+<h2>這一版第一次拿事件紀錄檢驗自己的清單</h2>
+<p>前面幾版排序靠的是從業者投票。2026 版第一次把投票拿去對照真實事件紀錄：蒐集 7,714 筆事件，其中 6,639 筆細節足以分類，最後投票佔四分之三權重、事件資料佔四分之一。</p>
+<p>有意思的是分歧出現在哪裡。<strong>Prompt Injection 若只按原始事件數排名，會掉出前十。</strong> 官方判定這是「防禦效應」——大家防得兇，乾淨的成功利用比較少進到公開資料庫，公開數字因此低估了風險。官方選擇讓投票壓過資料，把 Prompt Injection 留在第一。Misinformation 則相反：投票偏低、事件紀錄偏高，是落差最大的一條，因此往上移。</p>
+<p>這個推論陷阱我上一篇才踩過。當時固定 payload 連測五次都失敗，很容易把「這個 payload 沒成功」誤讀成「這個邊界有效」；OWASP 遇到的是同一個陷阱，只是規模放到七千多筆事件。<strong>低數字可能代表防守有效，也可能代表你根本沒測到會成功的那一面</strong>——分辨這兩種可能，比拿到數字本身更難。</p>
+<h2>把十條掛回示範應用</h2>
+<p>地圖要有用，得掛在具體的系統上。我目前的示範應用只有前篇那個最小摘要器：本機 Ollama 跑 <code>gemma4:latest</code>，system prompt 指定摘要任務，輸入是一份不可信文件，輸出是給人讀的純文字。沒有工具、沒有 RAG、沒有機敏資料。</p>
+<p>我原本以為這麼小的應用只沾得上一兩條。逐條掛完，六條已經存在或部分存在：</p>
+<table>
+<thead>
+<tr>
+<th>條目</th>
+<th>摘要器現況</th>
+<th>系列深入篇</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM01</td>
+<td><strong>已實測但未觀察語意服從</strong>：兩組各五次皆為 0／5；標記內 payload 的 exact 5／5 全是摘要或引用造成的誤報</td>
+<td>第二週整組注入主題</td>
+</tr>
+<tr>
+<td>LLM02</td>
+<td><strong>刻意排除</strong>：context 裡沒放機敏資料，無東西可洩；這是控制，不是免疫</td>
+<td>〈敏感資料防護：PII 偵測與遮罩〉</td>
+</tr>
+<tr>
+<td>LLM03</td>
+<td><strong>刻意排除</strong>：不給工具，所以沒有代理可以過度</td>
+<td>〈Excessive Agency：Agent 的過度代理風險〉</td>
+</tr>
+<tr>
+<td>LLM04</td>
+<td><strong>存在且未處理</strong>：<code>gemma4</code> 是從 Ollama registry 拉下來的，我沒有驗證過來源與完整性</td>
+<td>〈供應鏈風險：模型、套件與 MCP Server〉</td>
+</tr>
+<tr>
+<td>LLM05</td>
+<td>尚未涵蓋：沒有訓練、微調或 embedding 流程</td>
+<td>〈資料投毒與知識庫污染〉</td>
+</tr>
+<tr>
+<td>LLM06</td>
+<td><strong>部分存在</strong>：本機推論沒有帳單，但有算力可被榨取；換成雲端 API 就是 Denial of Wallet</td>
+<td>〈濫用與成本攻擊：DoS、Token 榨取與速率限制〉</td>
+</tr>
+<tr>
+<td>LLM07</td>
+<td><strong>存在</strong>：摘要器可能捏造文件裡沒有的內容，讀者信任就是 sink</td>
+<td>系列沒有專篇，先併入輸出端防禦與觀測性兩篇</td>
+</tr>
+<tr>
+<td>LLM08</td>
+<td><strong>存在但低影響</strong>：system prompt 只有任務描述，沒有秘密——正好符合官方「風險取決於你放了什麼」的定性</td>
+<td>〈Hidden Context Exposure：外洩的不只是 system prompt〉</td>
+</tr>
+<tr>
+<td>LLM09</td>
+<td>尚未涵蓋：沒有 RAG 與向量資料庫</td>
+<td>〈向量資料庫與 Embedding 的安全議題〉</td>
+</tr>
+<tr>
+<td>LLM10</td>
+<td><strong>部分存在</strong>：輸出只給人讀，還沒有 HTML 或 SQL 下游；但「給人讀」本身就是 sink</td>
+<td>〈輸出端防禦：過濾、審核與安全渲染〉</td>
+</tr>
+</tbody>
+</table>
+<p>這張表修正了我的第三個誤判。我以為「掛不上去」代表應用太小，實際上掛完發現兩件事。</p>
+<p>第一，<strong>LLM04 已經在系統裡了</strong>。我下載模型時完全沒想過供應鏈——這正是「完全沒想到」的條目會咬人的方式：供應鏈風險不在我的威脅模型裡，所以我連「沒驗證」這個狀態都沒意識到。</p>
+<p>第二，「尚未涵蓋」和「刻意排除」是兩回事。LLM03 掛不上去，是因為我依前兩篇的結論選擇不給工具；LLM05 掛不上去，只是因為還沒做到那裡。地圖的價值就在讓每一個「沒有」變成「刻意沒有」，其餘的標成待辦。</p>
+<p>順帶一提，LLM10 的官方條件清單裡有一項值得畫線：<strong>會自動抓取模型輸出中外部資源的用戶端渲染器</strong>——瀏覽器、聊天介面、IDE、終端機——Markdown 圖片、連結預覽或 iframe 都算，這些渲染器會透過對外請求把 context 資料送出去。也就是說，把輸出「變好看」這個看起來純屬介面的決定，官方直接列為外流條件。</p>
+<h2>這份清單管到哪裡為止</h2>
+<p>2026 版還畫了一條我原本沒意識到的邊界：**模型作為應用裡的「元件」時，風險歸這份清單；一旦模型成為「行動者」——能呼叫工具、跨 session 攜帶記憶、在下游造成後果——風險就移交給 OWASP 的 Agentic 清單。**那是另一份獨立的十條，2025 年 12 月公布，涵蓋目標劫持、工具濫用、身分與權限濫用、記憶與 context 污染、代理間通訊、連鎖失效等。</p>
+<p>這條邊界剛好把現在的摘要器留在 LLM 清單這一側。但只要哪天我給摘要器工具或記憶，我就得同時看兩份清單，而不是等這一份長出對應的條目。</p>
+<h2>帶走的判斷</h2>
+<p>下次拿到任何 LLM 應用——自己的或別人的——我會沿三條軸線問：</p>
+<ol>
+<li><strong>請求路徑</strong>：輸入從哪裡進來、模型讀得到什麼、輸出流向哪些 sink、每個動作誰重新授權？（LLM01、02、03、08、09、10）</li>
+<li><strong>生命週期</strong>：模型、adapter、套件、訓練與檢索資料各自從哪來，來源驗證過沒有？（LLM04、05）</li>
+<li><strong>資源與信任</strong>：推論的用量與成本有沒有上限？誰會不經查證就相信輸出？（LLM06、07）</li>
+</ol>
+<p>然後再加一個這次學到的前置動作：<strong>先確認手上這份清單是不是最新版</strong>，而且不要只問導覽頁。</p>
+<p>清單掛完，最大的未解問題是：目前的示範應用小到只能觀察十條裡的一部分。下一篇把實驗環境正式建起來，讓後面的攻擊與防禦每一條都有地方跑。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/">OWASP Top 10 for LLM Applications 2026（官方 PDF，Version 2026）</a></li>
+<li><a href="https://genai.owasp.org/llm-top-10/">OWASP Top 10 for LLM Applications 著陸頁（查核當下仍為 2025 版）</a></li>
+<li><a href="https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/">OWASP Top 10 for Agentic Applications 發布說明</a></li>
+<li><a href="https://genai.owasp.org/initiatives/agentic-security-initiative/">OWASP Agentic Security Initiative</a></li>
+<li><a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/">OWASP Top 10 for LLM Applications 2023／24（版本比較用）</a></li>
+<li><a href="https://owasp.org/www-community/controls/Static_Code_Analysis">OWASP Static Code Analysis — taint analysis 與 sink 的說明</a></li>
+<li><a href="https://modelcontextprotocol.io/docs/getting-started/intro">Model Context Protocol — 官方介紹</a></li>
+</ul>
+<p>文中兩張網頁截圖擷取自 <a href="https://genai.owasp.org/">genai.owasp.org</a>，擷取時間為 2026-08-05；同心圓結構圖為《OWASP Top 10 for LLM Applications 2026》（Version 2026）第 9 頁的 Figure 2，自官方 PDF 原樣取出，未修改圖說或標籤。OWASP 文件與網站內容除另有標示外採 <a href="https://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0</a> 授權；OWASP 與其標誌為 OWASP Foundation, Inc. 的商標。兩張網頁截圖僅移除第三方朗讀外掛的浮動元件，未修改頁面文字，其中資源頁那張的版本區塊另加放大標示。</p>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10402547">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 3／30 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-11-traditional-vs-llm-security/">上一篇：傳統資安 vs LLM 資安：到底哪裡不一樣</a> · 下一篇：打造你的資安實驗室：環境建置</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-11-traditional-vs-llm-security/" class="text-gray-900 hover:text-blue-600 transition">
+      傳統資安 vs LLM 資安：到底哪裡不一樣
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-11T00:00:00.000Z">2026年08月11日</time>
+    <span>8 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從 SQL Injection、XSS 與一次本機 Prompt Injection 實驗，拆解 LLM 資安延續了哪些既有原則，又因模型不確定性多了哪些工程難題。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-10-why-llm-security-matters/" class="text-gray-900 hover:text-blue-600 transition">
+      我從模型的不確定性開始理解 LLM 應用資安
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-10T00:00:00.000Z">2026年08月10日</time>
+    <span>6 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從客服退款與摘要流程拆解模型不確定性，找出意圖、決策、執行與資料邊界；安全控制由可驗證的程式與規則負責。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=b31d00e"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>
