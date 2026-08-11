@@ -188,9 +188,9 @@
 &lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/owasp-llm-top-10-overview-official-concentric-threat-flow.png&quot; alt=&quot;OWASP Top 10 for LLM Applications 2026 的官方結構圖，標題為 Concentric Threat Flow。最外層「Entry Vectors」放 LLM01 Prompt Injection、LLM04 Supply Chain、LLM05 Data and Model Poisoning；中層「Amplifiers / Machinery」放 LLM08 Hidden Context Exposure、LLM09 Vector and Embedding Weaknesses，以及下緣的 LLM03 Excessive Agency 與 LLM10 Improper Output Handling，四者皆為虛線框；核心「Impacts」放 LLM02 Sensitive Information Disclosure、LLM06 Unbounded Consumption、LLM07 Misinformation。圖下註明攻擊由外向內流動、防禦由內向外推，虛線代表該條目橫跨多層。&quot; /&gt;&lt;/p&gt;
 &lt;h2&gt;官方那張圖有三個訊息不在條目清單裡&lt;/h2&gt;
 &lt;p&gt;這張圖值得多花一分鐘讀，因為只看十條的名稱看不到下面三件事。&lt;/p&gt;
-&lt;p&gt;**第一，攻擊與防禦的方向相反。**圖的下緣寫著攻擊由外向內流、防禦由內向外推。攻擊者從最外圈任何一個入口進來，一路往核心推進；防守方的順序剛好倒過來，先確定核心那三種影響絕對不能發生，再往外決定每一層要擋掉什麼。這個方向感回答了一個常見問題：十條該先修哪一條沒有標準答案，因為要先決定的不是條目順序，而是你這套系統最不能承受哪一種影響。&lt;/p&gt;
-&lt;p&gt;**第二，中間那一圈是把小事變成大事的機制。**LLM08、LLM09、LLM03 與 LLM10 通常不是攻擊的起點。這四條的作用是放大：把一次成功的注入從「模型講錯話」，變成「資料被送出去」或「危險動作被執行」。官方對 LLM08 的描述就直接寫著，隱藏 context 外洩經常放大 LLM01、LLM02、LLM03 與 LLM10。換句話說，同一次注入最後有多嚴重，取決於中圈這四條被打開了幾條。&lt;/p&gt;
-&lt;p&gt;**第三，虛線代表這一條同時待在不只一層。**中圈那四條全是虛線框。以 LLM03 過度代理為例，LLM03 既可以是放大器，也可以是入口。官方在 LLM03 的內文裡列出幾種觸發情境，其中一種是「先前呼叫過的惡意或已被攻陷的工具」——被攻陷的那個工具本身，就是攻擊起點。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;第一，攻擊與防禦的方向相反。&lt;/strong&gt; 圖的下緣寫著攻擊由外向內流、防禦由內向外推。攻擊者從最外圈任何一個入口進來，一路往核心推進；防守方的順序剛好倒過來，先確定核心那三種影響絕對不能發生，再往外決定每一層要擋掉什麼。這個方向感回答了一個常見問題：十條該先修哪一條沒有標準答案，因為要先決定的不是條目順序，而是你這套系統最不能承受哪一種影響。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;第二，中間那一圈是把小事變成大事的機制。&lt;/strong&gt; LLM08、LLM09、LLM03 與 LLM10 通常不是攻擊的起點。這四條的作用是放大：把一次成功的注入從「模型講錯話」，變成「資料被送出去」或「危險動作被執行」。官方對 LLM08 的描述就直接寫著，隱藏 context 外洩經常放大 LLM01、LLM02、LLM03 與 LLM10。換句話說，同一次注入最後有多嚴重，取決於中圈這四條被打開了幾條。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;第三，虛線代表這一條同時待在不只一層。&lt;/strong&gt; 中圈那四條全是虛線框。以 LLM03 過度代理為例，LLM03 既可以是放大器，也可以是入口。官方在 LLM03 的內文裡列出幾種觸發情境，其中一種是「先前呼叫過的惡意或已被攻陷的工具」——被攻陷的那個工具本身，就是攻擊起點。&lt;/p&gt;
 &lt;p&gt;圖說還補了一個例外：不是每一次 LLM04 供應鏈攻擊都要由外往內走，有些直接造成影響。官方沒有舉例。不過 LLM04 涵蓋的狀況包含「取得的模型工件並不是宣稱的那一個」，據此推斷，最直接的情形就是下載到的模型或 adapter 本身已被動過手腳。這種攻擊不需要任何注入，惡意行為在元件裡就已經內建好了。&lt;/p&gt;
 &lt;h2&gt;兩種分法交叉起來&lt;/h2&gt;
 &lt;p&gt;用 LLM02 敏感資訊洩漏當例子最清楚。我把 LLM02 放進請求路徑軸，因為擋住 LLM02 的手段是限制模型讀得到什麼、輸出前再驗證一次，那些手段全都落在一次請求的路徑上。官方把 LLM02 放進最內圈，因為資料真的被洩漏出去時，那已經是攻擊的最終結果，不是攻擊的手法。同一條風險，我問「在哪防」得到請求路徑，官方問「是什麼環節」得到最終影響，兩個答案都對。&lt;/p&gt;
