@@ -155,6 +155,6 @@ delete_account(user_id=123)
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 2／30 篇**
 
-[上一篇：我從模型的不確定性開始理解 LLM 應用資安](https://imfw.io/posts/2026/2026-08-10-why-llm-security-matters/) · 下一篇：OWASP Top 10 for LLM Applications 全覽
+[上一篇：我從模型的不確定性開始理解 LLM 應用資安](https://imfw.io/posts/2026/2026-08-10-why-llm-security-matters/) · [下一篇：OWASP Top 10 for LLM Applications 全覽](https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/)
 
 <!-- series-nav:end -->

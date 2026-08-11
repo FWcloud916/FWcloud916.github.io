@@ -51,5 +51,17 @@
       "/posts/2026/2026-07-13-social-platform-apis-2026/",
       "/posts/2026/2026-07-20-meta-app-setup-pitfalls/"
     ]
+  },
+  {
+    "slug": "llm-app-security",
+    "title": "LLM 應用資安：從 Prompt Injection 到 AI Red Teaming",
+    "shortTitle": "LLM 應用資安",
+    "description": "從模型的不確定性與應用邊界出發，逐步理解 Prompt Injection、RAG、Agent、資料與供應鏈風險，以及可驗證的防禦與 AI Red Teaming 方法。",
+    "noteUrls": [],
+    "postUrls": [
+      "/posts/2026/2026-08-10-why-llm-security-matters/",
+      "/posts/2026/2026-08-11-traditional-vs-llm-security/",
+      "/posts/2026/2026-08-12-owasp-llm-top-10-overview/"
+    ]
   }
 ]
