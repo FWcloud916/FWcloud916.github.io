@@ -5,7 +5,7 @@
 **Ticket:** N/A
 **Related plan:** [fw-blog-roadmap-PROGRESS.md](../_plans/fw-blog-roadmap-PROGRESS.md)
 **Created:** 2026-07-27
-**Updated:** 2026-08-03
+**Updated:** 2026-08-12
 
 ---
 
@@ -81,9 +81,20 @@ source text is retained verbatim enough for row-level audit and future work.
 - [x] Fix article Lottie replay and control spacing. _(commit `210451e`: removed redundant terminal hold keyframes that prevented gear rotation from resetting; enforced the design-system 16px stage-to-control gap; added a content regression)_
 - [x] Add a test-guarded Digital Garden surface for six pilot concept notes. _(local `feature/digital-garden` branch; stable `/notes/<slug>/` pages, explicit topic `noteUrls`, maturity/relations, sitemap + llms discovery, and no homepage/archive/RSS mixing; not deployed)_
 - [x] Add a reusable works catalog. _(`/works/` groups Agent Skills/projects/tools from validated global data; first item is `lottie-maker` with install, GitHub, and supporting-article actions; sitemap + llms discovery without article/Garden/RSS mixing)_
+- [x] Hide zero-value concept and article counts on topic cards. _(commit `c5eaf4c`: each non-zero count remains visible; an entirely empty topic omits the count link)_
 - [ ] Update matching `tests/build.test.mjs` assertions with every SEO implementation. _(standing practice, not a one-off item — no existing assertions found for any of the unimplemented items above, so nothing to reconcile yet)_
 
 ## Work log
+
+### 2026-08-12
+
+- Commit `c5eaf4c` — topic cards no longer render `0 個概念` or `0 篇文章`. Each non-zero
+  collection count remains visible with the existing separator, and a topic with no notes or posts
+  omits the count link entirely.
+- Added production-output coverage for the composed count text and a regression rejecting visible
+  zero-value labels. Documentation impact reviewed and synchronized in `DESIGN.md`.
+- Verification: `npm test` passes 105/105 and `npm run build` passes. The generated LLM application
+  security topic card reads `查看 3 篇文章`; existing populated cards retain both counts.
 
 ### 2026-08-03
 
