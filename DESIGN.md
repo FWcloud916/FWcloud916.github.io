@@ -27,7 +27,7 @@ spacing: { xs: "0.25rem", sm: "0.5rem", md: "1rem", lg: "1.5rem", xl: "2rem", xx
 components:
   nav: { background: "{colors.surface}", shadow: "shadow-sm", link-color: "{colors.text-secondary}", link-hover: "{colors.text-primary}", mobile-gap: "1rem", desktop-gap: "1.5rem" }
   card: { background: "{colors.surface}", rounded: "{rounded.lg}", shadow: "shadow-md", shadow-hover: "shadow-lg", padding: "{spacing.lg}" }
-  topic-card: { extends: "{components.card}", body: "description + article count link" }
+  topic-card: { extends: "{components.card}", body: "description + non-zero concept/article count link" }
   work-card: { extends: "{components.card}", layout: "stacked → 16rem image + body at md", body: "type + description + tags + optional install command + actions" }
   tag-chip-post: { background: "{colors.accent-surface}", color: "{colors.accent-text}", rounded: "{rounded.full}", padding: "{spacing.xs} 0.75rem", hover-background: "#bedbff" }
   tag-chip-card: { background: "{colors.chip-neutral-surface}", color: "{colors.text-muted}", rounded: "{rounded.sm}", padding: "{spacing.xs} {spacing.sm}", hover-background: "{colors.border}" }
@@ -85,7 +85,7 @@ Three levels only: `shadow-sm` (nav bar) → `shadow-md` (cards, code blocks) �
 
 - **Nav** ([nav.njk](src/_includes/components/nav.njk)): white bar, `shadow-sm`, site title bold left, links right; hover transitions `text-gray-600 → text-gray-900` (title → `text-blue-600`). The five links are 首頁／花園／文章／作品／關於; mobile uses `gap-4 text-sm`, returning to `gap-6 text-base` at `sm`.
 - **Post card** ([post-card.njk](src/_includes/components/post-card.njk)): white, `rounded-lg shadow-md hover:shadow-lg transition`, `p-6`; title, date + reading-time row, description (or 150-char truncation), neutral tag chips.
-- **Topic card** ([topics-list.njk](src/topics-list.njk)): reuses the post-card surface/elevation and presents a curated topic description plus its current concept and article counts. Topic detail pages show `garden-note-card.njk` core concepts before the existing `post-card.njk` reading route.
+- **Topic card** ([topics-list.njk](src/topics-list.njk)): reuses the post-card surface/elevation and presents a curated topic description plus its current concept and article counts. A zero count is omitted instead of rendered as `0 個概念` or `0 篇文章`; if both collections are empty, the count link is omitted. Topic detail pages show `garden-note-card.njk` core concepts before the existing `post-card.njk` reading route.
 - **Garden note card** ([garden-note-card.njk](src/_includes/components/garden-note-card.njk)): reuses the white card, gray text hierarchy, and blue link accent; it adds one restrained maturity chip (`bg-gray-100 text-gray-700`) and the note description without introducing a new color family.
 - **Garden note page** ([garden-note.njk](src/_includes/layouts/garden-note.njk)): uses the same `max-w-4xl` article column and prose rhythm as posts. Breadcrumbs, maturity, created/updated dates, topic links, explicit related content, and note backlinks stay in the existing gray + blue system.
 - **Work card** ([work-card.njk](src/_includes/components/work-card.njk)): a full-width white card that stacks on mobile and becomes a `16rem` image/body split at `md`. It shows a blue type kicker, neutral tags, an optional One Dark install-command block, and the existing primary/secondary CTA pair. Local images use the shared responsive image transform; cards without images omit the media column.

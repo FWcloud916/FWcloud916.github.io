@@ -47,6 +47,14 @@ describe("build output", () => {
       expect(Array.isArray(topic.noteUrls), `主題 ${topic.slug} 缺 noteUrls 陣列`).toBe(true);
       expect(new Set(topic.noteUrls).size, `主題 ${topic.slug} 的 noteUrls 重複`).toBe(topic.noteUrls.length);
 
+      const countText = [
+        topic.noteUrls.length > 0 ? `${topic.noteUrls.length} 個概念` : null,
+        topic.postUrls.length > 0 ? `${topic.postUrls.length} 篇文章` : null,
+      ].filter(Boolean).join("、");
+      if (countText) {
+        expect(topicIndex).toContain(`查看 ${countText}`);
+      }
+
       const topicPage = read(`topics/${topic.slug}/index.html`);
       for (const url of topic.postUrls) {
         const post = posts.find((item) => postUrl(item) === url);
@@ -61,6 +69,7 @@ describe("build output", () => {
         expect(topicPage).toContain(escapeHtml(note.data.title));
       }
     }
+    expect(topicIndex).not.toMatch(/查看 0 (?:個概念|篇文章)/);
 
     for (const post of posts) {
       expect(archive, `彙整頁缺少 ${postUrl(post)}`).toContain(`href="${postUrl(post)}"`);
