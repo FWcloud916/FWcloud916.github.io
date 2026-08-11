@@ -95,6 +95,8 @@ source text is retained verbatim enough for row-level audit and future work.
   zero-value labels. Documentation impact reviewed and synchronized in `DESIGN.md`.
 - Verification: `npm test` passes 105/105 and `npm run build` passes. The generated LLM application
   security topic card reads `查看 3 篇文章`; existing populated cards retain both counts.
+- Deployment: workflows `31518252113` and `31518297950` passed. Public `/topics/` verification
+  confirms the LLM application security card shows `查看 3 篇文章` with no visible zero count.
 
 ### 2026-08-03
 
