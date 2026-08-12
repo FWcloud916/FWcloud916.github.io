@@ -2,7 +2,7 @@
 
 > **Type:** Explanation
 > **Audience:** Developers, AI assistants, and any tooling that needs project context
-> **Last updated:** 2026-08-10
+> **Last updated:** 2026-08-13
 >
 > Static personal blog (imfw.io) built with Eleventy 3 and Tailwind CSS v4, deployed to GitHub Pages. Related docs: [README.md](README.md) (how-tos), [../DESIGN.md](../DESIGN.md) (design system), [../AGENTS.md](../AGENTS.md) (agent guide).
 
@@ -56,7 +56,7 @@
 
 Notes:
 - Templates are **Nunjucks** (`.njk`); Markdown files are NOT pre-processed by any template engine (`markdownTemplateEngine: false`), so `{{ }}` inside code fences renders literally — no `{% raw %}` wrappers needed.
-- `package.json` pins `js-yaml@^3.15.0` via `overrides` for `gray-matter`.
+- `package.json` pins `js-yaml@^3.15.1` via `overrides` for `gray-matter`.
 - There is **no linter**. Tests run via vitest (`npm test`, see §10).
 
 ## 3. Architecture Overview
@@ -263,7 +263,9 @@ serialization), `filterByTag`, `filterByCategory`, `filterByUrls`, `topicsForPos
 
 ## 7. Background Jobs & Scheduled Tasks
 
-N/A — static site; no workers or schedules. The only automation is the deploy workflow (§10).
+N/A — static site; no workers or schedules. Automation is limited to the deploy workflow (§10) and
+[.github/dependabot.yml](../.github/dependabot.yml), which opens weekly PRs for npm devDependencies
+(grouped) and GitHub Actions, on top of GitHub's default security alerts.
 
 ## 8. External Service Integrations
 
@@ -271,6 +273,7 @@ N/A — static site; no workers or schedules. The only automation is the deploy 
 |---|---|---|
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
+| Dependabot | [.github/dependabot.yml](../.github/dependabot.yml) — weekly npm/GitHub Actions update PRs, plus GitHub's default security alerts | active |
 | Google Search Console | DNS ownership verification; optional HTML-meta hook in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) | verified through DNS; sitemap submitted; HTML token intentionally empty |
 | Bing Webmaster Tools | same layout, keyed by `site.bingSiteVerification` | verified; sitemap submitted |
 | Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-QBS6V0SVT1`) |
