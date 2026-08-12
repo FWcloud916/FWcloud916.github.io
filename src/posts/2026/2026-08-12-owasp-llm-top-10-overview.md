@@ -222,6 +222,6 @@ LLM01 的成因確實在模型，而且 2026 版把理由講得比我預期更�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 3／30 篇**
 
-[上一篇：傳統資安 vs LLM 資安：到底哪裡不一樣](https://imfw.io/posts/2026/2026-08-11-traditional-vs-llm-security/) · 下一篇：打造你的資安實驗室：環境建置
+[上一篇：傳統資安 vs LLM 資安：到底哪裡不一樣](https://imfw.io/posts/2026/2026-08-11-traditional-vs-llm-security/) · [下一篇：打造你的資安實驗室：環境建置](https://imfw.io/posts/2026/2026-08-13-build-llm-security-lab/)
 
 <!-- series-nav:end -->
