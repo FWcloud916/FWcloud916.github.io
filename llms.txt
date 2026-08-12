@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 打造你的資安實驗室：環境建置
+
+- Published: 2026-08-13T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-13-build-llm-security-lab/
+- Tags: ai-security, ai, security
+
+- Description: 用本機 Ollama、合成筆記與固定模型 digest 建立可重現的 LLM 資安沙盒，實際觀察間接 Prompt Injection 如何帶出另一份筆記的假金鑰。
+
+
 ### OWASP Top 10 for LLM Applications 全覽
 
 - Published: 2026-08-12T00:00:00.000Z
