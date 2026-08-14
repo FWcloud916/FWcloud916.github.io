@@ -212,6 +212,6 @@ Day 5 完成威脅模型與一個獨立的資料流觀測實驗，但尚未實�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 5／30 篇**
 
-[上一篇：打造你的資安實驗室：環境建置](https://imfw.io/posts/2026/2026-08-13-build-llm-security-lab/) · 下一篇：信任邊界與「不可信輸入」的觀念
+[上一篇：打造你的資安實驗室：環境建置](https://imfw.io/posts/2026/2026-08-13-build-llm-security-lab/) · [下一篇：模型只能提案，不能替自己授權：信任邊界與資料的影響範圍](https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/)
 
 <!-- series-nav:end -->
