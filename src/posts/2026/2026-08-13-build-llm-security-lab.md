@@ -197,6 +197,6 @@ Day 4 先保留刻意脆弱的 baseline。下一篇會把同一個應用程式�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 4／30 篇**
 
-[上一篇：OWASP Top 10 for LLM Applications 全覽](https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/) · 下一篇：對 LLM 應用做威脅建模
+[上一篇：OWASP Top 10 for LLM Applications 全覽](https://imfw.io/posts/2026/2026-08-12-owasp-llm-top-10-overview/) · [下一篇：對 LLM 應用做威脅建模](https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/)
 
 <!-- series-nav:end -->
