@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 對 LLM 應用做威脅建模
+
+- Published: 2026-08-14T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/
+- Tags: ai-security, ai, security
+
+- Description: 把刻意脆弱的 LLM 摘要器拆成資料流、儲存區與信任邊界，用 STRIDE 找出模型 context 以外的資訊洩漏路徑，再設計逐筆授權的讀取流程。
+
+
 ### 打造你的資安實驗室：環境建置
 
 - Published: 2026-08-13T00:00:00.000Z

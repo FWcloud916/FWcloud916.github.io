@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>對 LLM 應用做威脅建模 - FW Blog</title>
+  <meta name="description" content="把刻意脆弱的 LLM 摘要器拆成資料流、儲存區與信任邊界，用 STRIDE 找出模型 context 以外的資訊洩漏路徑，再設計逐筆授權的讀取流程。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="對 LLM 應用做威脅建模 - FW Blog">
+  <meta property="og:description" content="把刻意脆弱的 LLM 摘要器拆成資料流、儲存區與信任邊界，用 STRIDE 找出模型 context 以外的資訊洩漏路徑，再設計逐筆授權的讀取流程。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="對 LLM 應用做威脅建模 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-14T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="對 LLM 應用做威脅建模 - FW Blog">
+  <meta name="twitter:description" content="把刻意脆弱的 LLM 摘要器拆成資料流、儲存區與信任邊界，用 STRIDE 找出模型 context 以外的資訊洩漏路徑，再設計逐筆授權的讀取流程。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="對 LLM 應用做威脅建模 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=9b02ccc">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=9b02ccc">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "對 LLM 應用做威脅建模",
+    "description": "把刻意脆弱的 LLM 摘要器拆成資料流、儲存區與信任邊界，用 STRIDE 找出模型 context 以外的資訊洩漏路徑，再設計逐筆授權的讀取流程。",
+    "url": "https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/",
+    "datePublished": "2026-08-14T00:00:00.000Z",
+    "dateModified": "2026-08-14T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">對 LLM 應用做威脅建模</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-14T00:00:00.000Z">2026年08月14日</time></span>
+      
+      <span>11 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-06 依 Microsoft Learn、OWASP Threat Modeling、OWASP Threat Dragon、OWASP GenAI LLM Top 10 2026 官方資料，以及 LLM Application Security Lab 的 Day 4 固定 commit <code>8be976a913335951271d99515489a194472f3785</code> 與 Day 5 固定 commit <code>4b0cc06</code> 查核。Day 5 使用 Ollama 0.32.5、固定 <code>gemma4:latest</code> 完整 digest，Clean／Attack 各執行三次；結果只適用於記錄的模型、prompt、fixtures 與觀測點。To-be 架構尚未實作，不能視為已驗證的防禦效果。</p>
+</blockquote>
+<p>替 LLM 應用畫完資料流後，第一個浮出的不是新的 Prompt Injection 技巧，而是一條根本不需要模型配合的資訊洩漏路徑：Day 4 的 CLI 會把完整 fixtures、完整 request 與 model response 一起印到 stdout。</p>
+<p>先把這四個名稱對齊：<code>fixtures</code> 是實驗程式讀取的合成檔案；<code>request</code> 是送給模型的完整輸入；<code>model response</code> 是模型回傳的文字；<code>stdout</code> 是 CLI 最後印出的整份終端機輸出。<code>canary</code> 則是另一份筆記裡的無害測試值，只有出現在 model response 時，才代表模型路徑觀察到資料跨界。</p>
+<p>Day 4 的 CLI 會在呼叫模型前讀取 fixtures，把內容組成 request；模型回傳 model response 後，CLI 又把 fixtures、request 與 response 一起印到 stdout。這就是不需要模型配合也能成立的另一條資訊洩漏路徑。</p>
+<p>這個發現沒有推翻前篇實驗。Clean 的 model response 沒有 canary，attack 的 model response 帶出了另一份筆記的 canary，對照仍然成立。但是前篇使用的 <code>canary_in_visible_output</code> 名稱太寬；整份終端機輸出原本就含有 canary。真正接受實驗檢驗的 predicate 應該是 <code>canary_in_model_response</code>。</p>
+<p>威脅建模的價值就在這裡。只盯著模型，問題會停在「Prompt Injection 有沒有成功」；把整個應用程式畫出來，問題才會擴大成「敏感資料還能從哪一條路離開」。</p>
+<h2>我一開始把 cleaner 放在模型前後</h2>
+<p>我最初畫的理想流程是：</p>
+<pre class="language-text"><code class="language-text">input context -> context cleaner/ escape  -> LLM -> 權限檢查 -> 資料讀取 -> response -> context cleaner</code></pre>
+<p>我把核心問題收在一句話：<strong>「是，LLM 可讀到的問題。」<strong>後續設計也很直接：</strong>「LLM 提出讀取要求，再由權限層逐筆核准」</strong>；若權限層拒絕，<strong>「權限層拒絕讀取後，應直接終止」</strong>。</p>
+<p>這個方向抓到真正需要控制的地方，但流程圖混在一起的其實是兩種架構。Day 4 的現況不會等 LLM 提出要求；Python 程式在呼叫模型前，就已經讀完所有選定筆記。理想流程則把受保護資料留在模型外，等 LLM 提出資源 ID 後才授權。</p>
+<p>威脅模型必須先忠實畫出 as-is，再討論 to-be。若一開始只畫理想架構，圖上每個漂亮的控制點都可能只是願望。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/VEIT2fkgr1-300.webp 300w, /assets/img/VEIT2fkgr1-600.webp 600w, /assets/img/VEIT2fkgr1-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/VEIT2fkgr1-300.jpeg" alt="Day 4 as-is 與逐筆授權 to-be 資料流對照。左側顯示應用程式把全部 fixtures 送進單一 model context，再把完整 evidence 輸出到 stdout；右側顯示第一階段 LLM 只提出讀取要求，確定性權限層核准後才把單一資源交給第二階段 LLM，拒絕則立即終止。" width="1200" height="800" srcset="/assets/img/VEIT2fkgr1-300.jpeg 300w, /assets/img/VEIT2fkgr1-600.jpeg 600w, /assets/img/VEIT2fkgr1-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<h2>Day 4 真正讀資料的是 Python，不是 LLM</h2>
+<p><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/8be976a913335951271d99515489a194472f3785">固定實驗程式</a>的資料流如上圖左側所示。</p>
+<p>Day 4 沒有 tools，也沒有讓模型直接碰 filesystem。Python <code>read_fixture()</code> 先讀取檔案，<code>build_user_message()</code> 再把所有筆記與目標文件串成一則 user message。應用程式把內容放進 prompt 的瞬間，就已經授予模型讀取權。</p>
+<p>這個差異很重要。真正的第一個控制點不是 model response，而是：</p>
+<pre class="language-text"><code class="language-text">Data Store → Application → Model Context</code></pre>
+<p><code>context cleaner</code> 可以限制格式、長度或已知字串，卻不能取代存取控制。Day 4 的 system message 已經把 reference notes 標成不可信資料，模型仍然服從 <code>99-injection.md</code>。在這組實驗裡，<code>&lt;reference_notes&gt;</code> 標記沒有形成 parser 強制的資料／指令邊界；把 <code>escape</code> 寫在流程圖上，也不會自動多出那條邊界。</p>
+<h2>DFD 先把四種角色拆開</h2>
+<p><a href="https://learn.microsoft.com/en-us/training/modules/audit-security-development-operation/security-privacy-design">Microsoft 的方法</a>先描述元件、data flow、連接埠與協定，再從圖上識別與排序威脅。<a href="https://owasp.org/www-project-security-culture/stable/6-Threat_Modelling/">OWASP 的 threat modeling 流程</a>則要求標出 Actor、Process、Data Store、Flow、trust boundary 與敏感資料。</p>
+<p>Day 4 可以拆成：</p>
+<table>
+<thead>
+<tr>
+<th>類型</th>
+<th>元件</th>
+<th>必須標出的資料與信任差異</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Actor</td>
+<td>CLI 使用者</td>
+<td>選擇 scenario，最後閱讀 stdout</td>
+</tr>
+<tr>
+<td>Data Store</td>
+<td><code>scenario.json</code></td>
+<td>保存 system message、model digest、options 與 fixture paths</td>
+</tr>
+<tr>
+<td>Data Store</td>
+<td>synthetic fixtures</td>
+<td>同時放著目標文件、偏好、受保護 canary 與攻擊筆記</td>
+</tr>
+<tr>
+<td>Process</td>
+<td>Python lab runner</td>
+<td>讀檔、組 prompt、呼叫模型、建立 evidence</td>
+</tr>
+<tr>
+<td>Process</td>
+<td>Ollama／LLM</td>
+<td>看見完整 context，回傳不可信且不確定的輸出</td>
+</tr>
+<tr>
+<td>Flow</td>
+<td>Python → Ollama</td>
+<td>System message、全部選定筆記與目標文件</td>
+</tr>
+<tr>
+<td>Flow</td>
+<td>Python → stdout</td>
+<td>完整 fixtures、request 與 response</td>
+</tr>
+</tbody>
+</table>
+<p>最危險的地方不是資料跨過網路。Ollama endpoint 固定在 loopback，但不可信攻擊指令與受保護 canary 在同一個 model context 相遇，資料的信任等級已經改變。Trust boundary 描述的是信任改變，不是只描述主機或網段的邊界。</p>
+<h2>STRIDE 找得到影響，LLM01 解釋根因</h2>
+<p><a href="https://github.com/OWASP/threat-dragon">OWASP Threat Dragon</a>可以對 DFD 元件記錄 threat 與 mitigation，並以 STRIDE 逐項追問 Spoofing、Tampering、Repudiation、Information Disclosure、Denial of Service 與 Elevation of Privilege。</p>
+<p>把 STRIDE 套回 Day 4 與理想架構，可以得到六個直接問題：</p>
+<table>
+<thead>
+<tr>
+<th>STRIDE</th>
+<th>本篇問題</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Spoofing</td>
+<td>LLM 能否在讀取要求中冒用 user、tenant 或角色？</td>
+</tr>
+<tr>
+<td>Tampering</td>
+<td>惡意筆記能否改變原本的摘要流程？</td>
+</tr>
+<tr>
+<td>Repudiation</td>
+<td>系統能否追查誰在什麼 policy 下要求哪份資源？</td>
+</tr>
+<tr>
+<td>Information Disclosure</td>
+<td>Canary 是否進入 model response、debug evidence 或其他 sink？</td>
+</tr>
+<tr>
+<td>Denial of Service</td>
+<td>拒絕後重試是否形成無限迴圈或大量資源探測？</td>
+</tr>
+<tr>
+<td>Elevation of Privilege</td>
+<td>LLM 能否要求任務不需要或使用者無權讀取的資料？</td>
+</tr>
+</tbody>
+</table>
+<p>STRIDE 能命名攻擊者目標與系統影響，但 STRIDE 不會自動解釋一份自然語言資料為什麼能改變模型的指令遵循。Day 4 仍需要 <a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/">OWASP GenAI LLM Top 10 2026</a>的 LLM01 Prompt Injection 描述機制，再用 LLM02 Sensitive Information Disclosure 描述 canary 進入 response 的結果。</p>
+<p>兩套方法不是競爭關係。DFD 說明資料怎麼流，STRIDE 逼分析者逐元件檢查攻擊目標，LLM01／LLM02 則補上模型特有的攻擊機制與影響。</p>
+<h2>Threat register 不能只留一個 STRIDE 字母</h2>
+<p>把元件旁邊標上 <code>T</code> 或 <code>I</code> 只完成分類，沒有留下工程團隊可以處理的問題。每一筆 threat 至少還要記錄範圍、攻擊路徑、現有證據、預定控制與驗證方式。</p>
+<p>Day 4／Day 5 的 threat register 可以濃縮成：</p>
+<table>
+<thead>
+<tr>
+<th>威脅</th>
+<th>狀態</th>
+<th>證據</th>
+<th>下一個可驗證控制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>攻擊筆記竄改模型行為</td>
+<td>已觀察</td>
+<td>Attack response 帶出 canary</td>
+<td>限制第一階段 context，不把自然語言標記當成授權</td>
+</tr>
+<tr>
+<td>模型取得任務不需要的資料</td>
+<td>已確認的現況</td>
+<td>Python 在推論前載入 canary</td>
+<td>資源逐筆授權，核准後才讀取</td>
+</tr>
+<tr>
+<td>Evidence 直接揭露資料</td>
+<td>已確認的程式路徑</td>
+<td>Fixtures 與 request 原樣進入 stdout</td>
+<td>Log／trace／錯誤回報分級與資料淨化</td>
+</tr>
+<tr>
+<td>模型冒用身分或要求其他資源</td>
+<td>To-be 風險</td>
+<td>尚未實作，沒有實驗結果</td>
+<td>身分取自可信 session，只接受 opaque resource ID</td>
+</tr>
+<tr>
+<td>拒絕後探測資源或無限重試</td>
+<td>To-be 風險</td>
+<td>尚未實作，沒有實驗結果</td>
+<td>Generic deny、內部 audit、立即終止</td>
+</tr>
+<tr>
+<td>核准內容污染最終回覆</td>
+<td>To-be 風險</td>
+<td>Day 4 已證明核准內容仍可能含指令</td>
+<td>第二階段 response 依實際 sink 驗證</td>
+</tr>
+</tbody>
+</table>
+<p>這張表刻意不填 High／Medium／Low。合成單機實驗沒有正式資料價值、外部攻擊機率與業務影響，硬填 severity 只會製造假的精準度。Risk rating 應等到實際使用者、資料分類、暴露面與影響範圍都確定後再做。</p>
+<h2>另外做一個實驗，不把 Day 4 結果重算一次</h2>
+<p>畫出 stdout 路徑後，我還缺一個能被推翻的觀測：Clean model response 沒有 canary，是否代表使用者看見的完整 stdout 也沒有？我的事前預測是兩條路徑同時存在：Clean 的 request 與完整 stdout 會有 canary，但 model response 不會；Attack 則三處都有。</p>
+<p>這次實驗沒有直接重跑 Day 4 再換一個標題。<a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-05-threat-flow-observation"><code>day-05-threat-flow-observation</code></a>擁有自己的 experiment definition、合成 fixtures、raw runs 與 evidence。Day 5 的 fixture 內容、模型 digest、<code>seed=101</code> 與 <code>temperature=0</code> 刻意和 Day 4 相同，並以 SHA-256 確認等值，但 Day 5 bundle 不引用 Day 4 的 fixture 路徑。</p>
+<p>Clean 與 Attack 各完成一批三次執行，不因模型結果挑選性重跑：</p>
+<pre class="language-bash"><code class="language-bash">uv run llm-security-lab <span class="token punctuation">\</span>
+  <span class="token parameter variable">--experiment</span> day-05-threat-flow-observation <span class="token punctuation">\</span>
+  <span class="token parameter variable">--scenario</span> clean <span class="token punctuation">\</span>
+  <span class="token parameter variable">--repeat</span> <span class="token number">3</span>
+
+uv run llm-security-lab <span class="token punctuation">\</span>
+  <span class="token parameter variable">--experiment</span> day-05-threat-flow-observation <span class="token punctuation">\</span>
+  <span class="token parameter variable">--scenario</span> attack <span class="token punctuation">\</span>
+  <span class="token parameter variable">--repeat</span> <span class="token number">3</span></code></pre>
+<p>每次 run 分別檢查 canary 是否出現在 request、model response、fixture evidence 與 CLI 印出的完整 stdout。結果與預測一致：</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th style="text-align:right">Request</th>
+<th style="text-align:right">Model response</th>
+<th style="text-align:right">Fixture evidence</th>
+<th style="text-align:right">完整 stdout</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean，3 次</td>
+<td style="text-align:right">3/3</td>
+<td style="text-align:right">0/3</td>
+<td style="text-align:right">3/3</td>
+<td style="text-align:right">3/3</td>
+</tr>
+<tr>
+<td>Attack，3 次</td>
+<td style="text-align:right">3/3</td>
+<td style="text-align:right">3/3</td>
+<td style="text-align:right">3/3</td>
+<td style="text-align:right">3/3</td>
+</tr>
+</tbody>
+</table>
+<p><picture><source type="image/webp" srcset="/assets/img/tkEfejGkfR-300.webp 300w, /assets/img/tkEfejGkfR-600.webp 600w, /assets/img/tkEfejGkfR-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/tkEfejGkfR-300.jpeg" alt="Day 5 Clean 三次執行的 sanitized terminal report：固定 Ollama 0.32.5、模型完整 digest、fixture hashes 與推論參數；三次 request、fixture evidence、full stdout 都是 TRUE，model response 都是 FALSE。" width="1200" height="695" srcset="/assets/img/tkEfejGkfR-300.jpeg 300w, /assets/img/tkEfejGkfR-600.jpeg 600w, /assets/img/tkEfejGkfR-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p><picture><source type="image/webp" srcset="/assets/img/6PX0OrODHp-300.webp 300w, /assets/img/6PX0OrODHp-600.webp 600w, /assets/img/6PX0OrODHp-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/6PX0OrODHp-300.jpeg" alt="Day 5 Attack 三次執行的 sanitized terminal report：固定 Ollama 0.32.5、模型完整 digest、fixture hashes 與推論參數；三次 request、model response、fixture evidence、full stdout 都是 TRUE。" width="1200" height="725" srcset="/assets/img/6PX0OrODHp-300.jpeg 300w, /assets/img/6PX0OrODHp-600.jpeg 600w, /assets/img/6PX0OrODHp-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>完整 raw request 與 response 留在 Git 忽略路徑，公開 repo 只保存經檢查的報告、hash 與<a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-05-threat-flow-observation/evidence/day-05">實驗說明</a>。</p>
+<p>這組結果把兩條 flow 分開：</p>
+<pre class="language-text"><code class="language-text">Canary fixture → application evidence → stdout
+Canary fixture → model context → model response → stdout</code></pre>
+<p>第一條在 Clean／Attack 都成立，不需要 Prompt Injection；第二條只在三次 Attack 中出現，而且每次 response 第一行都是合成的 <code>LEAKED: LAB_ONLY_CANARY_7K4M_20260806</code>。實驗沒有證明所有模型都會被相同 payload 攻破，也沒有測試逐筆授權。實驗只證明：<strong>只檢查 model response，會漏掉應用程式自己建立的敏感資料輸出路徑。</strong></p>
+<h2>理想架構要把 LLM 降級成提案者</h2>
+<p>依照我選定的方向，to-be 流程需要兩次模型呼叫。圖右側把模型輸出的 <code>{action, resource_id}</code> 視為不可信讀取要求，而不是授權結果。</p>
+<p>第一階段 LLM 只能取得規劃所需的低敏感資料。模型可以提出 <code>action</code> 與 opaque <code>resource_id</code>，但模型不能提供或覆蓋 <code>user_id</code>、<code>tenant_id</code>、role、policy 或 allow／deny 結果。權限層必須從可信 session 與 resource metadata 取得授權依據。</p>
+<p><code>resource_id</code> 也不能直接當 filesystem path。應用程式必須先驗證 schema、解析 canonical resource，再確保授權與實際讀取指向同一個不可變的資源身分。否則「核准 note-123，實際讀到另一份檔案」仍是權限繞過。</p>
+<p>權限層若拒絕讀取，流程直接終止。權限層只對呼叫端回傳 generic deny，內部另記 request ID、可信 subject、resource ID、action、policy version、decision 與 timestamp。拒絕原因不回送模型，避免模型利用不同回應探測資源，或反覆更換 ID 猜測。</p>
+<h2>畫出控制不代表控制已經生效</h2>
+<p>To-be DFD 目前只是 security requirement。要聲稱逐筆授權能阻止 Day 4 攻擊，至少需要三組測試。</p>
+<p>第一組驗證模型看見的 context：</p>
+<ul>
+<li>第一階段 request 不得包含任何受保護筆記內容。</li>
+<li>權限層核准後，第二階段 request 只能包含核准的單一資源。</li>
+<li>Deny 後不得發生資料讀取，也不得送出第二次模型 request。</li>
+</ul>
+<p>第二組驗證權限層：</p>
+<ul>
+<li>模型輸出的 <code>user_id</code>、tenant 或 allow flag 必須被拒絕或忽略。</li>
+<li>未授權 <code>resource_id</code>、不存在的 ID、額外 action 與路徑逃逸必須得到相同 generic deny。</li>
+<li>授權決定與後續讀取必須綁定同一個 canonical resource，避免核准與使用不同物件。</li>
+</ul>
+<p>第三組驗證資料離開應用程式的路徑：</p>
+<ul>
+<li>Deny 的 model response、stdout、log 與 trace 都不得包含受保護內容。</li>
+<li>Allow 的 response 仍要跑 <code>canary_in_model_response</code> 與 sink-specific 檢查。</li>
+<li>Audit 要能證明 subject、resource、policy 與 decision，又不能保存不必要的完整敏感內容。</li>
+</ul>
+<p>Day 4 固定 fixture 很適合重用：把 <code>99-injection.md</code> 留在第一階段可見範圍，把 canary 留在受保護 store。新的成功條件不是「模型變乖」，而是攻擊筆記無法讓未核准 canary 進入第二階段 context。這個 predicate 能直接檢驗授權邊界，不必依賴每次 response 的措辭。</p>
+<h2>一套可以重複使用的建模順序</h2>
+<p>這次實作最後留下六個步驟：</p>
+<ol>
+<li>先畫 as-is，不要先畫預期中的防線。</li>
+<li>把 Actor、Process、Data Store 與每一條 Flow 具名列出。</li>
+<li>在 store 與 flow 上標出敏感資料、攻擊者可控資料與 trust boundary。</li>
+<li>對每個元件套一次 STRIDE，再用 LLM01 等模型風險補充根因。</li>
+<li>把模型輸出視為提案或不可信資料；授權、資源解析與 sink 驗證留在確定性程式。</li>
+<li>把 mitigation 寫成可測試的 requirement。沒有實驗或測試結果，就不能宣稱控制已生效。</li>
+</ol>
+<p>Day 5 完成威脅模型與一個獨立的資料流觀測實驗，但尚未實作理想架構，也沒有證明逐筆授權能阻止既有 payload。下一篇會繼續拆解每一種不可信輸入從哪裡進入；真正的防禦實作則留到後續輸入端、輸出端與最小權限篇，用相同內容但各篇獨立版本化的 fixture 重新驗證。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://learn.microsoft.com/en-us/training/modules/audit-security-development-operation/security-privacy-design">Microsoft Learn — Threat models and data flow diagrams</a></li>
+<li><a href="https://owasp.org/www-project-security-culture/stable/6-Threat_Modelling/">OWASP Security Culture — Threat modelling</a></li>
+<li><a href="https://github.com/OWASP/threat-dragon">OWASP Threat Dragon</a></li>
+<li><a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/">OWASP GenAI LLM Top 10 2026</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/8be976a913335951271d99515489a194472f3785">LLM Application Security Lab — Day 4 fixed commit</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-05-threat-flow-observation">LLM Application Security Lab — Day 5 獨立資料流觀測實驗</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10402868">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 5／30 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-13-build-llm-security-lab/">上一篇：打造你的資安實驗室：環境建置</a> · 下一篇：信任邊界與「不可信輸入」的觀念</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-13-build-llm-security-lab/" class="text-gray-900 hover:text-blue-600 transition">
+      打造你的資安實驗室：環境建置
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-13T00:00:00.000Z">2026年08月13日</time>
+    <span>9 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用本機 Ollama、合成筆記與固定模型 digest 建立可重現的 LLM 資安沙盒，實際觀察間接 Prompt Injection 如何帶出另一份筆記的假金鑰。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-12-owasp-llm-top-10-overview/" class="text-gray-900 hover:text-blue-600 transition">
+      OWASP Top 10 for LLM Applications 全覽
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-12T00:00:00.000Z">2026年08月12日</time>
+    <span>19 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">先自己列出 LLM 應用的風險清單，再對照 OWASP 2026 版找出盲點，把十條掛回一個最小示範應用，並拿自己畫的三軸地圖跟官方的靶心圖互相檢查。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-11-traditional-vs-llm-security/" class="text-gray-900 hover:text-blue-600 transition">
+      傳統資安 vs LLM 資安：到底哪裡不一樣
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-11T00:00:00.000Z">2026年08月11日</time>
+    <span>8 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從 SQL Injection、XSS 與一次本機 Prompt Injection 實驗，拆解 LLM 資安延續了哪些既有原則，又因模型不確定性多了哪些工程難題。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=9b02ccc"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>
