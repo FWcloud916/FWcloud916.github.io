@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>模型只能提案，不能替自己授權：信任邊界與資料的影響範圍 - FW Blog</title>
+  <meta name="description" content="從刻意脆弱的 LLM 摘要器逐層追蹤資料，拆開身分、授權、內容與輸出用途，建立一份能判斷輸入可以影響什麼的 trust／taint worksheet。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="模型只能提案，不能替自己授權：信任邊界與資料的影響範圍 - FW Blog">
+  <meta property="og:description" content="從刻意脆弱的 LLM 摘要器逐層追蹤資料，拆開身分、授權、內容與輸出用途，建立一份能判斷輸入可以影響什麼的 trust／taint worksheet。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="模型只能提案，不能替自己授權：信任邊界與資料的影響範圍 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-15T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="模型只能提案，不能替自己授權：信任邊界與資料的影響範圍 - FW Blog">
+  <meta name="twitter:description" content="從刻意脆弱的 LLM 摘要器逐層追蹤資料，拆開身分、授權、內容與輸出用途，建立一份能判斷輸入可以影響什麼的 trust／taint worksheet。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="模型只能提案，不能替自己授權：信任邊界與資料的影響範圍 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=f9f645f">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=f9f645f">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "模型只能提案，不能替自己授權：信任邊界與資料的影響範圍",
+    "description": "從刻意脆弱的 LLM 摘要器逐層追蹤資料，拆開身分、授權、內容與輸出用途，建立一份能判斷輸入可以影響什麼的 trust／taint worksheet。",
+    "url": "https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/",
+    "datePublished": "2026-08-15T00:00:00.000Z",
+    "dateModified": "2026-08-15T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">模型只能提案，不能替自己授權：信任邊界與資料的影響範圍</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-15T00:00:00.000Z">2026年08月15日</time></span>
+      
+      <span>11 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-06 依 OWASP Authorization、Business Logic Security、OAuth 2.0、LLM Prompt Injection Prevention 與 Logging Cheat Sheets，以及 LLM Application Security Lab 的 Day 4 固定 commit <code>8be976a913335951271d99515489a194472f3785</code> 與 Day 6 checkpoint tag <code>day-06-authority-boundary</code> 查核。本文對 Day 4 baseline 的描述來自固定程式與既有實驗；Day 6 只驗證合成的 deterministic authority prototype，production session／token 驗證、資源內容處理與告警仍未完成。</p>
+</blockquote>
+<p>如果 LLM 回傳一份語法完全正確的 JSON，裡面寫著 <code>&quot;user_id&quot;: &quot;admin&quot;</code> 與 <code>&quot;allow&quot;: true</code>，應用程式能相信什麼？</p>
+<p>簡單來說：JSON parser 只能證明格式正確，不能證明模型真的代表 admin，更不能證明存取應該被允許。模型輸出到了權限層，就是權限層收到的一份外部輸入。</p>
+<p>我先做兩個假設：</p>
+<ol>
+<li>輸入資料進入每一層時，都應視為不可信。</li>
+<li>權限必須由應用程式控管。</li>
+</ol>
+<p>方向沒有錯，但「不可信」如果只剩一個紅色標籤，工程上仍然不知道下一步該做什麼。這篇要把標籤拆開：誰產生資料、誰能修改資料、資料可以影響哪個決定，以及資料接下來會進入哪個 sink，也就是哪個會使用資料並產生效果的位置。</p>
+<h2>信任邊界不只存在於網路兩端</h2>
+<p>前篇把 Day 4 摘要器拆成 CLI、<code>scenario.json</code>、synthetic fixtures、Python lab runner、Ollama／LLM 與 stdout。所有元件都在同一台電腦，Ollama 也只接受 loopback 連線，但資料的信任假設仍然一路改變。</p>
+<p>CLI 參數進入 Python 時，Python 只能接受已知 scenario name，不能把任意字串當成檔案路徑。Fixture content 進入 prompt builder 時，內容可以成為摘要材料，不能取得修改 system message 的權威。Model response 回到 Python 時，回覆可以成為候選答案，不能直接成為授權結果、filesystem path 或可執行命令。</p>
+<p>因此，trust boundary 不等於「資料有沒有跨主機」。只要資料進入下一個元件，而該元件對資料來源、完整性或權威的假設不同，資料就跨過一道需要重新檢查的邊界。</p>
+<h2>一項檢查合格，不會變成全面可信</h2>
+<p>Day 4 的 <code>scenario.json</code> 通過 JSON parsing，只能證明結構可以解析。路徑仍要限制在實驗目錄內，model digest 仍要符合固定情境，fixture content 仍不能被當成指令。</p>
+<p>同樣地，權限層核准使用者讀取 <code>note-123</code>，只代表特定 subject 可以對特定 canonical resource 執行 <code>read</code>。權限層核准讀取後，筆記內容仍然可能包含 Prompt Injection；授權不會把筆記升格成 policy、identity 或下一個動作。</p>
+<p>這裡需要兩道分開的 gate：</p>
+<pre class="language-text"><code class="language-text">Authorization gate
+subject 能否對 resource 執行 action？
+
+Interpretation / sink gate
+取得的內容可以影響什麼？進入下一個 sink 前要驗證什麼？</code></pre>
+<p><a href="https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html">OWASP Authorization Cheat Sheet</a> 要求系統預設拒絕，並針對每次請求（request），檢查目前身分是否有權對特定物件（object）執行指定操作（operation）。 <a href="https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html">OWASP LLM Prompt Injection Prevention Cheat Sheet</a> 則分別檢查外部內容、模型輸出與模型提出的動作（proposed action）；模型 guardrail 不能取代確定性驗證與最小權限原則。</p>
+<p>兩份文件回答不同問題。Authorization 決定資料能否跨過資源邊界；Prompt Injection 防禦與 sink validation（資料進入落點前的驗證）則限制資料跨過邊界後能造成的影響。</p>
+<h2>System prompt 也沒有免死金牌</h2>
+<p>System prompt 通常由應用程式控制，完整性可以比使用者輸入高。這不代表 system prompt 是祕密、存取控制或 parser 強制的資料／指令邊界。</p>
+<p>Day 4 的 system message 已經把 reference notes 標成不可信資料，attack scenario 的模型仍然服從 <code>99-injection.md</code>，再從另一份筆記帶出 canary。實驗只證明該模型、prompt、fixture 與 payload 的行為，但至少足以否定一個過度樂觀的假設：在 system prompt 宣告「以下只是資料」，不會自動讓自然語言失去指令效果。</p>
+<p>應用程式可以相信「這份 system prompt 由受控版本產生」，卻不能進一步推論「模型一定遵守」或「寫在裡面的 policy 一定被執行」。完整性、保密性與授權能力是三個不同問題。</p>
+<h2>把 Day 4 的資料逐項標記</h2>
+<p>「每一層都視為不可信」真正可操作的版本，是替每份資料記錄可以影響什麼（allowed influence），以及不得擁有哪些決定權（forbidden authority）。</p>
+<table>
+<thead>
+<tr>
+<th>資料</th>
+<th>可以影響</th>
+<th>不能決定</th>
+<th>使用前檢查</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLI scenario name</td>
+<td>選擇已知實驗情境</td>
+<td>任意路徑或跳過驗證</td>
+<td>Exact allowlist</td>
+</tr>
+<tr>
+<td><code>scenario.json</code></td>
+<td>固定模型、參數與 fixture 清單</td>
+<td>未來服務的使用者授權</td>
+<td>Schema、路徑 containment、model digest</td>
+</tr>
+<tr>
+<td>Synthetic fixture content</td>
+<td>提供待摘要資料</td>
+<td>任務指令、身分、policy、其他資源</td>
+<td>保留 provenance，限制 context 與 sink</td>
+</tr>
+<tr>
+<td>Model read proposal</td>
+<td>提出 allowlisted <code>action</code> 與 opaque <code>resource_id</code></td>
+<td><code>user_id</code>、tenant、role、policy、<code>allow</code></td>
+<td>Schema、canonical resource resolution</td>
+</tr>
+<tr>
+<td>Session／API token</td>
+<td>驗證後建立 subject 與有限 claims</td>
+<td>超出 audience、scope 或 policy 的權限</td>
+<td>有效性、audience、scope 與適用 claims</td>
+</tr>
+<tr>
+<td>Model response</td>
+<td>候選回答</td>
+<td>工具執行、HTML／SQL／shell input</td>
+<td>依實際 sink 驗證</td>
+</tr>
+<tr>
+<td>Evidence／log</td>
+<td>重現與稽核</td>
+<td>因為由程式產生就視為可公開</td>
+<td>最小化、分類、遮罩與存取控制</td>
+</tr>
+</tbody>
+</table>
+<p>不過，只標記哪些資料不可信還不夠。系統仍要明確界定可信運算基礎（trusted computing base），也就是授權判斷可以採用的可信依據。這些依據包括經過驗證的 session／token、由後端可信來源取得的資源識別與歸屬資料，以及受到完整性保護的 policy。每項可信依據都必須有清楚來源，而且只能影響事先限定的決定；最終授權判斷則由受權限控管的函式執行。否則權限層根本沒有可信依據可用。</p>
+<h2>模型只能提案，不能替自己核准</h2>
+<p>我最後採用的規則是：</p>
+<blockquote>
+<p>如果應用程式已經有可信的 session 或是 api token 的話，忽略 user_id 和 allow，只用可信 session 重新判斷
+如果沒有的話則 直接拒絕整個要求</p>
+</blockquote>
+<p>這個選擇和 <a href="https://cheatsheetseries.owasp.org/cheatsheets/Business_Logic_Security_Cheat_Sheet.html">OWASP Business Logic Security Cheat Sheet</a> 的邊界一致：會影響存取權（access）、所有權（ownership）或狀態（state）的值，應由應用程式根據可信的 server-side 資料重新推導；執行動作的使用者身分（acting user identity）應來自 server-side session 或 token，不能接受可編輯欄位自行聲明。</p>
+<p>「可信的 API token」仍是簡寫。資源伺服器（resource server）不能只看到 token 就直接放行； <a href="https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html">OWASP OAuth 2.0 Cheat Sheet</a> 要求資源伺服器檢查 token 是否適用於目前的受眾（audience）、資源（resource）與動作（action），並把權限限制在必要的授權範圍（scope）。Token 若已過期、audience 或 scope 錯誤，或無法驗證，就不能建立可供授權判斷使用的已驗證身分（trusted subject）。</p>
+<p>這裡先用一個完全獨立的 prototype 驗證最小邊界。實驗不呼叫模型，執行結果也可以重現。
+Prototype 所使用的應用程式身分（application identity），是合成 fixture 預先提供的「已驗證結果」。
+這個 prototype 並未真的驗證 session／API token 的真偽、audience 或 scope，也沒有讀取任何資源內容。</p>
+<p>我在執行前先做四個預測：</p>
+<ol>
+<li>有權限的 trusted subject，即使模型夾帶 <code>allow: false</code>，仍會被允許。</li>
+<li>沒有權限的 trusted subject，即使模型夾帶 <code>user_id: admin</code> 與 <code>allow: true</code>，仍會被拒絕。</li>
+<li>沒有 trusted identity 時，模型聲明的身分與 <code>allow</code> 都不能讓要求繼續。</li>
+<li>只要模型輸出出現這些 forbidden fields，就留下 <code>llm_authority_field_ignored</code> event。</li>
+</ol>
+<p>命令固定執行 bundle 內的四個案例，不使用 Ollama，也不挑選案例重跑：</p>
+<pre class="language-bash"><code class="language-bash">uv run llm-security-authority <span class="token punctuation">\</span>
+  <span class="token parameter variable">--experiment</span> day-06-authority-boundary <span class="token punctuation">\</span>
+  <span class="token operator">></span> evidence/raw/day-06/results.json
+
+uv run llm-security-authority-report evidence/raw/day-06/results.json</code></pre>
+<p>結果如下：</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>Trusted identity</th>
+<th>模型夾帶的權限欄位</th>
+<th>實際決定</th>
+<th>Security event</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>有權限，模型未夾帶權限欄位</td>
+<td>有效且有權限</td>
+<td>無</td>
+<td><code>ALLOW</code></td>
+<td>無</td>
+</tr>
+<tr>
+<td>有權限，模型偽造拒絕</td>
+<td>有效且有權限</td>
+<td><code>allow: false</code>、<code>user_id: admin</code></td>
+<td><code>ALLOW</code></td>
+<td><code>llm_authority_field_ignored</code></td>
+</tr>
+<tr>
+<td>無權限，模型偽造允許</td>
+<td>有效但無權限</td>
+<td><code>allow: true</code>、<code>user_id: admin</code></td>
+<td><code>DENY</code></td>
+<td><code>llm_authority_field_ignored</code></td>
+</tr>
+<tr>
+<td>缺少可信身分，模型偽造允許</td>
+<td>缺少</td>
+<td><code>allow: true</code>、<code>user_id: admin</code></td>
+<td><code>DENY</code></td>
+<td><code>llm_authority_field_ignored</code></td>
+</tr>
+</tbody>
+</table>
+<p>「有權限，模型未夾帶權限欄位」與「有權限，模型偽造拒絕」都得到 <code>ALLOW</code>，原因不是模型說了
+算，而是應用程式持有的可信身分確實有權限。模型偽造拒絕時雖然夾帶 <code>allow: false</code> 與假的
+<code>user_id</code>，應用程式仍忽略這些欄位，依自己的 policy 重新判斷。</p>
+<p>「無權限，模型偽造允許」得到 <code>DENY</code>，因為可信身分沒有權限；模型聲稱 <code>allow: true</code>、把使用者
+寫成 <code>admin</code>，不能替應用程式補出權限。「缺少可信身分，模型偽造允許」也得到 <code>DENY</code>，而且流程
+直接停止，正是我原本選擇的 default-deny 邊界。</p>
+<p>在三個案例中，模型輸出都夾帶不應由模型決定的權限欄位，系統也都留下
+<code>llm_authority_field_ignored</code> event。系統忽略這些欄位，可以避免模型影響這次授權判斷；事件紀錄
+則能讓監控系統偵測模型輸出是否包含不應由模型決定的權限欄位。</p>
+<p>四個案例都符合事前預測：2 個 <code>ALLOW</code>、2 個 <code>DENY</code>。其中 3 個案例各留下一筆 authority event。</p>
+<p>這個結果只證明 prototype 會採用可信的應用程式狀態（trusted application state），並依固定 policy
+做 default-deny 判斷。這個結果不能證明真正的 token validator、resource store、第二階段 LLM 或
+production alerting 已經安全。</p>
+<p>固定的 Day 6 checkpoint 與 sanitized evidence 分別放在 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-06-authority-boundary">Lab tag</a> 與 <a href="https://github.com/FWcloud916/llm-app-security-lab/blob/day-06-authority-boundary/evidence/day-06/README.md">evidence report</a>。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/BM10r5uWFX-300.webp 300w, /assets/img/BM10r5uWFX-600.webp 600w, /assets/img/BM10r5uWFX-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/BM10r5uWFX-300.jpeg" alt="模型只提供 action 與 resource_id 提案。應用程式根據已驗證身分、後端資源資料與 policy 執行授權，忽略 user_id 與 allow，並留下紀錄。授權通過後讀取的內容仍以 untrusted_data 送入第二階段 LLM。" width="1200" height="800" srcset="/assets/img/BM10r5uWFX-300.jpeg 300w, /assets/img/BM10r5uWFX-600.jpeg 600w, /assets/img/BM10r5uWFX-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>若要真正接進應用程式，仍需要實作以下 design sketch；Day 4 baseline 目前沒有這段程式：</p>
+<pre class="language-python"><code class="language-python">proposal <span class="token operator">=</span> parse_model_output<span class="token punctuation">(</span>model_output<span class="token punctuation">)</span>
+allowed <span class="token operator">=</span> pick<span class="token punctuation">(</span>proposal<span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">,</span> <span class="token string">"resource_id"</span><span class="token punctuation">)</span>
+forbidden <span class="token operator">=</span> keys<span class="token punctuation">(</span>proposal<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token punctuation">{</span><span class="token string">"action"</span><span class="token punctuation">,</span> <span class="token string">"resource_id"</span><span class="token punctuation">}</span>
+
+identity <span class="token operator">=</span> validate_session_or_token<span class="token punctuation">(</span>request<span class="token punctuation">)</span>
+<span class="token keyword">if</span> identity <span class="token keyword">is</span> <span class="token boolean">None</span><span class="token punctuation">:</span>
+    audit<span class="token punctuation">(</span><span class="token string">"missing_trusted_identity"</span><span class="token punctuation">,</span> forbidden<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> generic_deny<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> forbidden<span class="token punctuation">:</span>
+    audit<span class="token punctuation">(</span><span class="token string">"llm_authority_field_ignored"</span><span class="token punctuation">,</span> forbidden<span class="token punctuation">)</span>
+
+resource <span class="token operator">=</span> resolve_canonical_resource<span class="token punctuation">(</span>allowed<span class="token punctuation">[</span><span class="token string">"resource_id"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+decision <span class="token operator">=</span> authorize<span class="token punctuation">(</span>identity<span class="token punctuation">,</span> allowed<span class="token punctuation">[</span><span class="token string">"action"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> resource<span class="token punctuation">,</span> policy<span class="token punctuation">)</span>
+<span class="token keyword">if</span> <span class="token keyword">not</span> decision<span class="token punctuation">.</span>allowed<span class="token punctuation">:</span>
+    <span class="token keyword">return</span> generic_deny<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+content <span class="token operator">=</span> read_authorized_resource<span class="token punctuation">(</span>resource<span class="token punctuation">)</span>
+<span class="token keyword">return</span> answer_llm<span class="token punctuation">(</span>untrusted_data<span class="token operator">=</span>content<span class="token punctuation">)</span></code></pre>
+<p>模型可以建議 <code>read note-123</code>，但不能提供或覆蓋 <code>user_id</code>、tenant、role、policy 與 allow／deny。沒有已驗證身分（trusted identity）就停止；即使已有已驗證身分，應用程式仍要針對 canonical resource 重新執行授權檢查。通過檢查後讀取的 content，仍須標記為 <code>untrusted_data</code>，再送入第二階段模型。</p>
+<h2>忽略權限欄位，也要留下 security signal</h2>
+<p>只把 <code>user_id</code> 與 <code>allow</code> 丟掉，會讓系統失去一個有價值的異常訊號。我的判斷是：</p>
+<blockquote>
+<p>要紀錄，最好能設定警告器</p>
+</blockquote>
+<p>Day 6 先定義 <code>llm_authority_field_ignored</code> 這種 security event。這筆 event 至少應包含 interaction ID、已驗證身分的替代識別碼（pseudonymous reference）、auth source 與 validation result、出現的 forbidden field names、action、canonical resource reference、policy version、decision、reason code 與 severity。</p>
+<p>這類 event 不應寫入 raw session ID、access token、完整 prompt、resource content 或 secret。 <a href="https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html">OWASP Logging Cheat Sheet</a> 建議記錄輸入驗證、身分驗證與授權失敗，以及可疑的業務行為；同時提醒過量紀錄會增加敏感資料曝露與告警疲勞（alarm fatigue）。</p>
+<p>所以系統可以先把單筆事件標成 security warning；當監控發現重複探測、涉及多個 resource 或高風險 action 時，再把相關事件聚合成 alert。真實環境的門檻需要 production baseline 支持，這篇不憑空設定次數。告警聚合、通知路由、保存期限與 incident response，留到觀測性篇實作。</p>
+<h2>一條可以套回真實系統的判斷順序</h2>
+<p>遇到任何進入 LLM 應用的資料，可以依序問：</p>
+<ol>
+<li>誰產生或控制這份資料？來源能否被冒用或竄改？</li>
+<li>這份資料在目前 component 只能影響什麼？明確禁止決定什麼？</li>
+<li>驗證通過的是格式、身分、授權，還是特定 sink 的安全性？不要把其中一種當成全部。</li>
+<li>資料轉換後，資料來源與流轉紀錄（provenance），以及原有的使用限制，是否仍會跟著資料進入下一層？</li>
+<li>若資料可能影響超出允許範圍的權限決定，系統會安全地拒絕（fail closed）、留下可用但不含機敏資料的 evidence，還是默默繼續？</li>
+</ol>
+<p>資料沒有永久不變的「可信／不可信」標籤。更實用的判斷方式是：<strong>先確認資料會進入哪個元件、用來做什麼，再決定資料可以影響哪些判斷。</strong> 下一篇會用第一週的概念做一次小型攻擊熱身；輸入、輸出與最小權限的正式防禦，仍要等後續篇目用相同 fixture 實作與重測。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html">OWASP Cheat Sheet Series — Authorization</a></li>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Business_Logic_Security_Cheat_Sheet.html">OWASP Cheat Sheet Series — Business Logic Security</a></li>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html">OWASP Cheat Sheet Series — OAuth 2.0 Protocol</a></li>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html">OWASP Cheat Sheet Series — LLM Prompt Injection Prevention</a></li>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html">OWASP Cheat Sheet Series — Logging</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/8be976a913335951271d99515489a194472f3785">LLM Application Security Lab — Day 4 fixed commit</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-06-authority-boundary">LLM Application Security Lab — Day 6 authority boundary checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10403061">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 6／30 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/">上一篇：對 LLM 應用做威脅建模</a> · 下一篇：第一階段回顧與小型攻擊熱身</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-14-threat-modeling-llm-apps/" class="text-gray-900 hover:text-blue-600 transition">
+      對 LLM 應用做威脅建模
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-14T00:00:00.000Z">2026年08月14日</time>
+    <span>11 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">把刻意脆弱的 LLM 摘要器拆成資料流、儲存區與信任邊界，用 STRIDE 找出模型 context 以外的資訊洩漏路徑，再設計逐筆授權的讀取流程。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-13-build-llm-security-lab/" class="text-gray-900 hover:text-blue-600 transition">
+      打造你的資安實驗室：環境建置
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-13T00:00:00.000Z">2026年08月13日</time>
+    <span>9 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用本機 Ollama、合成筆記與固定模型 digest 建立可重現的 LLM 資安沙盒，實際觀察間接 Prompt Injection 如何帶出另一份筆記的假金鑰。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-12-owasp-llm-top-10-overview/" class="text-gray-900 hover:text-blue-600 transition">
+      OWASP Top 10 for LLM Applications 全覽
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-12T00:00:00.000Z">2026年08月12日</time>
+    <span>19 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">先自己列出 LLM 應用的風險清單，再對照 OWASP 2026 版找出盲點，把十條掛回一個最小示範應用，並拿自己畫的三軸地圖跟官方的靶心圖互相檢查。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=f9f645f"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

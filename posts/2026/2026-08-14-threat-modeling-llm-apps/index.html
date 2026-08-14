@@ -61,8 +61,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=74b7894">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=74b7894">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=f9f645f">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=f9f645f">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -451,7 +451,7 @@ Canary fixture → model context → model response → stdout</code></pre>
 <!-- series-nav:start -->
 <hr>
 <p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 5／30 篇</strong></p>
-<p><a href="https://imfw.io/posts/2026/2026-08-13-build-llm-security-lab/">上一篇：打造你的資安實驗室：環境建置</a> · 下一篇：信任邊界與「不可信輸入」的觀念</p>
+<p><a href="https://imfw.io/posts/2026/2026-08-13-build-llm-security-lab/">上一篇：打造你的資安實驗室：環境建置</a> · <a href="https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/">下一篇：模型只能提案，不能替自己授權：信任邊界與資料的影響範圍</a></p>
 <!-- series-nav:end -->
 
   </div>
@@ -462,6 +462,50 @@ Canary fixture → model context → model response → stdout</code></pre>
 <section class="mt-12" aria-labelledby="related-posts-title">
   <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
   <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-15-trust-boundaries-untrusted-input/" class="text-gray-900 hover:text-blue-600 transition">
+      模型只能提案，不能替自己授權：信任邊界與資料的影響範圍
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-15T00:00:00.000Z">2026年08月15日</time>
+    <span>11 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從刻意脆弱的 LLM 摘要器逐層追蹤資料，拆開身分、授權、內容與輸出用途，建立一份能判斷輸入可以影響什麼的 trust／taint worksheet。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
   
     <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
@@ -551,50 +595,6 @@ Canary fixture → model context → model response → stdout</code></pre>
 </article>
 
   
-    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-08-11-traditional-vs-llm-security/" class="text-gray-900 hover:text-blue-600 transition">
-      傳統資安 vs LLM 資安：到底哪裡不一樣
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-08-11T00:00:00.000Z">2026年08月11日</time>
-    <span>8 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">從 SQL Injection、XSS 與一次本機 Prompt Injection 實驗，拆解 LLM 資安延續了哪些既有原則，又因模型不確定性多了哪些工程難題。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
-    
-      
-    
-      
-      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai-security
-      </a>
-      
-    
-      
-      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai
-      </a>
-      
-    
-      
-      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #security
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-  
   </div>
 </section>
 
@@ -602,7 +602,7 @@ Canary fixture → model context → model response → stdout</code></pre>
 
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=74b7894"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=f9f645f"></script>
 
   </main>
 

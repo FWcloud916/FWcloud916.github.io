@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 模型只能提案，不能替自己授權：信任邊界與資料的影響範圍
+
+- Published: 2026-08-15T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/
+- Tags: ai-security, ai, security
+
+- Description: 從刻意脆弱的 LLM 摘要器逐層追蹤資料，拆開身分、授權、內容與輸出用途，建立一份能判斷輸入可以影響什麼的 trust／taint worksheet。
+
+
 ### 對 LLM 應用做威脅建模
 
 - Published: 2026-08-14T00:00:00.000Z
