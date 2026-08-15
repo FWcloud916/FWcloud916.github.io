@@ -206,6 +206,6 @@ Day 6 先定義 `llm_authority_field_ignored` 這種 security event。這筆 eve
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 6／30 篇**
 
-[上一篇：對 LLM 應用做威脅建模](https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/) · 下一篇：第一階段回顧與小型攻擊熱身
+[上一篇：對 LLM 應用做威脅建模](https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/) · [下一篇：第一階段回顧與小型攻擊熱身](https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/)
 
 <!-- series-nav:end -->
