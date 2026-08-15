@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 第一階段回顧與小型攻擊熱身
+
+- Published: 2026-08-16T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/
+- Tags: ai-security, ai, security
+
+- Description: 以人工建立、內容固定的測試筆記進行三組實驗，分開驗證模型偏航與資料跨界，並建立可重現的 Prompt Injection 成功條件。
+
+
 ### 模型只能提案，不能替自己授權：信任邊界與資料的影響範圍
 
 - Published: 2026-08-15T00:00:00.000Z

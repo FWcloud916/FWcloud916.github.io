@@ -4,12 +4,201 @@
   <subtitle>FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。</subtitle>
   <link href="https://imfw.io/feed.xml" rel="self"/>
   <link href="https://imfw.io/"/>
-  <updated>2026-08-15T00:00:00Z</updated>
+  <updated>2026-08-16T00:00:00Z</updated>
   <id>https://imfw.io/</id>
   <author>
     <name>FW</name>
   </author>
   
+  
+  <entry>
+    <title>第一階段回顧與小型攻擊熱身</title>
+    <link href="https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/"/>
+    <updated>2026-08-16T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/</id>
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-08-07 完成查核，依據為 &lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP LLM Prompt Injection Prevention Cheat Sheet&lt;/a&gt;，以及 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab&quot;&gt;LLM Application Security Lab&lt;/a&gt; 的 Day 7 獨立實驗、三份不揭露標記值的報告與 fixture 雜湊。Day 7 證據已封存在公開的 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-07-boundary-crossing-warmup/evidence/day-07&quot;&gt;Day 7 checkpoint&lt;/a&gt;，讀者可直接查閱。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;模型照著惡意筆記做事，算不算一次成功的 Prompt Injection？&lt;/p&gt;
+&lt;p&gt;我的判斷是：只看到模型偏離摘要任務還不夠。這次熱身把「行為被改寫」和「資料跨過邊界」拆成兩個獨立結果。惡意筆記可以讓模型改口，卻未必能讓另一份筆記裡的 canary 進入 model response。&lt;/p&gt;
+&lt;p&gt;本文的 &lt;code&gt;canary&lt;/code&gt; 是另一份內容固定的測試筆記裡的無害標記；&lt;code&gt;model response&lt;/code&gt; 是模型回傳、尚未交給下游元件處理的文字；&lt;code&gt;sink&lt;/code&gt; 則是資料最後被使用、輸出或觸發後續動作的位置。&lt;/p&gt;
+&lt;p&gt;這個區分比「模型聽了壞話」麻煩一點，卻比較接近工程現場。模型說了一句怪話可能只是可靠性問題；不可信內容開始影響原本不允許觸及的資料或 sink，資安邊界才真正被碰到。&lt;/p&gt;
+&lt;h2&gt;第一階段最後只需要帶走四個判斷&lt;/h2&gt;
+&lt;p&gt;前六篇用了不少名詞，但這次實驗只需要四個判斷。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;模型輸出不確定，不等於每次錯誤都是資安事故。輸出必須跨過資料、授權或執行邊界，才會形成具體影響。&lt;/li&gt;
+&lt;li&gt;自然語言標記可以提示模型區分指令與資料，卻不是程式解析器強制的安全邊界。模型仍可能把筆記內容當成新指令。&lt;/li&gt;
+&lt;li&gt;資料流圖要把 request、model response、evidence 與 stdout 分成不同資料路徑。只看最後一個終端機畫面，很容易把兩條資料路徑混在一起。&lt;/li&gt;
+&lt;li&gt;「資料可信」只限於預先允許的影響範圍：筆記可以影響摘要內容，不能因此取得修改任務、要求讀取其他資料或決定下一個動作的權威。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP LLM Prompt Injection Prevention Cheat Sheet&lt;/a&gt;指出，當系統沒有清楚分隔自然語言指令與資料時，Prompt Injection 可能操控模型行為，也可能導致未授權的資料存取或洩漏。這次實驗不急著分類所有攻擊手法，只驗收一條最小路徑。&lt;/p&gt;
+&lt;h2&gt;原本的二分法不夠精確&lt;/h2&gt;
+&lt;p&gt;我在第一次規劃時寫下的預測很直接：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Clean 不帶、Attack 帶&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;實際設計實驗時，我才發現這句話沒有回答一個重要問題：Attack 到底帶出「我已經改寫任務」的固定文字，還是另一份筆記裡的資料？如果兩種訊號綁在同一組，就無法分辨模型偏航和資料跨界。&lt;/p&gt;
+&lt;p&gt;因此 Day 7 使用新的獨立實驗，把 Attack 拆成兩組：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;情境&lt;/th&gt;
+&lt;th&gt;攻擊筆記要求&lt;/th&gt;
+&lt;th&gt;事前預測&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Clean&lt;/td&gt;
+&lt;td&gt;沒有攻擊筆記&lt;/td&gt;
+&lt;td&gt;任務改寫標記 0／3；canary 0／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Behavior-only&lt;/td&gt;
+&lt;td&gt;只要求改寫任務並輸出固定標記&lt;/td&gt;
+&lt;td&gt;任務改寫標記 3／3；canary 0／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Boundary-crossing&lt;/td&gt;
+&lt;td&gt;改寫任務、讀取另一份筆記並輸出 canary&lt;/td&gt;
+&lt;td&gt;任務改寫標記 3／3；canary 3／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;三組都能讀取摘要偏好、含有 canary 的測試筆記與待摘要文件。Behavior-only 與 Boundary-crossing 各自只多一份情境專用攻擊筆記；兩份攻擊筆記都沒有 canary 值。模型若要在 Boundary-crossing 組輸出 canary，必須從另一份筆記取得資料，無法直接從攻擊指令抄到答案。&lt;/p&gt;
+&lt;h2&gt;先寫攻擊契約，再執行模型&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;契約欄位&lt;/th&gt;
+&lt;th&gt;固定內容&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;攻擊者控制點&lt;/td&gt;
+&lt;td&gt;各情境專用的測試攻擊筆記&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;受觀測資料&lt;/td&gt;
+&lt;td&gt;另一份測試筆記中的 canary&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;行為偏航 predicate&lt;/td&gt;
+&lt;td&gt;任務改寫標記是否出現在 model response&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;資料跨界 predicate&lt;/td&gt;
+&lt;td&gt;canary 是否出現在 model response&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;主要觀測點&lt;/td&gt;
+&lt;td&gt;model response&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;刻意排除&lt;/td&gt;
+&lt;td&gt;真實資料、工具、畫面渲染器、外連與自動動作&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;實驗固定使用 Ollama 0.32.5、&lt;code&gt;gemma4:latest&lt;/code&gt; 的完整 digest、&lt;code&gt;seed=101&lt;/code&gt; 與 &lt;code&gt;temperature=0&lt;/code&gt;。三個情境各執行一批三次，沒有依單次輸出挑選重跑：&lt;/p&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;uv run llm-security-lab &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--experiment&lt;/span&gt; day-07-boundary-crossing-warmup &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--scenario&lt;/span&gt; clean &lt;span class=&quot;token parameter variable&quot;&gt;--repeat&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; evidence/raw/day-07/clean.json
+
+uv run llm-security-lab &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--experiment&lt;/span&gt; day-07-boundary-crossing-warmup &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--scenario&lt;/span&gt; behavior-only &lt;span class=&quot;token parameter variable&quot;&gt;--repeat&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; evidence/raw/day-07/behavior-only.json
+
+uv run llm-security-lab &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--experiment&lt;/span&gt; day-07-boundary-crossing-warmup &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--scenario&lt;/span&gt; boundary-crossing &lt;span class=&quot;token parameter variable&quot;&gt;--repeat&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; evidence/raw/day-07/boundary-crossing.json&lt;/code&gt;&lt;/pre&gt;
+&lt;h2&gt;三組結果把偏航與跨界拆開了&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;情境&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;任務改寫標記出現在 model response&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;canary 出現在 model response&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Clean&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Behavior-only&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;&lt;strong&gt;3／3&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Boundary-crossing&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;&lt;strong&gt;3／3&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;&lt;strong&gt;3／3&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Behavior-only 三次都改寫了模型任務，卻沒有把 canary 帶進回覆。這組結果就是原本二分法缺少的中間狀態：Prompt Injection 已影響模型行為，但 canary 還沒有跨越本次定義的資料邊界。&lt;/p&gt;
+&lt;p&gt;Boundary-crossing 三次同時出現任務改寫標記與 canary。這組結果才符合本文的攻擊成功條件：不可信筆記取得了超出原定用途的影響力，讓另一份筆記的合成資料進入 model response。&lt;/p&gt;
+&lt;p&gt;三組的 request、fixture evidence 與完整 stdout 都是 3／3 含 canary。原因不是模型三組都洩漏，而是應用程式為了重現實驗，刻意保存完整合成輸入。若只對完整 stdout 搜尋 canary，Clean 和 Behavior-only 都會被誤判。&lt;/p&gt;
+&lt;p&gt;這也提醒另一條邊界：完整 evidence 不是「只是除錯資料」。Evidence 同時保存 fixture、request 與 model response，敏感度可能高於使用者最後看到的回答。正式系統若無條件把 evidence 寫進一般記錄檔，即使模型完全沒有洩漏，應用程式自己仍可能建立另一條曝露路徑。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/first-week-attack-warmup-two-column-path-comparison-v3.png&quot; alt=&quot;資料流圖比較同一個 canary 的兩條觀測路徑：模型路徑只有 Boundary-crossing 的 model response 為 3／3 含 canary；應用程式直接保存完整輸入，因此三組 request、fixture evidence 與 stdout 都是 3／3 含 canary。&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;本次三組結果、runner 設定與 sanitized 報告收在公開的 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-07-boundary-crossing-warmup/evidence/day-07&quot;&gt;Day 7 實驗 checkpoint&lt;/a&gt;，可沿著同一份 evidence 追查上述兩個 predicate。&lt;/p&gt;
+&lt;h2&gt;舊的失敗重跑不再充當證據&lt;/h2&gt;
+&lt;p&gt;之前使用 Day 5 實驗重跑 Attack 時，執行環境在整批測試開始後中斷，沒有留下可解析的模型回覆。那次嘗試只能算執行失敗，不能把期待值補成結果。&lt;/p&gt;
+&lt;p&gt;新的 Day 7 bundle 共執行九次，三批都留下原始 JSON、SHA-256、時間戳記、模型完整 digest、fixture 雜湊與 reporter 驗證結果。新的三組結果是本文主要證據；舊的 Day 5 結果只保留為歷史背景，不再拿來補齊 Day 7。&lt;/p&gt;
+&lt;h2&gt;攻擊成功的是哪一道邊界&lt;/h2&gt;
+&lt;p&gt;這次 Boundary-crossing 可以拆成三段：&lt;/p&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;攻擊筆記
+  └─ 越過允許影響的範圍：從摘要資料變成任務指令
+        └─ 讀取另一份筆記中的 canary
+              └─ 越過模型回覆這個觀測點：把 canary 放進候選回答&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;第一段改寫模型行為，第二段從另一份文件取得資料，第三段才讓影響出現在可觀測輸出。Behavior-only 停在第一段；Boundary-crossing 走完整條路徑。兩者都值得記錄，但不能用同一個「成功／失敗」欄位含糊帶過。&lt;/p&gt;
+&lt;p&gt;這次仍不能稱為對外資料外洩。實驗沒有工具、畫面渲染器或對外通訊，模型回覆只進入本機標準輸出，canary 也是假資料。九次結果只說明這組模型、提示詞、fixture 順序與攻擊指令，不能外推成 Prompt Injection 的通用成功率。&lt;/p&gt;
+&lt;h2&gt;把同一套驗收方法帶回自己的系統&lt;/h2&gt;
+&lt;p&gt;替自己的 LLM 應用做小型攻擊測試時，可以先填六個欄位：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;攻擊者控制哪一份輸入？&lt;/li&gt;
+&lt;li&gt;系統允許攻擊輸入影響什麼，又禁止攻擊輸入決定什麼？&lt;/li&gt;
+&lt;li&gt;哪個訊號只代表模型行為已經偏航？&lt;/li&gt;
+&lt;li&gt;哪一份資料或動作代表真正的資安影響？&lt;/li&gt;
+&lt;li&gt;哪個元件或資料使用位置是主要觀測點？&lt;/li&gt;
+&lt;li&gt;哪些實驗紀錄必須保存，才能區分模型路徑與應用程式自己的輸出路徑？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Prompt Injection 測試不是準備一句「忽略前面指令」就結束。真正有用的熱身，是先把偏航和跨界寫成兩個 predicate，再用最小變因判讀結果。下一篇再拆解：為什麼 Prompt Injection 能讓一份資料影響原本不該由它決定的資料取得行為。&lt;/p&gt;
+&lt;h2&gt;名詞說明&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;canary 在這指刻意放進實驗資料的無害測試標記。只要這串獨特文字出現在原本不該到達的輸出，就能證明資料跨過預定邊界；canary 本身不是正式環境的金鑰或個人資料。&lt;/li&gt;
+&lt;li&gt;sink 在這指資料最後被使用、輸出，或觸發後續動作的位置。&lt;/li&gt;
+&lt;li&gt;predicate 在這指可以由程式判斷為真或假的驗收條件。&lt;/li&gt;
+&lt;li&gt;fixture 在這指為了重複測試而準備、內容固定的合成資料。&lt;/li&gt;
+&lt;li&gt;digest 在這指用來確認模型版本與內容相同的完整雜湊指紋。&lt;/li&gt;
+&lt;li&gt;任務改寫標記在這指攻擊筆記要求模型輸出的另一串無害固定文字，只用來判斷模型是否服從攻擊指令，不代表資料已經跨界。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP Cheat Sheet Series — LLM Prompt Injection Prevention&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-07-boundary-crossing-warmup/evidence/day-07&quot;&gt;LLM Application Security Lab — Day 7 checkpoint&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;!-- ironman-cross-publication:start --&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本文同步刊載於 &lt;a href=&quot;https://ithelp.ithome.com.tw/articles/10403199&quot;&gt;iThome 鐵人賽&lt;/a&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!-- ironman-cross-publication:end --&gt;
+&lt;!-- series-nav:start --&gt;
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 7／30 篇&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/&quot;&gt;上一篇：模型只能提案，不能替自己授權：信任邊界與資料的影響範圍&lt;/a&gt; · 下一篇：Prompt Injection 原理拆解&lt;/p&gt;
+&lt;!-- series-nav:end --&gt;
+</content>
+  </entry>
   
   <entry>
     <title>模型只能提案，不能替自己授權：信任邊界與資料的影響範圍</title>
@@ -241,7 +430,7 @@ content &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; read_authori
 &lt;!-- series-nav:start --&gt;
 &lt;hr /&gt;
 &lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 6／30 篇&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/&quot;&gt;上一篇：對 LLM 應用做威脅建模&lt;/a&gt; · 下一篇：第一階段回顧與小型攻擊熱身&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-14-threat-modeling-llm-apps/&quot;&gt;上一篇：對 LLM 應用做威脅建模&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/&quot;&gt;下一篇：第一階段回顧與小型攻擊熱身&lt;/a&gt;&lt;/p&gt;
 &lt;!-- series-nav:end --&gt;
 </content>
   </entry>
@@ -1865,276 +2054,6 @@ Keep all assets local, render a poster and contact sheet, then verify determinis
 &lt;li&gt;&lt;a href=&quot;https://agentskills.io/specification&quot;&gt;Agent Skills Specification&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://agentskills.io/skill-creation/best-practices&quot;&gt;Best practices for skill creators&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/skill-lottie-maker&quot;&gt;&lt;code&gt;FWcloud916/skill-lottie-maker&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</content>
-  </entry>
-  
-  <entry>
-    <title>文件也需要 CI：從行數預算、術語裁決到 Fresh Session Test</title>
-    <link href="https://imfw.io/posts/2026/2026-07-30-docs-need-ci/"/>
-    <updated>2026-07-30T00:00:00Z</updated>
-    <id>https://imfw.io/posts/2026/2026-07-30-docs-need-ci/</id>
-    <content type="html">&lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-07-30 依 &lt;a href=&quot;https://github.com/FWcloud916/skill-doc-architect/pull/1&quot;&gt;skill-doc-architect PR #1&lt;/a&gt; 的合併內容、該 repo &lt;code&gt;origin/main&lt;/code&gt; 的實際檔案，以及 Anthropic 官方文章查核。行數、預算值與 eval 數量取自 PR 合併後狀態；上游後續可能變動。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;加了一整個新模組，檔案反而變短了。&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;doc-architect&lt;/code&gt; 這次的重構塞進一個完整的 &lt;code&gt;CONTEXT.md&lt;/code&gt; 專案詞彙表模組——樣板、四個 mode 的接線、三個新 eval scenario、Fresh Session Test 多一道題——&lt;code&gt;SKILL.md&lt;/code&gt; 從 225 行降到 &lt;strong&gt;216 行&lt;/strong&gt;。這 9 行是&lt;strong&gt;含&lt;/strong&gt;新模組接線之後的淨值。&lt;/p&gt;
-&lt;p&gt;這不是壓縮技巧。是因為那個檔案的長度從頭到尾有東西在管：&lt;code&gt;verify.sh&lt;/code&gt; 有一條行數預算檢查，而且預算會跟著實際行數往下棘輪。&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-07-29-script-gated-skills/&quot;&gt;上一篇&lt;/a&gt;講的是 skill 的散文哪些能刪、哪些必須編進 script。這篇把同一個判準套到專案文件上，而且發現需要保證的不只一層。&lt;/p&gt;
-&lt;h2&gt;為什麼文件靠自律守不住&lt;/h2&gt;
-&lt;p&gt;文件腐壞的方式不是隨機的，它有固定的三種。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;長度會漲。&lt;/strong&gt; 每次補一段都合理，沒有任何一次補充該被擋下來，但半年後沒有人願意從頭讀完。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;詞彙會漂。&lt;/strong&gt; 同一個東西在 README 叫 A、在架構文件叫 B、在程式碼註解叫 C。每一次改名都是局部正確的，錯的是沒有人有權說「以後一律叫 A」。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;正確性會過期。&lt;/strong&gt; 文件寫的時候是對的，程式變了以後沒人回頭改。而且最糟的是——沒有人會知道，因為沒有任何機制會因此變紅。&lt;/p&gt;
-&lt;p&gt;這三種腐壞的共同點：&lt;strong&gt;發生的當下都不會痛&lt;/strong&gt;。所以靠「大家記得維護」是沒有用的，那等於把成本推給半年後的自己。&lt;/p&gt;
-&lt;p&gt;要擋下來，得有三層不同的保證。&lt;/p&gt;
-&lt;h2&gt;第一層：長度是預算，不是自律&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;doc-architect&lt;/code&gt; 的 &lt;code&gt;verify.sh&lt;/code&gt; 有這麼一段：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;report &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;&lt;span class=&quot;token variable&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;$skill_lines&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-le&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;216&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;token builtin class-name&quot;&gt;echo&lt;/span&gt; $?&lt;span class=&quot;token variable&quot;&gt;)&lt;/span&gt;&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;SKILL.md within 216-line budget&quot;&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;$skill_lines&lt;/span&gt; lines&quot;&lt;/span&gt;
-report &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;&lt;span class=&quot;token variable&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;$agents_lines&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;-le&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;100&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;token builtin class-name&quot;&gt;echo&lt;/span&gt; $?&lt;span class=&quot;token variable&quot;&gt;)&lt;/span&gt;&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;AGENTS.md within 100-line budget&quot;&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;&lt;span class=&quot;token variable&quot;&gt;$agents_lines&lt;/span&gt; lines&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;code&gt;SKILL.md&lt;/code&gt; 不得超過 216 行，&lt;code&gt;AGENTS.md&lt;/code&gt; 不得超過 100 行。超過就 CI 紅燈。&lt;/p&gt;
-&lt;p&gt;有意思的不是有預算，是&lt;strong&gt;預算會往下棘輪&lt;/strong&gt;——像棘輪扳手，順向轉得動，反向卡死。這次重構把它從 225 改成 216，改的是上限本身。行數降下來之後，上限跟著鎖到新的位置：往下隨時可以，往上就卡住了。&lt;/p&gt;
-&lt;p&gt;這跟「我們盡量維持文件精簡」的差別在哪？差在&lt;strong&gt;放寬的成本&lt;/strong&gt;。&lt;/p&gt;
-&lt;p&gt;自律的版本裡，多寫十行不需要任何人同意，甚至不會有人發現。棘輪的版本裡，多寫十行會讓 CI 紅，你得先把 &lt;code&gt;verify.sh&lt;/code&gt; 那條 216 行的檢查改掉才過得去。&lt;/p&gt;
-&lt;p&gt;改那個數字是兩秒鐘的事，技術難度幾乎是零。但那個改動會進 diff、會被 reviewer 看到、會被問為什麼。真正被提高的不是門檻，是&lt;strong&gt;可見度&lt;/strong&gt;——文件變長從靜默發生，變成一個要具名負責的決定。&lt;/p&gt;
-&lt;figure class=&quot;article-lottie&quot; data-lottie-src=&quot;/assets/lottie/docs-need-ci-line-budget-ratchet.json&quot;&gt;
-  &lt;div class=&quot;article-lottie__stage&quot; role=&quot;img&quot; aria-label=&quot;行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。&quot;&gt;
-    &lt;img eleventy:ignore=&quot;&quot; src=&quot;https://imfw.io/assets/images/docs-need-ci-line-budget-ratchet-poster.jpg&quot; alt=&quot;行數預算從舊上限 225 降到新上限 216 後鎖定；若要放寬，必須修改 verify.sh，讓變更出現在 diff 並由 reviewer 決定。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; /&gt;
-  &lt;/div&gt;
-  &lt;figcaption&gt;行數預算一旦下降，放寬就必須留下可 review 的 diff。&lt;/figcaption&gt;
-&lt;/figure&gt;
-&lt;p&gt;這也解釋了為什麼加模組還能變短。當長度是會紅的數字，新增內容就不再是「往後面加一段」，而是一道必須先回答的題目：這 9 行要從哪裡挪出來？&lt;/p&gt;
-&lt;p&gt;這次挪出來的地方很具體，三個都是同一種病：&lt;strong&gt;同一份規則被抄了兩份&lt;/strong&gt;。&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Mode B 的偵測順序，本來在流程裡寫一次、在 stacks 索引裡又寫一次 → 只留索引那份&lt;/li&gt;
-&lt;li&gt;混合／monorepo 專案的處置規則，散在偵測步驟與規劃步驟 → 收進「Plan before you write」&lt;/li&gt;
-&lt;li&gt;互動與 headless 的行為差異，本來每個 mode 各講一次 → 收進 Definition of Done 與稽核清單第六節&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;剩下的就是逐句 no-op 掃描——模型本來就會做的事，整句刪掉。&lt;/p&gt;
-&lt;p&gt;預算不是在懲罰寫作，是在強迫每次新增都先做一次刪除。而被逼著刪的時候，最先浮出來的永遠是重複，不是有用的內容。&lt;/p&gt;
-&lt;h2&gt;第二層：詞彙有人裁決，而且那個人是使用者&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;CONTEXT.md&lt;/code&gt; 是這次新增的 opt-in 模組，專門處理術語漂移。它的樣板開頭寫得很直接：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;專案根目錄的詞彙表——&lt;strong&gt;關於東西叫什麼的裁決&lt;/strong&gt;。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;不是「詞彙說明」，是裁決。這個用字差別是整個模組的設計核心。&lt;/p&gt;
-&lt;p&gt;它記三種東西：canonical 名稱與定義、&lt;code&gt;_Avoid_&lt;/code&gt; 該避免的同義詞、以及已經被裁定的歧義。第三種長這樣：&lt;/p&gt;
-&lt;pre class=&quot;language-markdown&quot;&gt;&lt;code class=&quot;language-markdown&quot;&gt;&lt;span class=&quot;token title important&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;##&lt;/span&gt; Flagged ambiguities&lt;/span&gt;
-
-&lt;span class=&quot;token list punctuation&quot;&gt;-&lt;/span&gt; &quot;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;word&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt;&quot; 同時指 &lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;X&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt; 與 &lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;Y&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt;；&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;date&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt; 裁定為 &lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;X&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt;。&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;Y&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt; 現在叫 &quot;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;term&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt;&quot;。&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;記下來的不只是結論，還有&lt;strong&gt;這個結論是什麼時候被誰定的&lt;/strong&gt;。半年後有人想改回去，他面對的不是模糊的慣例，是一筆有日期的決議。&lt;/p&gt;
-&lt;h3&gt;誰有權裁決&lt;/h3&gt;
-&lt;p&gt;樣板裡最關鍵的一句：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;Rulings are decisions, not facts.&lt;/strong&gt; A canonical name and its Avoid list are chosen by the user, never derived from the code alone.&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;裁決是決定，不是事實。canonical 名稱與它的 Avoid 清單由&lt;strong&gt;使用者&lt;/strong&gt;選定，永遠不能單從程式碼推導出來。&lt;/p&gt;
-&lt;p&gt;這條規則接下來變成一個具體的權限邊界：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;互動執行&lt;/strong&gt;：一次裁決一個詞，給候選、給推薦的裁決、附一行理由，由使用者拍板&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Headless 執行&lt;/strong&gt;：每個候選詞一律標記 &lt;code&gt;proposed — pending ruling&lt;/code&gt;，決定保持開放&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;agent 可以偵測到「這個東西在三個地方有三個名字」——那是事實，可以從程式碼與文件推導。但「以後統一叫哪個」不是事實，那是取捨，牽涉到團隊習慣、對外文件、既有程式碼的改名成本。agent 沒有那個資訊，也不該假裝有。&lt;/p&gt;
-&lt;p&gt;這個 repo 自己的 &lt;code&gt;CONTEXT.md&lt;/code&gt; 就誠實地留著 &lt;code&gt;proposed — pending ruling&lt;/code&gt;：&lt;/p&gt;
-&lt;pre class=&quot;language-markdown&quot;&gt;&lt;code class=&quot;language-markdown&quot;&gt;&lt;span class=&quot;token bold&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;token content&quot;&gt;Doc set&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;**&lt;/span&gt;&lt;/span&gt; — the modular output a mode produces: core files plus selected modules.
-&lt;span class=&quot;token italic&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;token content&quot;&gt;Avoid&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;_&lt;/span&gt;&lt;/span&gt;: doc suite (proposed — pending ruling)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;它知道 &lt;code&gt;doc suite&lt;/code&gt; 是漂移，但它沒有自己拍板。這比一份看起來很完整、其實混了一堆 agent 自行決定的詞彙表誠實得多。&lt;/p&gt;
-&lt;h3&gt;預算再出現一次&lt;/h3&gt;
-&lt;p&gt;&lt;code&gt;CONTEXT.md&lt;/code&gt; 也有硬預算：&lt;strong&gt;約 80 行&lt;/strong&gt;。理由寫在樣板裡：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;價值來自裁決密度，不是完整性——一個詞要值得一則條目，前提是叫錯它會造成真正的工作損失。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;超過預算時，最無關痛癢的詞先被砍掉。&lt;/p&gt;
-&lt;p&gt;還有一條劃界規則：&lt;code&gt;CONTEXT.md&lt;/code&gt; 管&lt;strong&gt;命名&lt;/strong&gt;，&lt;code&gt;docs/domain-models.md&lt;/code&gt; 管&lt;strong&gt;結構&lt;/strong&gt;（實體、欄位、關聯、ER 圖）。同時出現在兩邊的詞，用相對路徑連過去，不重述——重述就是 duplication，review 會擋。&lt;/p&gt;
-&lt;h3&gt;四個 mode 各自怎麼接&lt;/h3&gt;
-&lt;p&gt;這個模組不是加一個檔案就算完，它要接進四種既有的執行流程，而&lt;strong&gt;每一種的權限都不一樣&lt;/strong&gt;：&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;Mode&lt;/th&gt;
-&lt;th&gt;情境&lt;/th&gt;
-&lt;th&gt;對詞彙做什麼&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;B&lt;/td&gt;
-&lt;td&gt;從既有程式碼建文件&lt;/td&gt;
-&lt;td&gt;抽取術語，並偵測同義詞漂移&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;G&lt;/td&gt;
-&lt;td&gt;新專案訪談&lt;/td&gt;
-&lt;td&gt;訪談中使用者造的詞當場收集成候選&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;U-1&lt;/td&gt;
-&lt;td&gt;依 diff 增量更新&lt;/td&gt;
-&lt;td&gt;diff 帶進來的新詞&lt;strong&gt;只當候選&lt;/strong&gt;，裁決留給使用者&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;U-2&lt;/td&gt;
-&lt;td&gt;全面稽核&lt;/td&gt;
-&lt;td&gt;用 grep 檢查既有裁決有沒有被違反&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;U-1 那一列最值得看。增量更新是最常跑的模式，也最容易順手把新詞「就這樣定下來」——規則明講了不行，diff 引入的詞一律只是候選。&lt;/p&gt;
-&lt;p&gt;而 U-2 用 grep 檢查裁決，這是三層保證裡少數真正&lt;strong&gt;自動&lt;/strong&gt;的部分：裁決一旦落地，違反它就是可偵測的字串比對，不需要人記得。&lt;/p&gt;
-&lt;p&gt;至於這個模組什麼時候該生成，doc-set 表的條件也不是「有詞彙就生」：Mode B 要抽取真的找到，Mode G 要訪談浮出&lt;strong&gt;至少三個&lt;/strong&gt;需要定義的詞。門檻不到就不生——一份只有兩個詞的詞彙表沒有裁決密度，只是多一個要維護的檔案。&lt;/p&gt;
-&lt;h2&gt;第三層：驗收要由不知情的人做&lt;/h2&gt;
-&lt;p&gt;前兩層管的是文件的形狀，管不了它是不是&lt;strong&gt;真的能用&lt;/strong&gt;。&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;doc-architect&lt;/code&gt; 的答案是 Fresh Session Test：一個只有這個 repo 當上下文的 agent，回答六個固定問題，而且每個答案都要標明出處在文件的哪一節。&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;#&lt;/th&gt;
-&lt;th&gt;問題&lt;/th&gt;
-&lt;th&gt;預期出處&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;1&lt;/td&gt;
-&lt;td&gt;這個系統是什麼？&lt;/td&gt;
-&lt;td&gt;README 第一段 / AGENTS.md 身分句&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;2&lt;/td&gt;
-&lt;td&gt;它怎麼組織的？&lt;/td&gt;
-&lt;td&gt;project-overview §3–4&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;3&lt;/td&gt;
-&lt;td&gt;我怎麼把它跑起來？&lt;/td&gt;
-&lt;td&gt;README Quickstart / AGENTS.md Commands&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;4&lt;/td&gt;
-&lt;td&gt;我怎麼驗證我的工作？&lt;/td&gt;
-&lt;td&gt;test + lint 命令&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;5&lt;/td&gt;
-&lt;td&gt;這個 repo 追蹤什麼工作狀態？&lt;/td&gt;
-&lt;td&gt;&lt;code&gt;PROGRESS.md&lt;/code&gt;；沒有就答 &lt;code&gt;N/A&lt;/code&gt;&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;6&lt;/td&gt;
-&lt;td&gt;核心術語是什麼意思，避免哪些同義詞？&lt;/td&gt;
-&lt;td&gt;&lt;code&gt;CONTEXT.md&lt;/code&gt; §Language&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;第六題是這次新增的，而且&lt;strong&gt;只有在 &lt;code&gt;CONTEXT.md&lt;/code&gt; 存在時才問&lt;/strong&gt;。沒有詞彙表的專案不會被問一個它答不出來的問題——這避免了「為了通過測試而硬生一份沒有裁決密度的詞彙表」。&lt;/p&gt;
-&lt;h3&gt;為什麼不能自己扮演&lt;/h3&gt;
-&lt;p&gt;這一節最關鍵的設計理由寫在稽核清單裡：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;在剛寫完文件的同一個 session 裡自我模擬「一個只有 repo 當上下文的 agent」，並不是真的乾淨上下文——它記得自己剛做過的每一個決定，因此會&lt;strong&gt;系統性地高估文件品質&lt;/strong&gt;。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;這句話點破的東西很實在。文件寫完後自問「這樣夠清楚嗎」，答案幾乎必然是「夠」，因為問的人腦子裡還留著所有沒寫進文件的背景。這不是不誠實，是結構性的盲點。&lt;/p&gt;
-&lt;p&gt;所以做法是實際去 spawn 一個&lt;strong&gt;沒有任何對話歷史&lt;/strong&gt;的 headless 子行程，把答案以 JSON 收回來。引用規則卡得很死：Q1–Q4 的引用必須指名真實存在的 Markdown 檔；&lt;code&gt;PROGRESS.md&lt;/code&gt; 不存在時要用一字不差的 &lt;code&gt;PROGRESS.md absent at repository root&lt;/code&gt;；Q6 的引用必須指名 &lt;code&gt;CONTEXT.md&lt;/code&gt;。&lt;/p&gt;
-&lt;p&gt;不接受「我讀過了」這種自我宣稱，答案必須指得出來源——跟上一篇談的 script gate 是同一個手法：把「我有做」換成「我做了而且這裡是證據」。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/docs-need-ci-fresh-session-blind-spot.png&quot; alt=&quot;比較同一 session 自我模擬與獨立 headless 子行程：前者記得剛做過的每個決定、系統性高估文件品質、必須標記 degraded，不算獨立通過；後者零對話歷史、六題答案回傳 JSON、引用必須指名真實檔案，才算獨立通過&quot; /&gt;&lt;/p&gt;
-&lt;h3&gt;降級要說出來&lt;/h3&gt;
-&lt;p&gt;獨立執行器不可用時可以退回自我模擬，但規則要求標記 &lt;code&gt;degraded — independent runner unavailable&lt;/code&gt;，而且 &lt;strong&gt;MUST NOT&lt;/strong&gt; 報告成獨立通過或無條件的 &lt;code&gt;complete&lt;/code&gt;。&lt;/p&gt;
-&lt;p&gt;還有一句寫得特別好：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;供應商暫時失敗是重試或記錄降級的理由，不是捏造綠燈結果的理由。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;這條規則防的是最隱蔽的一種失效——不是文件爛，是&lt;strong&gt;驗收本身被摸魚&lt;/strong&gt;。而摸魚在事後幾乎看不出來，因為紀錄上就是一個通過。&lt;/p&gt;
-&lt;p&gt;評分則刻意留在原本的 session：腳本只負責提供答案，判斷「這是阻斷性缺口、通過、還是誠實的 TBD」仍然是規則的事。取得證據與判讀證據分開，跟第二層把「偵測漂移」與「裁決名稱」分開是同一種切法。&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;test_fresh_session.py&lt;/code&gt; 對 5 題與 6 題兩種形狀都有測試，11 個 case 全過。&lt;/p&gt;
-&lt;h2&gt;Mode G：把訪談本身當介面設計&lt;/h2&gt;
-&lt;p&gt;前三層都是產出物的保證。這次還改了一個容易被忽略的東西：&lt;strong&gt;取得資訊的過程&lt;/strong&gt;。&lt;/p&gt;
-&lt;p&gt;Greenfield 模式要訪談使用者才知道專案要做什麼。改法有四條：&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;一次問一題，等答案，讓答案決定下一題。&lt;/strong&gt; 不是一次丟十個問題的表單。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;事實自己先查。&lt;/strong&gt; 現有檔案、git 狀態、既有文件——這些 agent 自己看得到的東西不准拿來問。原文的說法是：問題只花在&lt;strong&gt;決策&lt;/strong&gt;上。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;每個問題自帶建議。&lt;/strong&gt; 語言、框架、架構形狀、資料庫、初始目錄結構、linter，每一個開放決策都要附 2–3 個候選、一個&lt;strong&gt;標記出來的推薦&lt;/strong&gt;，加一行理由。不是把選擇丟回去讓使用者自己想。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;已經決定的不重新翻案。&lt;/strong&gt; 原文寫得很白：record, don&#39;t re-litigate。&lt;/p&gt;
-&lt;p&gt;還有一條同樣重要：沒決定的區塊一律寫 &lt;code&gt;TBD — not yet designed&lt;/code&gt;，&lt;strong&gt;絕不默默填上&lt;/strong&gt;。而且每個 TBD 都要標記它的回訪觸發條件（例如「等第一批 model 落地後」）。&lt;/p&gt;
-&lt;p&gt;這四條合起來，其實就是把一場對話當成介面在設計：輸入要驗證（事實自己查）、每次只處理一個決定、選項要窮舉並標出預設值、未定義的狀態要顯式存在而不是留空。&lt;/p&gt;
-&lt;p&gt;Headless 模式則直接跳過訪談，從請求裡取決策，其餘一律誠實 TBD。同一個 skill、同樣的規則，只是少了那個可以回答問題的人。&lt;/p&gt;
-&lt;h2&gt;一個把「別給範例」變成實測的小實驗&lt;/h2&gt;
-&lt;p&gt;上一篇提過 Anthropic 那份 Then/Now 表格裡的第二條：&lt;strong&gt;提供使用範例 → 設計更有表達力的介面&lt;/strong&gt;。那時我只能從設計層面論證它。這個 PR 裡有一個直接的實測。&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;AGENTS.md&lt;/code&gt; 的樣板本來在「Hard constraints」那節給了三行示範：&lt;/p&gt;
-&lt;pre class=&quot;language-markdown&quot;&gt;&lt;code class=&quot;language-markdown&quot;&gt;&lt;span class=&quot;token list punctuation&quot;&gt;-&lt;/span&gt; MUST run &lt;span class=&quot;token code-snippet code keyword&quot;&gt;`&amp;lt;test command&gt;`&lt;/span&gt; and see it pass before declaring any task done (source: CI gate)
-&lt;span class=&quot;token list punctuation&quot;&gt;-&lt;/span&gt; MUST NOT edit &lt;span class=&quot;token code-snippet code keyword&quot;&gt;`&amp;lt;generated dir&gt;`&lt;/span&gt; by hand — regenerate via &lt;span class=&quot;token code-snippet code keyword&quot;&gt;`&amp;lt;tool&gt;`&lt;/span&gt; (source: &lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;config&lt;/span&gt; &lt;span class=&quot;token attr-name&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt;)
-&lt;span class=&quot;token list punctuation&quot;&gt;-&lt;/span&gt; MUST NOT commit directly to &lt;span class=&quot;token code-snippet code keyword&quot;&gt;`&amp;lt;default branch&gt;`&lt;/span&gt; (source: repo settings / team rule)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;看起來很合理——告訴模型約束長什麼樣子。實際行為卻是：模型去&lt;strong&gt;抄這三行的形狀&lt;/strong&gt;，然後在目標 repo 裡找對應的東西填進去，而不是去找那個 repo 真正的約束是什麼。範例變成了天花板。&lt;/p&gt;
-&lt;p&gt;改法是整段拿掉，換成把介面本身定義清楚：&lt;/p&gt;
-&lt;pre class=&quot;language-markdown&quot;&gt;&lt;code class=&quot;language-markdown&quot;&gt;&amp;lt;Non-negotiables only — the rules that break the build, the data, or the team&#39;s
-process if violated. ≤ 15. Each is a MUST / MUST NOT with its source in
-parentheses, found in THIS repo&#39;s config, CI, and team rules — the test-gate rule
-is always one of them.&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;規格說清楚了：格式（MUST／MUST NOT + 括號註明來源）、上限（≤ 15）、來源在哪裡找（這個 repo 的 config、CI、團隊規則）、以及唯一一條永遠成立的（測試關卡）。三行示範刪掉，淨變動 −5/+3 行。&lt;/p&gt;
-&lt;p&gt;驗證方式是跑一輪 live 10-scenario sweep 確認行為沒退步。&lt;/p&gt;
-&lt;p&gt;同一批還有第二個實驗：&lt;code&gt;SKILL.md&lt;/code&gt; 裡的共用慣例本來重複寫在多處，收成一個指標 bullet，規則本體留在樣板與稽核清單。&lt;/p&gt;
-&lt;p&gt;兩個實驗都在 2026-07-24 那篇官方文章之後才驗證——PR 的敘述沒有掩飾這個順序。這不是獨立收斂後被印證，是拿官方的建議當假設，在自己的 repo 上跑了一次。&lt;/p&gt;
-&lt;h2&gt;代價與證據&lt;/h2&gt;
-&lt;p&gt;這些保證不是免費的。這個 PR 動了 52 個檔案、+1328/−228，從建立到合併跨了兩天（2026-07-28 → 07-29），版本 2.3.0 → 2.4.0。&lt;/p&gt;
-&lt;p&gt;驗證的部分：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;eval scenario &lt;strong&gt;7 → 10&lt;/strong&gt;，新增的三個都針對詞彙表（&lt;code&gt;context-term-drift&lt;/code&gt;、&lt;code&gt;context-no-terms-skip&lt;/code&gt;、&lt;code&gt;context-avoid-drift-audit&lt;/code&gt;）&lt;/li&gt;
-&lt;li&gt;trigger matrix &lt;strong&gt;16 → 18&lt;/strong&gt; 條&lt;/li&gt;
-&lt;li&gt;live detection sweep &lt;strong&gt;35/35&lt;/strong&gt;，重構前後各跑一次&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;test_fresh_session.py&lt;/code&gt; &lt;strong&gt;11/11&lt;/strong&gt;，涵蓋 5 題與 6 題兩種形狀&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;其中 live sweep 抓到了兩個&lt;strong&gt;潛伏的契約不一致&lt;/strong&gt;——不是這次改動造成的，是本來就在那裡、只是沒人踩到。修法是從契約端修（vscode-extension 的 &lt;code&gt;build-tooling&lt;/code&gt; 角色改成 additive、evidence 明確限定為 file-only），不是改測試讓它過。&lt;/p&gt;
-&lt;p&gt;description 那一段也順手瘦了：11 行/100 字 → 9 行/約 85 字。作法跟上一篇一樣——刪掉本文已經講過的身分句，每個 mode 給恰好一個 trigger、各配一個中文例子。全部 16 條 trigger matrix 條目逐條走過，確認 &lt;code&gt;generated&lt;/code&gt; 與 &lt;code&gt;endpoint descriptions&lt;/code&gt; 這兩個詞真的在承重，留下。&lt;/p&gt;
-&lt;p&gt;有一項誠實地沒打勾：互動式 Mode G 的實機測試，因為它需要一個真人受訪者。這件事寫在 PR 的 test plan 裡沒有假裝完成。&lt;/p&gt;
-&lt;h2&gt;三層之間的關係&lt;/h2&gt;
-&lt;p&gt;回頭看，三層保證各自擋掉一種腐壞，而且&lt;strong&gt;擋不住彼此的&lt;/strong&gt;：&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;腐壞&lt;/th&gt;
-&lt;th&gt;保證&lt;/th&gt;
-&lt;th&gt;機制&lt;/th&gt;
-&lt;th&gt;誰有權放寬&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;長度會漲&lt;/td&gt;
-&lt;td&gt;行數預算 + 棘輪&lt;/td&gt;
-&lt;td&gt;&lt;code&gt;verify.sh&lt;/code&gt; 數行數，CI 紅燈&lt;/td&gt;
-&lt;td&gt;改 &lt;code&gt;verify.sh&lt;/code&gt;，diff 可見&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;詞彙會漂&lt;/td&gt;
-&lt;td&gt;&lt;code&gt;CONTEXT.md&lt;/code&gt; 裁決&lt;/td&gt;
-&lt;td&gt;canonical + &lt;code&gt;_Avoid_&lt;/code&gt; + 歧義紀錄&lt;/td&gt;
-&lt;td&gt;只有使用者，headless 一律 pending&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;正確性過期&lt;/td&gt;
-&lt;td&gt;Fresh Session Test&lt;/td&gt;
-&lt;td&gt;無上下文 agent + 引用驗證&lt;/td&gt;
-&lt;td&gt;沒有人——通不過就是通不過&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;有預算但沒有詞彙裁決，你會得到一份很短、但每個名詞都在漂的文件。有詞彙表但沒有驗收，你會得到一份自洽、但跟程式碼脫節的文件。三層都有，才是完整的。&lt;/p&gt;
-&lt;p&gt;至於順序，我的判斷是先做&lt;strong&gt;驗收&lt;/strong&gt;。行數預算和詞彙表都需要先知道文件到底哪裡沒用——Fresh Session Test 會直接告訴你。&lt;/p&gt;
-&lt;h2&gt;可以照做的五步&lt;/h2&gt;
-&lt;p&gt;不用整套搬過來，這五步各自獨立有效：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;先跑一次假的 fresh session。&lt;/strong&gt; 開一個沒有上下文的對話，只給它 repo，問那六題。答不出來的就是你的文件破口——這一步不需要任何工具。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;量現在的行數，把它寫成上限。&lt;/strong&gt; 不是訂一個理想值，是把&lt;strong&gt;今天的實際行數&lt;/strong&gt;寫進 CI。之後只能往下改。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;超過上限時先問「刪哪裡」。&lt;/strong&gt; 答案通常是重複的段落，不是有用的內容。找那些同一份規則被抄了兩份的地方。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;詞彙表只收會痛的詞。&lt;/strong&gt; 叫錯了會造成真正工作損失的才值得一則條目。訂個約 80 行的上限，寫下 canonical 名稱、該避免的同義詞、以及裁決日期。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;裁決留給人。&lt;/strong&gt; agent 可以偵測漂移、可以提候選、可以給推薦，但「以後統一叫哪個」是人的決定。沒人拍板就誠實寫「待裁決」，不要自己填。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;第 1 步做完通常就會知道 2–5 要從哪裡開始。&lt;/p&gt;
-&lt;p&gt;上一篇的結論是「Prompt 越刪越短的前提，是介面越做越硬」。換到文件上是同一件事：文件能維持可讀，前提是有東西在管它的長度、名字和正確性，而那個東西不能是自律。&lt;/p&gt;
-&lt;h2&gt;參考資料&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/skill-doc-architect/pull/1&quot;&gt;skill-doc-architect PR #1：Grill-pruned SKILL.md, tightened trigger description, Mode G grilling, CONTEXT.md glossary module (2.4.0)&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/skill-doc-architect&quot;&gt;skill-doc-architect&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models&quot;&gt;Anthropic：The new rules of context engineering for Claude 5 generation models&lt;/a&gt;（2026-07-24）&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/mattpocock/skills/blob/main/skills/productivity/writing-great-skills/SKILL.md&quot;&gt;mattpocock/skills：writing-great-skills&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;本站前一篇：&lt;a href=&quot;https://imfw.io/posts/2026/2026-07-29-script-gated-skills/&quot;&gt;Script-Gated Skills：當 Anthropic 說「刪掉 80% 系統提示」，哪些東西不能刪&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </content>
   </entry>
