@@ -4,12 +4,186 @@
   <subtitle>FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。</subtitle>
   <link href="https://imfw.io/feed.xml" rel="self"/>
   <link href="https://imfw.io/"/>
-  <updated>2026-08-16T00:00:00Z</updated>
+  <updated>2026-08-17T00:00:00Z</updated>
   <id>https://imfw.io/</id>
   <author>
     <name>FW</name>
   </author>
   
+  
+  <entry>
+    <title>Prompt Injection 原理拆解</title>
+    <link href="https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/"/>
+    <updated>2026-08-17T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/</id>
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-08-07 查核 &lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP LLM Prompt Injection Prevention Cheat Sheet&lt;/a&gt;、Instruction Hierarchy 與 StruQ 原始論文，以及 Ollama 官方 API 文件；實驗證據來自 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab&quot;&gt;LLM Application Security Lab&lt;/a&gt; 的 32 次 Day 8 獨立實驗。模型、推論環境與研究結果可能更新；Day 8 證據已封存在公開的 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-08-prompt-injection-mechanism/evidence/day-08&quot;&gt;Day 8 checkpoint&lt;/a&gt;，讀者可直接查閱。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;這篇先把實驗中的兩種 system prompt 說清楚。&lt;code&gt;baseline&lt;/code&gt; 是 Day 4 沿用的原始 system prompt；
+&lt;code&gt;reinforced&lt;/code&gt; 是只加強 instruction hierarchy、其餘攻擊筆記與 user request 都不變的版本。本文把
+「失守」限定為模型服從攻擊格式，並把另一份筆記的 canary 帶進 model response；下一段 3／10 與
+0／10 的分母，都是十次固定 sampling 的 run，不是所有模型的通用成功率。&lt;/p&gt;
+&lt;p&gt;使用同一段攻擊筆記時，baseline system prompt 失守 3／10；換成更明確的 system prompt 後，模型失守次數降至 0／10。這代表 Prompt Injection 被修好了嗎？&lt;/p&gt;
+&lt;p&gt;我的判斷是：&lt;strong&gt;Reinforced prompt 降低模型失守機率，卻沒有替系統建立安全邊界。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;我一開始認為，問題來自模型沒有邊界，加上隨機性不會完全消失。這個想法卻碰到一個反例：固定 &lt;code&gt;temperature=0&lt;/code&gt; 並使用同一個 seed 時，模型仍連續三次服從惡意筆記。既然失敗能在固定條件下重現，就不能只用隨機性解釋。&lt;/p&gt;
+&lt;h2&gt;攻擊不是資料突然變成程式碼&lt;/h2&gt;
+&lt;p&gt;傳統 parser 會把指令、參數與文字節點分成不同型別。一般 LLM 沒有同樣的強制隔離；即使用 &lt;code&gt;&amp;lt;reference_notes&amp;gt;&lt;/code&gt; 包住筆記，模型看到的仍是包含多種自然語言要求的 context。&lt;/p&gt;
+&lt;p&gt;一條最小 Prompt Injection 路徑可以拆成五步：&lt;/p&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;攻擊者控制的文字
+  → 應用程式把文字序列化進 context
+  → 資料內容與原任務形成 competing instructions
+  → 模型產生候選回覆
+  → 應用程式接受回覆，送往畫面、記錄檔、工具或其他 sink&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP&lt;/a&gt;指出，自然語言指令與資料之間缺乏清楚分隔，是 Prompt Injection 的核心差異。&lt;a href=&quot;https://arxiv.org/abs/2404.13208&quot;&gt;Instruction Hierarchy&lt;/a&gt;也指出，chat model 雖能區分 system、user 與 tool message，指令衝突時仍可能套用錯誤優先順序。研究者因此另外訓練模型學會 instruction privilege，不是只多寫一句「永遠不要忽略我」。&lt;/p&gt;
+&lt;p&gt;真正的結構化防線也不等於多放幾個標籤。&lt;a href=&quot;https://www.usenix.org/conference/usenixsecurity25/presentation/chen-sizhe&quot;&gt;StruQ&lt;/a&gt;同時使用 secure front-end 與專門訓練的模型。把一般模型前面的 &lt;code&gt;&amp;lt;note&amp;gt;&lt;/code&gt; 換成 &lt;code&gt;&amp;lt;untrusted_note&amp;gt;&lt;/code&gt;，只會增加語意提示，不會憑空長出權限系統。&lt;/p&gt;
+&lt;h2&gt;三個 predicate 才看得出攻擊走到哪裡&lt;/h2&gt;
+&lt;p&gt;前一篇已把「模型偏航」與「資料跨界」拆開。這次實驗再加入「原任務是否完成」這項判定，避免把全面拒絕或空白回覆誤判為安全。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Predicate&lt;/th&gt;
+&lt;th&gt;回答的問題&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;target marker&lt;/td&gt;
+&lt;td&gt;模型是否完成原本的摘要任務？&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;injection marker&lt;/td&gt;
+&lt;td&gt;模型是否服從攻擊筆記指定的格式？&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;canary&lt;/td&gt;
+&lt;td&gt;模型是否從另一份筆記取得資料並放進回覆？&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;攻擊筆記本身沒有 canary 值；模型若輸出 canary，必須從另一份合成筆記讀取。&lt;/p&gt;
+&lt;p&gt;實驗先把完整 run plan 寫進 bundle，再執行本機 Ollama：&lt;/p&gt;
+&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;uv run llm-security-lab &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  &lt;span class=&quot;token parameter variable&quot;&gt;--experiment&lt;/span&gt; day-08-prompt-injection-mechanism &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
+  --run-plan &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; evidence/raw/day-08/results.json
+
+uv run llm-security-report evidence/raw/day-08/results.json&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Runner 在推論前核對 Ollama 0.32.5 與 &lt;code&gt;gemma4:latest&lt;/code&gt; 的完整 digest，並保存 fixture 雜湊。Phase A 固定 &lt;code&gt;seed=101&lt;/code&gt;、&lt;code&gt;temperature=0&lt;/code&gt;；Phase B 固定 &lt;code&gt;temperature=0.7&lt;/code&gt; 與 seeds 201 至 210。CLI 不允許臨時覆寫 prompt 或 sampling；實驗也沒有依結果更換 seed。&lt;/p&gt;
+&lt;h2&gt;固定條件揭露的是機制，不是成功率&lt;/h2&gt;
+&lt;p&gt;Phase A 比較四種情境。Semantic 將攻擊指令完整留在 &lt;code&gt;&amp;lt;note&amp;gt;&lt;/code&gt; 內。Reinforced 使用完全相同的筆記與 user message，只將 system prompt 改成更明確的 instruction hierarchy。Delimiter-break 則在筆記內容中放入看似關閉與重開標記的文字。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;情境&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;Target&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;Injection&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;Canary&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Clean（無攻擊筆記）&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Semantic（一般語意攻擊）&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Reinforced（強化 system prompt）&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Delimiter-break（偽造標記邊界）&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／3&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Clean 沒有攻擊筆記，三次都只完成正常摘要。Semantic 加入一般語意攻擊後，三次都完成原任務，
+也都服從攻擊格式並帶出 canary。模型把兩組要求合併執行，不可信資料因此從摘要背景升格為任務
+指令。&lt;/p&gt;
+&lt;p&gt;Reinforced 使用完全相同的攻擊筆記，只把 system prompt 改得更明確。Reinforced 的三次回覆都只
+完成正常摘要，比我原先預測的「1／3 完成原任務、1／3 偏航」更穩定。&lt;/p&gt;
+&lt;p&gt;Delimiter-break 三次回覆都只有 injection marker，沒有 target marker 或 canary。模型放棄原任務
+並服從部分攻擊格式，卻沒有完成資料跨界。只搜尋 canary 會誤寫成安全；只搜尋 injection marker
+又會誤寫成完整攻擊成功。&lt;/p&gt;
+&lt;h2&gt;隨機性影響重現率，但不是根因&lt;/h2&gt;
+&lt;p&gt;Phase B 對相同 Semantic payload 使用十個預定 seeds：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;System prompt&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;Target&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;Injection&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;Canary&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Baseline&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;10／10&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／10&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;3／10&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Reinforced&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;10／10&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／10&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0／10&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Baseline 十次都完成原任務，其中三次同時服從攻擊格式並帶出 canary，其餘七次只完成正常摘要。
+這表示同一組 payload 與 system prompt 會因 sampling 不同而產生不同的資安結果；但 Phase A 的 Semantic
+在固定 sampling 下仍是 3／3 失守，說明隨機性不是根因。根本問題仍是模型無法可靠執行「來源
+對應權限」。&lt;/p&gt;
+&lt;p&gt;Reinforced 十次都完成原任務，沒有一次服從攻擊格式或帶出 canary。這批 Reinforced 實驗讓偏航與跨界從 3／10
+降到 0／10，符合我最後採用的說法：&lt;strong&gt;降低模型失守機率。&lt;/strong&gt; 這批實驗沒有觀察到 failure，不代表其他
+seed、payload、模型或 context 也會是 0，也不能把 0／10 寫成「授權已核准」。&lt;/p&gt;
+&lt;p&gt;完整的 32-run 計畫、三個 predicate 與 sanitized 結果收在公開的 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-08-prompt-injection-mechanism/evidence/day-08&quot;&gt;Day 8 實驗 checkpoint&lt;/a&gt;。&lt;/p&gt;
+&lt;h2&gt;模型守住，不代表系統沒有旁路&lt;/h2&gt;
+&lt;p&gt;模型失守後，output gate 若在顯示或執行前攔下 canary，系統仍可能守住本次 sink。反過來，即使模型回覆完全沒有 canary，應用程式若把完整 context 寫進一般 debug log，系統仍會建立另一條曝露路徑。&lt;/p&gt;
+&lt;p&gt;這次實驗的 32 個 request、fixture evidence 與完整 stdout 全部含 canary，因為 Lab 刻意保存完整合成輸入；
+在 model response 中，只有 Semantic 固定組與 Phase B baseline 的三次偏航回覆含有 canary。這項差異
+不是統計瑕疵，而是在提醒讀者：觀測資料本身也有權限邊界。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/prompt-injection-fundamentals-model-system-boundary.png&quot; alt=&quot;左欄顯示 model response 含 canary 時，output gate 可在資料送往 sink 前攔下 canary；右欄顯示 model response 沒有 canary 時，完整 context 仍可能經 debug log 形成另一條曝露路徑。&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;正式系統至少要把四件事留在模型外：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;先限制 context 能取得哪些資料，不把不必要的機敏資訊交給模型。&lt;/li&gt;
+&lt;li&gt;由後端依可信身分與 policy 做授權，不接受模型自行宣告 &lt;code&gt;allow&lt;/code&gt;、role 或 user ID。&lt;/li&gt;
+&lt;li&gt;在實際 sink 前驗證輸出；工具、HTML、記錄檔與對外回覆各自有不同規則。&lt;/li&gt;
+&lt;li&gt;隱藏 prompt、response 與 evidence 中的機敏資料，並設定存取控制、保存期限及人員權限。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;OWASP 建議結構化 prompt、輸入與輸出驗證、最小權限及 human-in-the-loop，正是因為沒有一段 prompt 能獨自承擔這四層責任。本文只處理不可信資料如何改寫應用程式原定任務；本系列後續的 jailbreak 手法分類，則會討論模型供應商的安全政策如何遭到規避。&lt;/p&gt;
+&lt;p&gt;測試自己整合 LLM 的系統時，先定義攻擊者控制點、allowed influence 與三個 predicate，固定模型與 sampling options，再逐一盤點 log、renderer、工具等 sink。Prompt 可以降低模型失守的機率，卻不能替系統決定誰有權讀取資料、哪些動作可以執行，以及哪些人可以查看完整紀錄。&lt;/p&gt;
+&lt;p&gt;把機率性緩解措施和確定性安全控制分開，才是 Prompt Injection 原理真正值得帶回系統設計的部分。&lt;/p&gt;
+&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP Cheat Sheet Series — LLM Prompt Injection Prevention&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://arxiv.org/abs/2404.13208&quot;&gt;The Instruction Hierarchy: Training LLMs to Prioritize Privileged Instructions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://www.usenix.org/conference/usenixsecurity25/presentation/chen-sizhe&quot;&gt;StruQ: Defending Against Prompt Injection with Structured Queries&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/ollama/ollama/blob/main/docs/api.md&quot;&gt;Ollama API documentation&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-08-prompt-injection-mechanism/evidence/day-08&quot;&gt;LLM Application Security Lab — Day 8 checkpoint&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;!-- ironman-cross-publication:start --&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本文同步刊載於 &lt;a href=&quot;https://ithelp.ithome.com.tw/articles/10403360&quot;&gt;iThome 鐵人賽&lt;/a&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!-- ironman-cross-publication:end --&gt;
+&lt;!-- series-nav:start --&gt;
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 8／30 篇&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/&quot;&gt;上一篇：第一階段回顧與小型攻擊熱身&lt;/a&gt; · 下一篇：直接注入 vs 間接注入&lt;/p&gt;
+&lt;!-- series-nav:end --&gt;
+</content>
+  </entry>
   
   <entry>
     <title>第一階段回顧與小型攻擊熱身</title>
@@ -195,7 +369,7 @@ uv run llm-security-lab &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt
 &lt;!-- series-nav:start --&gt;
 &lt;hr /&gt;
 &lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 7／30 篇&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/&quot;&gt;上一篇：模型只能提案，不能替自己授權：信任邊界與資料的影響範圍&lt;/a&gt; · 下一篇：Prompt Injection 原理拆解&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/&quot;&gt;上一篇：模型只能提案，不能替自己授權：信任邊界與資料的影響範圍&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/&quot;&gt;下一篇：Prompt Injection 原理拆解&lt;/a&gt;&lt;/p&gt;
 &lt;!-- series-nav:end --&gt;
 </content>
   </entry>
@@ -1893,167 +2067,6 @@ the summary below.&lt;/code&gt;&lt;/pre&gt;
 &lt;li&gt;&lt;a href=&quot;https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models&quot;&gt;Anthropic：The new rules of context engineering for Claude 5 generation models&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://www.anthropic.com/engineering/building-effective-agents&quot;&gt;Anthropic：Building effective agents&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/writing-great-skills/SKILL.md&quot;&gt;&lt;code&gt;mattpocock/skills&lt;/code&gt;：&lt;code&gt;writing-great-skills&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</content>
-  </entry>
-  
-  <entry>
-    <title>把專用動畫流程抽成 Agent Skill：lottie-maker 如何讓 Lottie 可建立、可診斷、可驗證</title>
-    <link href="https://imfw.io/posts/2026/2026-07-31-lottie-maker-agent-skill/"/>
-    <updated>2026-07-31T00:00:00Z</updated>
-    <id>https://imfw.io/posts/2026/2026-07-31-lottie-maker-agent-skill/</id>
-    <content type="html">&lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-07-31 依 Airbnb Lottie 官方文件、Lottie Community Specification、Skia Skottie 文件、Agent Skills 官方規格與 &lt;code&gt;lottie-maker&lt;/code&gt; 實際程式及測試查核。Lottie 規格、player 支援範圍與工具版本仍可能變動，使用前應以目標 player 的最新文件與實測結果為準。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;把一套專案內能正常工作的動畫流程搬出去，最容易犯的錯，是先複製整個資料夾，再把專案名稱搜尋取代掉。&lt;/p&gt;
-&lt;p&gt;檔案看起來獨立了，裡面卻可能仍假設固定的 9:16 Reel、1200×675 文章圖、品牌配色、特定字型、發文目錄，甚至只有原專案才存在的 renderer。這不是泛用化，只是把耦合藏得比較遠。&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://github.com/FWcloud916/skill-lottie-maker&quot;&gt;&lt;code&gt;lottie-maker&lt;/code&gt;&lt;/a&gt; 的起點正是這個問題。我們原本在內容自動化專案裡有一套 &lt;code&gt;design-lottie-motion&lt;/code&gt; workflow，能產生 Reel 與文章動畫，也有 validator、poster、contact sheet 和人工 QA。它在自己的場景很好用，但換一個比例、語言或產品，就得先理解一大包不屬於新任務的規則。&lt;/p&gt;
-&lt;p&gt;我們要抽離的核心，不是「畫幾個 shape」的能力，而是一份更小、可以重複執行的合約：先定義動畫意圖，再建立 bundle；先檢查 portable subset，再渲染；最後用畫面與 hash 證明結果，不接受一句「應該可以播放」。&lt;/p&gt;
-&lt;h2&gt;Lottie 不是塞進 JSON 的影片&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&quot;https://lottie.airbnb.tech/&quot;&gt;Lottie 官方文件&lt;/a&gt;將它描述為可在 Android、iOS、Web、React Native 與 Windows 播放的動畫系統，會解析由 Bodymovin 從 Adobe After Effects 匯出的 JSON，再由各平台 renderer 繪製。Bodymovin 原本由 Hernan Torrisi 建立，Airbnb 後續把這套方法延伸到多個平台。&lt;/p&gt;
-&lt;p&gt;這個差異很重要。MP4 記錄的是一格格畫素；Lottie JSON 描述的是時間軸、圖層、向量路徑、文字、transform、keyframe 與素材關係。播放器可以在 runtime 控制播放、暫停、進度、速度與方向，也能在不同尺寸下重新繪製向量內容。&lt;/p&gt;
-&lt;p&gt;所以在 &lt;code&gt;lottie-maker&lt;/code&gt; 裡，&lt;code&gt;animation.json&lt;/code&gt; 永遠是 canonical source。MP4、GIF、poster 和 contact sheet 只是檢查或交付用的衍生物，不能反過來取代原始動畫。&lt;/p&gt;
-&lt;p&gt;名稱本身也帶著一點動畫史。&lt;a href=&quot;https://lottie.airbnb.tech/&quot;&gt;Airbnb 的 Lottie 文件&lt;/a&gt;說明，Lottie 是以剪影動畫先驅 Lotte Reiniger 命名。這個名字很貼切：新的 runtime 技術沒有抹掉動態設計，反而讓設計意圖能以另一種媒介被保存與播放。&lt;/p&gt;
-&lt;p&gt;但 JSON 不代表天然相容。&lt;a href=&quot;https://lottiefiles.github.io/lottie-spec/&quot;&gt;Lottie Community Specification&lt;/a&gt;明確說明，目前正式文件仍在發展，只涵蓋社群已核准的部分功能。不同 player 對 expressions、文字、gradient、mask、effect 或額外欄位的支援可能不同。Schema valid 只能回答「符合這份 schema 嗎」，不能推導成「每個 player 都長得一樣」。&lt;/p&gt;
-&lt;h2&gt;靈感不是來自一個 prompt，而是三層既有工作&lt;/h2&gt;
-&lt;p&gt;第一層當然是 Lottie 本身。它把設計工具裡的時間軸轉成 runtime 可以解析的資料，讓動畫不必由每個平台工程師重新手刻一次。&lt;code&gt;lottie-maker&lt;/code&gt; 延續的是同一個方向，只是把作者從 After Effects 擴充到能閱讀 brief、編輯 JSON、執行工具的 agent。&lt;/p&gt;
-&lt;p&gt;第二層來自 &lt;code&gt;brag-talker&lt;/code&gt; 的 &lt;code&gt;design-lottie-motion&lt;/code&gt;。那套專用 Skill 已經證明幾個規則不能省：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;motion rationale 要先於 JSON，否則很容易只得到「有東西在動」。&lt;/li&gt;
-&lt;li&gt;copy、時間、poster frame 和 local assets 必須有單一來源。&lt;/li&gt;
-&lt;li&gt;validator 只能抓結構錯誤，poster 和 contact sheet 仍要由人看。&lt;/li&gt;
-&lt;li&gt;renderer 失敗時不能默默換工具，否則前後畫面已不是同一個驗證環境。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;第三層是 Agent Skills 的設計方式。&lt;a href=&quot;https://agentskills.io/specification&quot;&gt;Agent Skills 規格&lt;/a&gt;讓一個 Skill 以 &lt;code&gt;SKILL.md&lt;/code&gt; 搭配 &lt;code&gt;scripts/&lt;/code&gt;、&lt;code&gt;references/&lt;/code&gt; 與 &lt;code&gt;assets/&lt;/code&gt; 封裝；啟動時先看 &lt;code&gt;name&lt;/code&gt; 與 &lt;code&gt;description&lt;/code&gt;，需要時才載入完整指令與資源。官方的&lt;a href=&quot;https://agentskills.io/skill-creation/best-practices&quot;&gt;撰寫建議&lt;/a&gt;也特別強調：有效的 Skill 應從真實任務、人工修正、版本歷史與失敗案例抽取，而不是請模型憑空生成一份「最佳實務」。&lt;/p&gt;
-&lt;p&gt;因此我們沒有從空白 &lt;code&gt;SKILL.md&lt;/code&gt; 開始，而是反過來問：原流程中哪些是 Lottie 共通問題，哪些只是部落格或 Reel 的政策？&lt;/p&gt;
-&lt;h2&gt;泛用化不是刪掉限制，而是把限制變成 profile&lt;/h2&gt;
-&lt;p&gt;原本的文章動畫固定 1200×675、24 FPS，Reel 則固定直式版面與社群安全區。獨立 Skill 改成四個具名 profile，加上一個有上限的 custom mode：&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;Profile&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;畫布&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;FPS&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;預設長度&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;預設循環&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;landscape-16x9&lt;/code&gt;&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;1200×675&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;24&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;6 秒&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;portrait-9x16&lt;/code&gt;&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;1080×1920&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;24&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;6 秒&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;square-1x1&lt;/code&gt;&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;1080×1080&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;24&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;6 秒&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;icon&lt;/code&gt;&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;512×512&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;30&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;2 秒&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;Custom mode 仍要求 width、height、FPS 與 duration 全部明確，而且 FPS 乘上秒數必須得到整數 frame count。這不是故意刁難，而是避免 &lt;code&gt;op&lt;/code&gt;、poster frame 與輸出媒體各自用不同方式四捨五入。&lt;/p&gt;
-&lt;p&gt;Skill 負責判斷語意、流程與停止條件；Node CLI 處理可重複的機械工作：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;brief.yaml
-    │
-    ├─ init / clone
-    ▼
-animation.json ── inspect / compare / validate
-    │
-    ▼
-CanvasKit + Skottie ── render twice ── SHA-256 compare
-    │
-    ├─ poster.png
-    ├─ contact-sheet.png
-    └─ optional MP4 / GIF&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;a href=&quot;https://skia.org/docs/user/modules/skottie/&quot;&gt;Skia 官方文件&lt;/a&gt;把 Skottie 定位為在 Skia 上播放 Bodymovin／Lottie JSON 的 native player。&lt;code&gt;lottie-maker&lt;/code&gt; 固定 CanvasKit 與 Skottie 版本，目的不是宣稱它代表所有 player，而是讓同一個驗證環境可以被重播。&lt;/p&gt;
-&lt;h2&gt;範例一：齒輪不是裝飾，而是一個改善循環&lt;/h2&gt;
-&lt;p&gt;第一個實作是三個互相咬合的齒輪。大齒輪順時針，小齒輪反向，對應 &lt;code&gt;Observe → Refine → Verify → Repeat&lt;/code&gt;。如果三個齒輪都用同方向旋轉，畫面仍然會動，機械關係卻是錯的；這正是 motion rationale 要先寫的原因。&lt;/p&gt;
-&lt;p&gt;Repo 裡的原始示範是 720×720、30 FPS、4 秒的無縫循環。文章版則依 accessibility 合約改成 1200×675、24 FPS，只播放一輪並停在完整狀態；想再看一次可以按「重播」。這不是哪一版比較高級，而是 delivery profile 不同：icon 或背景狀態適合循環，長文裡的說明圖應讓讀者有機會停下來看。&lt;/p&gt;
-&lt;figure class=&quot;article-lottie&quot; data-lottie-src=&quot;/assets/lottie/lottie-maker-agent-skill-skill-improvement-cycle.json&quot;&gt;
-  &lt;div class=&quot;article-lottie__stage&quot; role=&quot;img&quot; aria-label=&quot;三個互相咬合的齒輪依序帶動 Observe、Refine、Verify、Repeat，完成一輪 Skill 改善循環後停在完整狀態。&quot;&gt;
-    &lt;img eleventy:ignore=&quot;&quot; src=&quot;https://imfw.io/assets/images/lottie-maker-agent-skill-skill-improvement-cycle-poster.jpg&quot; alt=&quot;三個互相咬合的齒輪依序帶動 Observe、Refine、Verify、Repeat，完成一輪 Skill 改善循環後停在完整狀態。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; /&gt;
-  &lt;/div&gt;
-  &lt;figcaption&gt;齒輪不是裝飾：每個改善階段都會帶動下一個階段。&lt;/figcaption&gt;
-&lt;/figure&gt;
-&lt;p&gt;最短的建立流程先跑 dry-run：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;node&lt;/span&gt; skills/lottie-maker/scripts/lottie-maker.mjs init &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;--id&lt;/span&gt; skill-improvement-gear-loop &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;--profile&lt;/span&gt; custom &lt;span class=&quot;token parameter variable&quot;&gt;--width&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;720&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;--height&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;720&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;--fps&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;30&lt;/span&gt; &lt;span class=&quot;token parameter variable&quot;&gt;--duration&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;4&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;--title&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;Skill 循環改善&quot;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;--intent&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;用咬合齒輪表達 Observe、Refine、Verify、Repeat&quot;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;--out&lt;/span&gt; ./work --dry-run&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;確認路徑、時間與預估輸出後，才移除 &lt;code&gt;--dry-run&lt;/code&gt; 建立 bundle。接下來不是直接交付，而是依序 &lt;code&gt;validate&lt;/code&gt;、&lt;code&gt;render&lt;/code&gt;、視覺抽查與 &lt;code&gt;verify&lt;/code&gt;。&lt;/p&gt;
-&lt;h2&gt;範例二：同一個意圖，換畫布不等於等比例縮放&lt;/h2&gt;
-&lt;p&gt;把 16:9 動畫塞進 9:16，最簡單的方法是縮小到看得見全貌；最常見的結果也是所有東西都小到看不清楚。Profile 的作用不只提供尺寸，而是提醒作者重新安排 focal group、安全區與文字密度。&lt;/p&gt;
-&lt;p&gt;第二個示範保留同一個「訊號」：圓點與短線的關係不變，但依序放入 landscape、portrait、square 與 icon 容器。讀者看到的是相同語意如何重新配置，而不是四張不同主題的動畫。&lt;/p&gt;
-&lt;figure class=&quot;article-lottie&quot; data-lottie-src=&quot;/assets/lottie/lottie-maker-agent-skill-profile-portability.json&quot;&gt;
-  &lt;div class=&quot;article-lottie__stage&quot; role=&quot;img&quot; aria-label=&quot;同一個圓點與短線訊號依序配置到 16:9 橫式、9:16 直式、1:1 方形與 icon 畫布，最後並排比較四種 profile。&quot;&gt;
-    &lt;img eleventy:ignore=&quot;&quot; src=&quot;https://imfw.io/assets/images/lottie-maker-agent-skill-profile-portability-poster.jpg&quot; alt=&quot;同一個圓點與短線訊號依序配置到 16:9 橫式、9:16 直式、1:1 方形與 icon 畫布，最後並排比較四種 profile。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; /&gt;
-  &lt;/div&gt;
-  &lt;figcaption&gt;Profile 決定的不是縮放比例，而是同一個視覺意圖如何重新配置。&lt;/figcaption&gt;
-&lt;/figure&gt;
-&lt;p&gt;Profile 也讓 agent 不必每次重新猜合理預設：文章圖先用 &lt;code&gt;landscape-16x9&lt;/code&gt;，社群直式素材從 &lt;code&gt;portrait-9x16&lt;/code&gt; 開始，小型循環元件則用 &lt;code&gt;icon&lt;/code&gt;。真的有特殊畫布時再進 custom mode，不把每個任務都假裝成例外。&lt;/p&gt;
-&lt;h2&gt;範例三：驗證不是一句「看起來可以」&lt;/h2&gt;
-&lt;p&gt;第三個示範把安全與重現性放進同一條路徑。輸入先經 &lt;code&gt;inspect&lt;/code&gt;；若 asset 使用 remote URL、data URL、越界路徑或 symlink，portable profile 會停止。檢查通過後才交給固定版本的 CanvasKit／Skottie 渲染兩次，逐一比對抽樣 frame 與 poster 的 SHA-256。&lt;/p&gt;
-&lt;figure class=&quot;article-lottie&quot; data-lottie-src=&quot;/assets/lottie/lottie-maker-agent-skill-deterministic-verification.json&quot;&gt;
-  &lt;div class=&quot;article-lottie__stage&quot; role=&quot;img&quot; aria-label=&quot;Lottie JSON 先通過 Inspect；不安全的 remote asset 被封鎖，安全輸入則分別產生 Render A 與 Render B，兩者 SHA-256 相同後標記為 deterministic。&quot;&gt;
-    &lt;img eleventy:ignore=&quot;&quot; src=&quot;https://imfw.io/assets/images/lottie-maker-agent-skill-deterministic-verification-poster.jpg&quot; alt=&quot;Lottie JSON 先通過 Inspect；不安全的 remote asset 被封鎖，安全輸入則分別產生 Render A 與 Render B，兩者 SHA-256 相同後標記為 deterministic。&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; /&gt;
-  &lt;/div&gt;
-  &lt;figcaption&gt;驗證同時保留失敗證據與重現性證據，不把 valid 說成全播放器保證。&lt;/figcaption&gt;
-&lt;/figure&gt;
-&lt;p&gt;Repo 內還放了一份故意無效的 &lt;code&gt;unsafe-remote-asset.json&lt;/code&gt;。它不是可播放範例，而是診斷 fixture：&lt;code&gt;inspect&lt;/code&gt; 必須回報 &lt;code&gt;/assets/0/u&lt;/code&gt; 是 remote asset，而且整個流程不得抓取那個 URL。&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;node&lt;/span&gt; skills/lottie-maker/scripts/lottie-maker.mjs inspect &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  examples/fixtures/unsafe-remote-asset.json &lt;span class=&quot;token parameter variable&quot;&gt;--json&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;有效 bundle 則用：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;node&lt;/span&gt; skills/lottie-maker/scripts/lottie-maker.mjs verify &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  examples/deterministic-verification &lt;span class=&quot;token punctuation&quot;&gt;&#92;&lt;/span&gt;
-  &lt;span class=&quot;token parameter variable&quot;&gt;--out&lt;/span&gt; /tmp/lottie-verify&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;code&gt;deterministic: true&lt;/code&gt; 只代表在這個固定環境、這些抽樣 frame 得到相同畫素結果。它不會神奇地證明 Safari、Android 與另一個 native player 全部一致。這條界線一定要寫清楚，否則 hash 只是讓錯誤承諾看起來更科學。&lt;/p&gt;
-&lt;h2&gt;第一支影片就抓到一個規格外的洞&lt;/h2&gt;
-&lt;p&gt;第一個完整影片試作使用文章常見的 1200×675。Lottie 本身可以正常渲染，但 FFmpeg 的 H.264 &lt;code&gt;yuv420p&lt;/code&gt; 輸出因高度是奇數而失敗。&lt;/p&gt;
-&lt;p&gt;處理方式不是偷偷把 canonical JSON 改成 1200×676，而是只在 MP4 encoding 階段補 1px padding，JSON、poster 與 PNG frames 仍維持原尺寸，再補上一個 odd-height regression test。這個修正可在 &lt;a href=&quot;https://github.com/FWcloud916/skill-lottie-maker/commit/130721b1537537063bcceb5b21a627250049fafd&quot;&gt;&lt;code&gt;130721b&lt;/code&gt;&lt;/a&gt; 查到。&lt;/p&gt;
-&lt;p&gt;這個小問題比一段「妥善處理影音相容性」有價值得多。它提供了明確輸入、失敗原因、修正邊界與可重播測試，也直接回到齒輪示範的意思：Observe、Refine、Verify，然後才 Repeat。&lt;/p&gt;
-&lt;h2&gt;Portable profile 是保守交集，不是完整 Lottie&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;lottie-maker&lt;/code&gt; 允許 shapes、native text、local images、precompositions、masks、trim paths 與 2D transforms，但 portable profile 主動拒絕 expressions、remote/data URLs、3D、effects，以及逃出 bundle 的 assets。&lt;/p&gt;
-&lt;p&gt;這會犧牲一部分 Lottie 能力，換來比較清楚的安全與重播邊界。如果目標是完整還原某個複雜 After Effects 專案，這個 Skill 不是適合的工具；它也不會修改 &lt;code&gt;.aep&lt;/code&gt;、下載缺少素材、代替你發布，或把無效第三方 JSON 自動洗成「相容」。&lt;/p&gt;
-&lt;p&gt;另一方面，官方 schema 對部分實際可播放的 native text 欄位仍可能回報 advisory。工具因此把兩件事分開：portable-profile errors 會阻擋流程；official-schema advisories 會保留在報告，但不覆蓋實際 renderer 與人工 QA 的結果。&lt;/p&gt;
-&lt;h2&gt;安裝後，先要求它證明，不要先要求它輸出影片&lt;/h2&gt;
-&lt;p&gt;可以使用 Skills CLI 安裝：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;npx skills &lt;span class=&quot;token function&quot;&gt;add&lt;/span&gt; FWcloud916/skill-lottie-maker &lt;span class=&quot;token parameter variable&quot;&gt;--skill&lt;/span&gt; lottie-maker&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;或者直接 clone repo，安裝固定 dependencies：&lt;/p&gt;
-&lt;pre class=&quot;language-bash&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;&lt;span class=&quot;token function&quot;&gt;npm&lt;/span&gt; ci --ignore-scripts &lt;span class=&quot;token parameter variable&quot;&gt;--prefix&lt;/span&gt; skills/lottie-maker
-&lt;span class=&quot;token function&quot;&gt;bash&lt;/span&gt; scripts/verify.sh&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;第一個任務不妨寫得具體一點：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;Use $lottie-maker to create a 1:1 four-second loop that explains a review cycle.
-Keep all assets local, render a poster and contact sheet, then verify deterministic hashes.&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;這句話同時給了語意、profile、duration、loop、安全要求與完成證據。Agent 還是有設計空間，但不能只交回一份 JSON 就宣布完成。&lt;/p&gt;
-&lt;p&gt;把專用流程抽成泛用 Skill，最終不是讓規則變少，而是讓每一條規則都回到正確層級。文章或 Reel 的品牌政策留在內容專案；Lottie 的 bundle、portability、render 與 verification 留在 &lt;code&gt;lottie-maker&lt;/code&gt;。齒輪會繼續轉，但每一圈都應該留下可以被檢查的改善。&lt;/p&gt;
-&lt;h2&gt;參考資料&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://lottie.airbnb.tech/&quot;&gt;Lottie 官方文件&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://lottiefiles.github.io/lottie-spec/&quot;&gt;Lottie Community Specification&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://skia.org/docs/user/modules/skottie/&quot;&gt;Skia：Skottie - Lottie Animation Player&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://agentskills.io/specification&quot;&gt;Agent Skills Specification&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://agentskills.io/skill-creation/best-practices&quot;&gt;Best practices for skill creators&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/skill-lottie-maker&quot;&gt;&lt;code&gt;FWcloud916/skill-lottie-maker&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </content>
   </entry>

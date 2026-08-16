@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Prompt Injection 原理拆解
+
+- Published: 2026-08-17T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/
+- Tags: ai-security, ai, security
+
+- Description: 從 32 次固定實驗拆解資料如何變成競爭指令，並釐清 prompt 緩解、模型失守與系統安全邊界的差異。
+
+
 ### 第一階段回顧與小型攻擊熱身
 
 - Published: 2026-08-16T00:00:00.000Z
