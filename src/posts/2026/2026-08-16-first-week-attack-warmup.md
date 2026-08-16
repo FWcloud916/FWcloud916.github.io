@@ -155,6 +155,6 @@ Prompt Injection 測試不是準備一句「忽略前面指令」就結束。真
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 7／30 篇**
 
-[上一篇：模型只能提案，不能替自己授權：信任邊界與資料的影響範圍](https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/) · 下一篇：Prompt Injection 原理拆解
+[上一篇：模型只能提案，不能替自己授權：信任邊界與資料的影響範圍](https://imfw.io/posts/2026/2026-08-15-trust-boundaries-untrusted-input/) · [下一篇：Prompt Injection 原理拆解](https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/)
 
 <!-- series-nav:end -->
