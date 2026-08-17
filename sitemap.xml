@@ -178,6 +178,13 @@
 
   
   <url>
+    <loc>https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+  </url>
+  
+
+  
+  <url>
     <loc>https://imfw.io/about/</loc>
     
   </url>
@@ -215,6 +222,13 @@
   <url>
     <loc>https://imfw.io/notes/container-isolation-model/</loc>
     <lastmod>2026-08-01T00:00:00.000Z</lastmod>
+  </url>
+  
+
+  
+  <url>
+    <loc>https://imfw.io/notes/llm-proposal-not-authority/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
   </url>
   
 
@@ -266,13 +280,6 @@
   <url>
     <loc>https://imfw.io/works/</loc>
     
-  </url>
-  
-
-  
-  <url>
-    <loc>https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/</loc>
-    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
   </url>
   
 

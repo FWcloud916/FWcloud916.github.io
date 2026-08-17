@@ -288,6 +288,15 @@ Author: FW (https://imfw.io/about/)
 
 ## Knowledge Notes
 
+### 模型是提案者，不是授權者
+
+- Maturity: 成長中
+- Created: 2026-08-17T00:00:00.000Z
+- Updated: 2026-08-17T00:00:00.000Z
+- URL: https://imfw.io/notes/llm-proposal-not-authority/
+- Description: LLM 可以提出動作與資源，但身分、權限與業務決策仍要由應用程式根據可信資料重新判斷。
+
+
 ### Agent 的上下文工程：文件是共享記憶，也是邊界
 
 - Maturity: 成長中
