@@ -2,7 +2,7 @@
 
 > **Type:** Explanation
 > **Audience:** Developers, AI assistants, and any tooling that needs project context
-> **Last updated:** 2026-08-13
+> **Last updated:** 2026-08-18
 >
 > Static personal blog (imfw.io) built with Eleventy 3 and Tailwind CSS v4, deployed to GitHub Pages. Related docs: [README.md](README.md) (how-tos), [../DESIGN.md](../DESIGN.md) (design system), [../AGENTS.md](../AGENTS.md) (agent guide).
 
@@ -41,17 +41,17 @@
 |---|---|---|
 | Node.js | 22 (CI: `node-version: '22'`) | runtime |
 | @11ty/eleventy | 3.1.6 | static site generator (ESM config: [eleventy.config.mjs](../eleventy.config.mjs)) |
-| tailwindcss + @tailwindcss/cli | 4.3.2 | CSS framework; v4 CSS-based config, compiled by the standalone CLI |
+| tailwindcss + @tailwindcss/cli | 4.3.3 | CSS framework; v4 CSS-based config, compiled by the standalone CLI |
 | @tailwindcss/typography | 0.5.20 | `prose` classes for Markdown post bodies |
-| @11ty/eleventy-img | 6.0.4 | build-time image optimization (`eleventyImageTransformPlugin`) |
+| @11ty/eleventy-img | 7.0.0 | build-time image optimization (`eleventyImageTransformPlugin`) |
 | @11ty/eleventy-plugin-rss | 3.0.0 | Atom feed filters (`dateToRfc3339`, `absoluteUrl`, …) |
 | @11ty/eleventy-plugin-syntaxhighlight | 5.0.2 | Prism.js syntax highlighting at build time |
 | prism-themes | 1.9.0 | Prism One Dark CSS (passthrough-copied from node_modules) |
 | lottie-web | 5.13.0 | pinned local light/SVG article-animation player, loaded on demand |
 | luxon | 3.7.2 | date formatting filters |
-| pinyin-pro | 3.28.1 | Chinese→pinyin transliteration for the custom `slug` filter |
+| pinyin-pro | 3.29.1 | Chinese→pinyin transliteration for the custom `slug` filter |
 | npm-run-all | 4.1.5 | runs the two watch processes in parallel (`npm start`) |
-| vitest | 3.2.7 | test runner (`npm test`): filter units, content checks, build smoke |
+| vitest | 4.1.10 | test runner (`npm test`): filter units, content checks, build smoke |
 | gray-matter | 4.0.3 | frontmatter parsing in tests (tests/helpers.mjs) |
 
 Notes:
@@ -264,8 +264,10 @@ serialization), `filterByTag`, `filterByCategory`, `filterByUrls`, `topicsForPos
 ## 7. Background Jobs & Scheduled Tasks
 
 N/A — static site; no workers or schedules. Automation is limited to the deploy workflow (§10) and
-[.github/dependabot.yml](../.github/dependabot.yml), which opens weekly PRs for npm devDependencies
-(grouped) and GitHub Actions, on top of GitHub's default security alerts.
+[.github/dependabot.yml](../.github/dependabot.yml), which opens weekly npm and GitHub Actions update
+PRs on top of GitHub's default security alerts. Only routine **minor/patch** npm devDependency updates
+are grouped into one PR; **major** bumps and **security** updates each get their own PR so a bad
+upgrade stays easy to isolate.
 
 ## 8. External Service Integrations
 
@@ -273,7 +275,7 @@ N/A — static site; no workers or schedules. Automation is limited to the deplo
 |---|---|---|
 | GitHub Pages | deploy target (`gh-pages` branch, CNAME `imfw.io`) | active |
 | GitHub Actions | [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | active |
-| Dependabot | [.github/dependabot.yml](../.github/dependabot.yml) — weekly npm/GitHub Actions update PRs, plus GitHub's default security alerts | active |
+| Dependabot | [.github/dependabot.yml](../.github/dependabot.yml) — weekly npm/GitHub Actions update PRs (minor/patch grouped; majors and security updates separate), plus GitHub's default security alerts | active |
 | Google Search Console | DNS ownership verification; optional HTML-meta hook in [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk) | verified through DNS; sitemap submitted; HTML token intentionally empty |
 | Bing Webmaster Tools | same layout, keyed by `site.bingSiteVerification` | verified; sitemap submitted |
 | Google Analytics (gtag.js) | [src/_includes/layouts/base.njk](../src/_includes/layouts/base.njk), keyed by `site.googleAnalyticsId` | active (`G-QBS6V0SVT1`) |
