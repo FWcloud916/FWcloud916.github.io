@@ -146,6 +146,6 @@ OWASP 建議結構化 prompt、輸入與輸出驗證、最小權限及 human-in-
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 8／30 篇**
 
-[上一篇：第一階段回顧與小型攻擊熱身](https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/) · 下一篇：直接注入 vs 間接注入
+[上一篇：第一階段回顧與小型攻擊熱身](https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/) · [下一篇：直接注入 vs 間接注入](https://imfw.io/posts/2026/2026-08-18-direct-vs-indirect-injection/)
 
 <!-- series-nav:end -->
