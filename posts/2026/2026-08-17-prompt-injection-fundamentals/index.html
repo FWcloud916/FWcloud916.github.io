@@ -61,8 +61,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=916e012">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=916e012">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=15acb6d">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=15acb6d">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -351,7 +351,7 @@ seed、payload、模型或 context 也會是 0，也不能把 0／10 寫成「�
 <!-- series-nav:start -->
 <hr>
 <p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 8／30 篇</strong></p>
-<p><a href="https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/">上一篇：第一階段回顧與小型攻擊熱身</a> · 下一篇：直接注入 vs 間接注入</p>
+<p><a href="https://imfw.io/posts/2026/2026-08-16-first-week-attack-warmup/">上一篇：第一階段回顧與小型攻擊熱身</a> · <a href="https://imfw.io/posts/2026/2026-08-18-direct-vs-indirect-injection/">下一篇：直接注入 vs 間接注入</a></p>
 <!-- series-nav:end -->
 
   </div>
@@ -362,6 +362,50 @@ seed、payload、模型或 context 也會是 0，也不能把 0／10 寫成「�
 <section class="mt-12" aria-labelledby="related-posts-title">
   <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
   <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-18-direct-vs-indirect-injection/" class="text-gray-900 hover:text-blue-600 transition">
+      直接注入 vs 間接注入
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-18T00:00:00.000Z">2026年08月18日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用同一段攻擊文字比較使用者輸入與外部參考文件兩條路徑，從來源、控制者、序列化位置與 sink，判斷注入屬於直接還是間接。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
   
     <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
@@ -451,50 +495,6 @@ seed、payload、模型或 context 也會是 0，也不能把 0／10 寫成「�
 </article>
 
   
-    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-08-14-threat-modeling-llm-apps/" class="text-gray-900 hover:text-blue-600 transition">
-      對 LLM 應用做威脅建模
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-08-14T00:00:00.000Z">2026年08月14日</time>
-    <span>11 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">把刻意脆弱的 LLM 摘要器拆成資料流、儲存區與信任邊界，用 STRIDE 找出模型 context 以外的資訊洩漏路徑，再設計逐筆授權的讀取流程。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
-    
-      
-    
-      
-      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai-security
-      </a>
-      
-    
-      
-      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai
-      </a>
-      
-    
-      
-      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #security
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-  
   </div>
 </section>
 
@@ -502,7 +502,7 @@ seed、payload、模型或 context 也會是 0，也不能把 0／10 寫成「�
 
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=916e012"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=15acb6d"></script>
 
   </main>
 

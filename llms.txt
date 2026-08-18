@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 直接注入 vs 間接注入
+
+- Published: 2026-08-18T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-18-direct-vs-indirect-injection/
+- Tags: ai-security, ai, security
+
+- Description: 用同一段攻擊文字比較使用者輸入與外部參考文件兩條路徑，從來源、控制者、序列化位置與 sink，判斷注入屬於直接還是間接。
+
+
 ### Prompt Injection 原理拆解
 
 - Published: 2026-08-17T00:00:00.000Z
