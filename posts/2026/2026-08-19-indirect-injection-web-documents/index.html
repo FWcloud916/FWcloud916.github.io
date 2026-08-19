@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>間接注入實戰：把指令藏進網頁與文件 - FW Blog</title>
+  <meta name="description" content="用合成 HTML、PDF 與 email 追蹤隱藏指令如何經過 extractor 與應用程式 policy 進入模型，分開判讀入口曝露、行為偏航與資料跨界。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="間接注入實戰：把指令藏進網頁與文件 - FW Blog">
+  <meta property="og:description" content="用合成 HTML、PDF 與 email 追蹤隱藏指令如何經過 extractor 與應用程式 policy 進入模型，分開判讀入口曝露、行為偏航與資料跨界。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="間接注入實戰：把指令藏進網頁與文件 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-19T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="間接注入實戰：把指令藏進網頁與文件 - FW Blog">
+  <meta name="twitter:description" content="用合成 HTML、PDF 與 email 追蹤隱藏指令如何經過 extractor 與應用程式 policy 進入模型，分開判讀入口曝露、行為偏航與資料跨界。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="間接注入實戰：把指令藏進網頁與文件 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=136643a">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=136643a">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "間接注入實戰：把指令藏進網頁與文件",
+    "description": "用合成 HTML、PDF 與 email 追蹤隱藏指令如何經過 extractor 與應用程式 policy 進入模型，分開判讀入口曝露、行為偏航與資料跨界。",
+    "url": "https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/",
+    "datePublished": "2026-08-19T00:00:00.000Z",
+    "dateModified": "2026-08-19T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">間接注入實戰：把指令藏進網頁與文件</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-19T00:00:00.000Z">2026年08月19日</time></span>
+      
+      <span>8 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文內容於 2026-08-08 完成查核，依據包括 <a href="https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html">OWASP Prompt Injection Prevention Cheat Sheet</a>、Python <code>html.parser</code>／<code>email</code> 與 pypdf 6.15.0 官方文件，以及 <a href="https://github.com/FWcloud916/llm-app-security-lab">LLM Application Security Lab</a> 的 Day 10 合成文件實驗。Parser、模型與工具行為可能更新；Day 10 evidence 已封存在公開的 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-10-hidden-document-paths/evidence/day-10">Day 10 checkpoint</a>，讀者可直接查閱。</p>
+</blockquote>
+<p>白色文字藏進 PDF 後，模型五次都沒有服從。這能證明白色文字攻擊沒用嗎？不能。比較早的一個問題是：白色文字有沒有被 PDF extractor 讀出來？</p>
+<p>我在查資料前預測 HTML 白色文字與註解、PDF 白色文字與 metadata、email 隱藏 HTML 和檔名「都會」進入模型。實驗只支持其中五條資料路徑。另三條雖然在原始檔案裡有攻擊文字，卻被目前的 extractor policy 排除。</p>
+<p><strong>檔案格式只決定攻擊文字可以藏在哪裡；應用程式如何抽取與序列化，才決定模型實際看見什麼。</strong></p>
+<h2>「藏在檔案裡」離模型還有三道轉換</h2>
+<p><a href="https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html">OWASP</a>把網頁、文件、email、附件與 hidden text 都列為 Remote／Indirect Prompt Injection 的可能入口。不過，被列為可能入口，不代表任何 parser 都會保留其中的攻擊文字。</p>
+<p>這次我把資料路徑拆成四個觀測點。以 PDF 白色文字案例來看，攻擊 marker 在前三個觀測點都是 <code>TRUE</code>；到了 model response，判讀方式改為檢查 injection marker 與刻意放入參考資料的假機密值（canary），確認模型是否偏航或讓資料跨界。下圖整理這四個觀測點的實際結果。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/3dbDvQQgYH-300.webp 300w, /assets/img/3dbDvQQgYH-600.webp 600w, /assets/img/3dbDvQQgYH-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/3dbDvQQgYH-300.jpeg" alt="Day 10 四個資料路徑觀測點：pdf-white-text.pdf 的 DAY10_ATTACK_SOURCE 存在於 source bytes，經 pypdf 保留在 extractor output，也被應用程式放進 serialized model request；model response 完成正常摘要，injection marker 與 canary 都是 FALSE，因此判為只有入口曝露。Source bytes 另有一條人眼檢視旁支，PDF 頁面上的白色文字 marker 不可見。" width="1200" height="800" srcset="/assets/img/3dbDvQQgYH-300.jpeg 300w, /assets/img/3dbDvQQgYH-600.jpeg 600w, /assets/img/3dbDvQQgYH-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>四段不是四種檔案，而是同一份外部內容經過應用程式時的四個觀測點：</p>
+<ol>
+<li><strong>Source bytes</strong>：原始 HTML、PDF 或 <code>.eml</code> 的檔案內容。Source bytes 用來確認攻擊文字是否真的存在，並以 SHA-256 證明實驗前後使用同一份來源。</li>
+<li><strong>Extractor output</strong>：parser 從檔案取出的文字。例如 pypdf 可能讀到 PDF 白色文字，HTML extractor 也可能排除 comment。</li>
+<li><strong>Serialized model request</strong>：應用程式把 system message、使用者要求與 extracted text 組合後，實際送給模型的完整 request。Extractor 讀到某個欄位，不代表應用程式一定會把該欄位放進 request。</li>
+<li><strong>Model response</strong>：模型回傳的內容。這一段才檢查模型是否完成正常任務、服從攻擊，或帶出另一份資料裡的 canary。</li>
+</ol>
+<p>以 PDF 白色文字案例來看，<code>DAY10_ATTACK_SOURCE</code> 存在於 source bytes，也出現在 pypdf output 與 model request；model response 最後沒有產生代表服從攻擊的 response marker，也沒有帶出 canary。這就是「入口曝露，但沒有觀察到偏航或資料跨界」。</p>
+<p>人眼可見性是另一個層面。白色文字可能在白底 PDF 看不到，content stream 仍保有文字；附件檔名可能顯示在郵件介面，卻不在 body。</p>
+<h2>用同一份來源比較不同 application policy</h2>
+<p>實驗只用本機合成 HTML、PDF 與 <code>.eml</code>，不讀真實第三方內容、不做 OCR，也不開工具或 outbound sink。HTML 與 email 使用 Python 3.14.6 標準函式庫；PDF 鎖定 pypdf 6.15.0。每個來源都使用語意相同的 payload，並將 source marker 與 response marker 分開。source marker 用來追蹤資料路徑；response marker 不會逐字出現在檔案或 prompt，只有模型服從攻擊時才會產生。</p>
+<p>PDF metadata 與 email filename 各做一組成對比較。每一組成對比較都沿用各自完全相同的 source bytes，唯一改變的是應用程式是否把該欄位加入 extracted text：</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th style="text-align:right">Source 有攻擊文字</th>
+<th style="text-align:right">Extractor 保留</th>
+<th style="text-align:right">進入 request</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一般 HTML</td>
+<td style="text-align:right">否</td>
+<td style="text-align:right">否</td>
+<td style="text-align:right">否</td>
+</tr>
+<tr>
+<td>HTML 白色文字</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+</tr>
+<tr>
+<td>HTML comment</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">否</td>
+<td style="text-align:right">否</td>
+</tr>
+<tr>
+<td>PDF 白色文字</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+</tr>
+<tr>
+<td>PDF metadata，只取 page text</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">否</td>
+<td style="text-align:right">否</td>
+</tr>
+<tr>
+<td>同一份 PDF，另納入 Subject</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+</tr>
+<tr>
+<td>Email 隱藏 HTML</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+</tr>
+<tr>
+<td>Email 檔名，只取 body</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">否</td>
+<td style="text-align:right">否</td>
+</tr>
+<tr>
+<td>同一封 email，另納入檔名</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+<td style="text-align:right">是</td>
+</tr>
+</tbody>
+</table>
+<p>表格修正了我的「都會」預測。Metadata 與檔名都只有在應用程式選擇序列化時才會進模型。</p>
+<h2>HTML 白色文字會留下，comment 不一定</h2>
+<p><a href="https://docs.python.org/3/library/html.parser.html">Python <code>HTMLParser</code> 文件</a>把一般文字與 comment 分給不同 callback。本次 extractor 收集允許元素的 text node，不收 comment，也排除 <code>script</code> 與 <code>style</code>。白色文字仍是普通 text node；extractor 不執行 CSS，因此完整保留 payload。換成會保留 comment 的 pipeline，結果就可能不同。</p>
+<p>實驗中的兩份 HTML 只把相同 marker 放在不同位置。下列範例省略後面的合成攻擊內容：</p>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span> <span class="token special-attr"><span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value css language-css"><span class="token property">color</span><span class="token punctuation">:</span> #fff<span class="token punctuation">;</span> <span class="token property">background</span><span class="token punctuation">:</span> #fff</span><span class="token punctuation">"</span></span></span><span class="token punctuation">></span></span>
+  DAY10_ATTACK_SOURCE ...
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+
+<span class="token comment">&lt;!-- DAY10_ATTACK_SOURCE ... --></span></code></pre>
+<p>白色文字版本的 extracted text 仍含 <code>DAY10_ATTACK_SOURCE</code>；comment 版本只留下正常會議內容，marker 沒有進入 request。</p>
+<h2>PDF page text 與 metadata 是兩條入口</h2>
+<p><a href="https://pypdf.readthedocs.io/en/stable/modules/PageObject.html">pypdf <code>extract_text()</code> 文件</a>說明，API 會從 page content stream 找出文字繪製指令。本次合成 PDF 以白色繪製 payload；這段文字雖然在白底頁面上看不見，仍存在於 page content stream，會被 <code>extract_text()</code> 讀出。PDF Subject 則要經 <a href="https://pypdf.readthedocs.io/en/stable/user/metadata.html"><code>PdfReader.metadata</code></a> 另外讀取；只有應用程式追加 Subject 時，同一份 PDF 才形成模型可見的入口。</p>
+<p>實驗輸出把「畫面看不到」與「extractor 讀不到」拆成兩件事。下圖左側直接算繪合成 PDF，右側則保留同一份檔案的完整 pypdf 輸出；右側換行只為排版，沒有省略文字。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/4z3xn7PrPV-300.webp 300w, /assets/img/4z3xn7PrPV-600.webp 600w, /assets/img/4z3xn7PrPV-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/4z3xn7PrPV-300.jpeg" alt="Day 10 PDF 白色文字實驗對照：左側 Poppler 算繪頁面只看見正常的會議內容，human-visible marker 為 FALSE；右側同一份 PDF 經 pypdf extract_text() 後包含 DAY10_ATTACK_SOURCE 與完整合成 payload，extracted marker 為 TRUE。" width="1200" height="800" srcset="/assets/img/4z3xn7PrPV-300.jpeg 300w, /assets/img/4z3xn7PrPV-600.jpeg 600w, /assets/img/4z3xn7PrPV-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>因此 PDF ingestion pipeline 要明列實際採用的 page text、annotation、form field、metadata、OCR 與附件。本文只驗證 page text 與 Subject，不能推定其他入口。</p>
+<h2>Email body、header 與檔名也不會自動混成一包</h2>
+<p><a href="https://docs.python.org/3/library/email.parser.html">Python <code>email.parser</code> 文件</a>把 headers、body 與 MIME subparts 解析成 message tree；<a href="https://docs.python.org/3/library/email.message.html"><code>EmailMessage</code></a> 再分別選 body、走訪附件及讀取檔名。本次 HTML body extractor 保留 <code>display: none</code> 文字；附件檔名則只有在 policy 明確追加時才進入 request。完成 email parsing 不代表所有欄位會自動混成一包。</p>
+<p>兩封合成 email 分別驗證隱藏 body 與附件檔名：</p>
+<pre class="language-text"><code class="language-text">HTML body：<p style="display: none">DAY10_ATTACK_SOURCE ...</p>
+body extractor：... DAY10_ATTACK_SOURCE ...
+
+附件檔名：DAY10_ATTACK_SOURCE [payload omitted].txt
+body only：marker 不存在
+body + attachment filenames：... DAY10_ATTACK_SOURCE [payload omitted].txt</code></pre>
+<h2>進入 context，不等於攻擊成功</h2>
+<p>正式計畫固定本機 Ollama 0.32.5、<code>gemma4:latest</code> 完整 digest、system message、合成 canary、<code>temperature=0.7</code> 與 seeds 411 至 415。九組各五次，共 45 runs，一次執行完整 plan。</p>
+<table>
+<thead>
+<tr>
+<th>分組</th>
+<th style="text-align:right">Runs</th>
+<th style="text-align:right">Exact target</th>
+<th style="text-align:right">Injection</th>
+<th style="text-align:right">Canary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+</tr>
+<tr>
+<td>攻擊文字被 extractor 排除</td>
+<td style="text-align:right">15</td>
+<td style="text-align:right">15／15</td>
+<td style="text-align:right">0／15</td>
+<td style="text-align:right">0／15</td>
+</tr>
+<tr>
+<td>攻擊文字進入 request</td>
+<td style="text-align:right">25</td>
+<td style="text-align:right">24／25</td>
+<td style="text-align:right">0／25</td>
+<td style="text-align:right">0／25</td>
+</tr>
+</tbody>
+</table>
+<p>進入 request 的 25 次就是我所說的「只有入口曝露」：沒有 response-only marker，也沒有帶出參考文件中的 canary。兩次回覆把 payload 描述成可疑指令，仍完成摘要；描述不等於服從。Exact target 唯一未命中只是把識別碼寫成帶有 Markdown 跳脫字元的形式；人工閱讀後 45 次都完成正常摘要，但表格仍保留事前定義的 exact count。</p>
+<p>這批 0／25 不能外推成隱匿注入普遍無效。模型、payload、parser、prompt、欄位順序或 sampling 改變，都可能改變結果。先確認 attack 是否到達模型，再用模型與系統層 predicate 判斷影響。</p>
+<p>來源 bytes、extractor output、serialized request 與 response predicates 的完整摘要，可在公開的 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-10-hidden-document-paths/evidence/day-10">Day 10 實驗 checkpoint</a> 查閱。</p>
+<h2>Pilot 先抓到的是量測漏洞</h2>
+<p>正式計畫前，我跑過一批 45-run pilot。當時同一個 injection marker 同時存在於來源與 response predicate；模型正常摘要 metadata 裡的攻擊句，exact matcher 卻把「引用」算成「服從」。這是量測失守，不是攻擊成功。</p>
+<p>Pilot 沒有混入正式結果。正式計畫分開 source／response markers、重建 fixtures、換用 seeds 411 至 415 並通過離線測試後，才重新跑完整 45 次。若 success token 原本就在測試文件裡，全文搜尋只能證明 token 出現；response predicate 必須排除正常引用，並和資料跨界、工具動作或 downstream sink 分開。</p>
+<h2>回到自己的 ingestion pipeline</h2>
+<p>盤點間接注入時，我會留下三組證據。第一組是原始來源與 SHA-256，用來確認攻擊者能控制哪些 bytes。第二組是 extractor 的名稱、版本、policy、輸出與 SHA-256，用來確認 comment、metadata、header、檔名或 OCR 哪些被保留。第三組是 serialized request 與分離的 response predicates，分別用來判斷模型偏航、資料跨界及 downstream action。</p>
+<p>「文件裡有惡意文字」只是威脅的起點。「模型這次沒聽」也不是安全邊界。能把 source、extractor、serialization 與 sink 逐段拿出證據，才知道防線應該放在哪裡。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html">OWASP Cheat Sheet Series — LLM Prompt Injection Prevention</a></li>
+<li><a href="https://arxiv.org/abs/2302.12173">Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection</a></li>
+<li><a href="https://docs.python.org/3/library/html.parser.html">Python 3 — <code>html.parser</code></a></li>
+<li><a href="https://docs.python.org/3/library/email.parser.html">Python 3 — <code>email.parser</code></a></li>
+<li><a href="https://docs.python.org/3/library/email.message.html">Python 3 — <code>email.message</code></a></li>
+<li><a href="https://pypdf.readthedocs.io/en/stable/user/extract-text.html">pypdf — Extract Text from a PDF</a></li>
+<li><a href="https://pypdf.readthedocs.io/en/stable/user/metadata.html">pypdf — Metadata</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-10-hidden-document-paths/evidence/day-10">LLM Application Security Lab — Day 10 checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10403770">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 10／30 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-18-direct-vs-indirect-injection/">上一篇：直接注入 vs 間接注入</a> · 下一篇：Jailbreak 手法分類學</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-18-direct-vs-indirect-injection/" class="text-gray-900 hover:text-blue-600 transition">
+      直接注入 vs 間接注入
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-18T00:00:00.000Z">2026年08月18日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用同一段攻擊文字比較使用者輸入與外部參考文件兩條路徑，從來源、控制者、序列化位置與 sink，判斷注入屬於直接還是間接。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-17-prompt-injection-fundamentals/" class="text-gray-900 hover:text-blue-600 transition">
+      Prompt Injection 原理拆解
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-17T00:00:00.000Z">2026年08月17日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從 32 次固定實驗拆解資料如何變成競爭指令，並釐清 prompt 緩解、模型失守與系統安全邊界的差異。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-16-first-week-attack-warmup/" class="text-gray-900 hover:text-blue-600 transition">
+      第一階段回顧與小型攻擊熱身
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-16T00:00:00.000Z">2026年08月16日</time>
+    <span>8 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">以人工建立、內容固定的測試筆記進行三組實驗，分開驗證模型偏航與資料跨界，並建立可重現的 Prompt Injection 成功條件。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=136643a"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

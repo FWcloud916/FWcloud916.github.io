@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 間接注入實戰：把指令藏進網頁與文件
+
+- Published: 2026-08-19T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/
+- Tags: ai-security, ai, security
+
+- Description: 用合成 HTML、PDF 與 email 追蹤隱藏指令如何經過 extractor 與應用程式 policy 進入模型，分開判讀入口曝露、行為偏航與資料跨界。
+
+
 ### 直接注入 vs 間接注入
 
 - Published: 2026-08-18T00:00:00.000Z
