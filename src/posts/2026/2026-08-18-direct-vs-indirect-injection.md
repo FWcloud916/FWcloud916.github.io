@@ -115,6 +115,6 @@ Indirect 把完全相同的攻擊文字放進外部參考文件，使用者要�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 9／30 篇**
 
-[上一篇：Prompt Injection 原理拆解](https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/) · 下一篇：間接注入實戰：把指令藏進網頁與文件
+[上一篇：Prompt Injection 原理拆解](https://imfw.io/posts/2026/2026-08-17-prompt-injection-fundamentals/) · [下一篇：間接注入實戰：把指令藏進網頁與文件](https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/)
 
 <!-- series-nav:end -->
