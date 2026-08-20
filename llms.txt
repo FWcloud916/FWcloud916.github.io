@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Jailbreak 手法分類學
+
+- Published: 2026-08-20T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-20-jailbreak-taxonomy/
+- Tags: ai-security, ai, security
+
+- Description: 把角色扮演、假設情境、編碼、逐步誘導與 many-shot 拆成不同機制，用 30 個固定實驗單位分開量測行為偏離與合成資料跨界。
+
+
 ### 間接注入實戰：把指令藏進網頁與文件
 
 - Published: 2026-08-19T00:00:00.000Z
