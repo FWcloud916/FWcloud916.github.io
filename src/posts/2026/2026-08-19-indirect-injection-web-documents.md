@@ -145,6 +145,6 @@ Pilot 沒有混入正式結果。正式計畫分開 source／response markers、
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 10／30 篇**
 
-[上一篇：直接注入 vs 間接注入](https://imfw.io/posts/2026/2026-08-18-direct-vs-indirect-injection/) · 下一篇：Jailbreak 手法分類學
+[上一篇：直接注入 vs 間接注入](https://imfw.io/posts/2026/2026-08-18-direct-vs-indirect-injection/) · [下一篇：Jailbreak 手法分類學](https://imfw.io/posts/2026/2026-08-20-jailbreak-taxonomy/)
 
 <!-- series-nav:end -->
