@@ -272,6 +272,6 @@ retrieval ACL、後端授權、輸出驗證與最小權限。真正的防守不�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 12／30 篇**
 
-[上一篇：Jailbreak 手法分類學](https://imfw.io/posts/2026/2026-08-20-jailbreak-taxonomy/) · 下一篇：多模態注入：圖片、語音與檔案
+[上一篇：Jailbreak 手法分類學](https://imfw.io/posts/2026/2026-08-20-jailbreak-taxonomy/) · [下一篇：多模態注入：圖片、語音與檔案](https://imfw.io/posts/2026/2026-08-22-multimodal-injection/)
 
 <!-- series-nav:end -->
