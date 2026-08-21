@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Hidden Context Exposure：外洩的不只是 system prompt
+
+- Published: 2026-08-21T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-21-system-prompt-leakage/
+- Tags: ai-security, ai, security
+
+- Description: 用 40 次固定對照實驗比較 system prompt、developer block、RAG 政策與 tool schema，拆開逐字外洩、語意重建與下游影響。
+
+
 ### Jailbreak 手法分類學
 
 - Published: 2026-08-20T00:00:00.000Z
