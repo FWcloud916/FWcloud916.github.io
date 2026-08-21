@@ -303,6 +303,6 @@ Payload 會過期，控制路徑不會。當角色扮演失效，攻擊者會換
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 11／30 篇**
 
-[上一篇：間接注入實戰：把指令藏進網頁與文件](https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/) · 下一篇：Hidden Context Exposure：外洩的不只是 system prompt
+[上一篇：間接注入實戰：把指令藏進網頁與文件](https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/) · [下一篇：Hidden Context Exposure：外洩的不只是 system prompt](https://imfw.io/posts/2026/2026-08-21-system-prompt-leakage/)
 
 <!-- series-nav:end -->
