@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 多模態注入：圖片、語音與檔案
+
+- Published: 2026-08-22T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-22-multimodal-injection/
+- Tags: ai-security, ai, security
+
+- Description: 用 20 次固定圖片實驗拆開可達性、逐字服從與機密跨界，說明為什麼 PNG、語音與檔案格式都不是 Prompt Injection 的安全邊界。
+
+
 ### Hidden Context Exposure：外洩的不只是 system prompt
 
 - Published: 2026-08-21T00:00:00.000Z
