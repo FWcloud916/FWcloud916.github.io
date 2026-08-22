@@ -232,6 +232,6 @@ OWASP 建議在每個 modality boundary 做相應檢查，但任何 detector 都
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 13／30 篇**
 
-[上一篇：Hidden Context Exposure：外洩的不只是 system prompt](https://imfw.io/posts/2026/2026-08-21-system-prompt-leakage/) · 下一篇：第二週回顧：對示範應用做一輪注入普查
+[上一篇：Hidden Context Exposure：外洩的不只是 system prompt](https://imfw.io/posts/2026/2026-08-21-system-prompt-leakage/) · [下一篇：第二週回顧：用十種情境測試範例應用程式的提示注入風險](https://imfw.io/posts/2026/2026-08-23-injection-assessment-review/)
 
 <!-- series-nav:end -->
