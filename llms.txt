@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 第二週回顧：用十種情境測試範例應用程式的提示注入風險
+
+- Published: 2026-08-23T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-23-injection-assessment-review/
+- Tags: ai-security, ai, security
+
+- Description: 用同一個本機摘要器重測十種注入情境，分開量測模型偏航與資料跨界，並把單一攻擊示範整理成可重跑的評估基準。
+
+
 ### 多模態注入：圖片、語音與檔案
 
 - Published: 2026-08-22T00:00:00.000Z
