@@ -209,6 +209,6 @@ Day 14 的基準不會因此作廢。相反地，clean target、canary、exact�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 14／30 篇**
 
-[上一篇：多模態注入：圖片、語音與檔案](https://imfw.io/posts/2026/2026-08-22-multimodal-injection/) · 下一篇：RAG 架構的攻擊面全解
+[上一篇：多模態注入：圖片、語音與檔案](https://imfw.io/posts/2026/2026-08-22-multimodal-injection/) · [下一篇：RAG 架構的攻擊面全解](https://imfw.io/posts/2026/2026-08-24-rag-attack-surface/)
 
 <!-- series-nav:end -->
