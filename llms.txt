@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### RAG 架構的攻擊面全解
+
+- Published: 2026-08-24T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-24-rag-attack-surface/
+- Tags: ai-security, ai, security
+
+- Description: 沿著資料來源、切塊、檢索、序列化與模型輸出拆解 RAG 攻擊面，並用十五次確定性追蹤分開驗證語料存在、被檢索器選取與模型偏航。
+
+
 ### 第二週回顧：用十種情境測試範例應用程式的提示注入風險
 
 - Published: 2026-08-23T00:00:00.000Z
