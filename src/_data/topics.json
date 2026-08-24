@@ -75,7 +75,8 @@
       "/posts/2026/2026-08-21-system-prompt-leakage/",
       "/posts/2026/2026-08-22-multimodal-injection/",
       "/posts/2026/2026-08-23-injection-assessment-review/",
-      "/posts/2026/2026-08-24-rag-attack-surface/"
+      "/posts/2026/2026-08-24-rag-attack-surface/",
+      "/posts/2026/2026-08-25-data-poisoning-knowledge-base/"
     ]
   }
 ]

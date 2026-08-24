@@ -211,6 +211,6 @@ RAG 沒有能包辦全程的「安全 prompt」。各層應只負責能明確判
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 15／30 篇**
 
-[上一篇：第二週回顧：用十種情境測試範例應用程式的提示注入風險](https://imfw.io/posts/2026/2026-08-23-injection-assessment-review/) · 下一篇：資料投毒與知識庫污染
+[上一篇：第二週回顧：用十種情境測試範例應用程式的提示注入風險](https://imfw.io/posts/2026/2026-08-23-injection-assessment-review/) · [下一篇：資料投毒與知識庫污染](https://imfw.io/posts/2026/2026-08-25-data-poisoning-knowledge-base/)
 
 <!-- series-nav:end -->
