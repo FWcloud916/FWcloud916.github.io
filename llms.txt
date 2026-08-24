@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 資料投毒與知識庫污染
+
+- Published: 2026-08-25T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-25-data-poisoning-knowledge-base/
+- Tags: ai-security, ai, security
+
+- Description: 從共編政策遭竄改、撤銷到重建知識庫，說明資料投毒如何持續污染系統，並用二十次生命週期實驗驗證：來源失效後，衍生語料不會自動同步失效。
+
+
 ### RAG 架構的攻擊面全解
 
 - Published: 2026-08-24T00:00:00.000Z
