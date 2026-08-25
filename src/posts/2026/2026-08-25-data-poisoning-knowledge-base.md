@@ -239,8 +239,8 @@ Embedding model 會把文件與查詢轉成一串數值；轉換後的向量所�
 
 ---
 
-**《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 16／30 篇**
+**《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 16／31 篇**
 
-[上一篇：RAG 架構的攻擊面全解](https://imfw.io/posts/2026/2026-08-24-rag-attack-surface/) · 下一篇：向量資料庫與 Embedding 的安全議題
+[上一篇：RAG 架構的攻擊面全解](https://imfw.io/posts/2026/2026-08-24-rag-attack-surface/) · [下一篇：向量資料庫與 Embedding 的安全議題](https://imfw.io/posts/2026/2026-08-26-vector-database-embedding-security/)
 
 <!-- series-nav:end -->
