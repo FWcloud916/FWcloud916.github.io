@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 向量資料庫與 Embedding 的安全議題
+
+- Published: 2026-08-26T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-26-vector-database-embedding-security/
+- Tags: ai-security, ai, security
+
+- Description: 本文使用真實 Embedding、exact cosine 與 Qdrant 比較四種情境，說明相似度排名與租戶授權為什麼需要兩道獨立閘門，並整理向量反推、跨租戶檢索與同租戶投毒的防線。
+
+
 ### 資料投毒與知識庫污染
 
 - Published: 2026-08-25T00:00:00.000Z
