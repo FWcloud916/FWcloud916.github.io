@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>Excessive Agency：Agent 的過度代理風險 - FW Blog</title>
+  <meta name="description" content="以一個固定的惡意寄信提案為起點，拆解過度功能、過度權限與過度自主如何讓模型偏航造成真實副作用，並驗證最小權限、精確核准與批次警示的邊界。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="Excessive Agency：Agent 的過度代理風險 - FW Blog">
+  <meta property="og:description" content="以一個固定的惡意寄信提案為起點，拆解過度功能、過度權限與過度自主如何讓模型偏航造成真實副作用，並驗證最小權限、精確核准與批次警示的邊界。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="Excessive Agency：Agent 的過度代理風險 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-27T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Excessive Agency：Agent 的過度代理風險 - FW Blog">
+  <meta name="twitter:description" content="以一個固定的惡意寄信提案為起點，拆解過度功能、過度權限與過度自主如何讓模型偏航造成真實副作用，並驗證最小權限、精確核准與批次警示的邊界。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="Excessive Agency：Agent 的過度代理風險 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=258970f">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=258970f">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Excessive Agency：Agent 的過度代理風險",
+    "description": "以一個固定的惡意寄信提案為起點，拆解過度功能、過度權限與過度自主如何讓模型偏航造成真實副作用，並驗證最小權限、精確核准與批次警示的邊界。",
+    "url": "https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/",
+    "datePublished": "2026-08-27T00:00:00.000Z",
+    "dateModified": "2026-08-27T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">Excessive Agency：Agent 的過度代理風險</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-27T00:00:00.000Z">2026年08月27日</time></span>
+      
+      <span>7 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-13 查核 OWASP LLM Top 10 2026 與 OWASP Top 10 for Agentic Applications 2026，並引用同日完成的固定合成實驗。OWASP 分類與 Agent 安全建議仍可能更新，實際設計時請重新確認官方資料。</p>
+</blockquote>
+<p>Agent 草擬一封危險郵件，和 Agent 真的把郵件寄出去，是兩件不同的事。</p>
+<p>模型偏航是第一個缺口。應用程式若又提供寄信功能、給予過大的下游權限，最後還省略人工核准，
+同一段錯誤輸出才會一路變成真實副作用。這正是 Excessive Agency（過度代理）要處理的問題。</p>
+<p>我一開始的想法是：只保留讀取來信與草擬回覆。</p>
+<p>接著加入下游權限與實際寄送需求兩個反例後，我把判斷補完整：</p>
+<blockquote>
+<p>Agent 只負責讀信與草擬；後端依登入者身分限制資料範圍，並給 Agent 獨立的最小權限。寄信前由使用者檢閱實際送出的內容。系統可批次核准低風險草稿，但異常信件必須分離並單獨確認；關鍵字偵測只負責輔助標註與警報。</p>
+</blockquote>
+<p>這段判斷不期待模型永遠拒絕惡意指令，而是假設模型終究會失守，再限制錯誤提案能走多遠。</p>
+<h2>三種「過度」要分開處理</h2>
+<p><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM03_ExcessiveAgency.md">OWASP LLM03:2026</a>
+把 Excessive Agency 的根因分成三類：</p>
+<table>
+<thead>
+<tr>
+<th>根因</th>
+<th>郵件 Agent 的例子</th>
+<th>對應控制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>過度功能（excessive functionality）</td>
+<td>摘要工具同時提供寄信、刪信與退款</td>
+<td>只提供工作需要的功能</td>
+</tr>
+<tr>
+<td>過度權限（excessive permissions）</td>
+<td>讀信工具使用能存取全公司的共用管理員帳號</td>
+<td>後端依登入者身分授權，Agent 使用獨立最小權限</td>
+</tr>
+<tr>
+<td>過度自主（excessive autonomy）</td>
+<td>Agent 不經確認就寄信、刪資料或付款</td>
+<td>高影響動作綁定人工核准與確定性政策</td>
+</tr>
+</tbody>
+</table>
+<p>三道防線處理的問題不同。移除 <code>send_mail</code>，代表 Agent 根本沒有寄信功能；保留功能但移除下游寄信
+權限，代表 Agent 即使提出寄信要求也無法執行；兩者都保留時，人工核准才負責判斷這一次寄信是否
+符合使用者意圖。</p>
+<p>只做其中一道，不代表另外兩道可以消失。第三方工具可能把讀、寫、刪除包在一起；Agent 也可能拿到
+服務帳號原本就有的廣泛權限。介面上看起來只有「整理信箱」，不等於下游系統真的只允許讀取。</p>
+<h2>實驗不再問模型會不會中招</h2>
+<p>前面的注入實驗已經說明模型輸出不能當成安全邊界。這次我直接把一個惡意寄信提案視為既定輸入，
+固定收件者、主旨、正文、附件、動作與資源，再依序檢查五個階段：</p>
+<pre class="language-text"><code class="language-text">不可信的 Agent 提案
+  → 功能是否存在
+  → 登入者與 Agent 身分是否具有下游權限
+  → 關鍵字規則是否標註風險
+  → 使用者是否核准完全相同的動作內容
+  → 記憶體內的合成副作用是否發生</code></pre>
+<p>正式實驗設計了 7 組測試情境，共產生 9 個待執行的動作提案。其中 6 組情境各有 1 個提案，批次核准
+情境則一次包含 3 個提案。所有郵件地址都在 <code>.test</code> 網域，附件與身分都是假資料，副作用只寫入
+記憶體內的 ledger。實驗沒有呼叫模型、沒有網路連線，也沒有接上真實信箱、付款系統或外部 API。</p>
+<p>固定程式、fixture、事前預測與淨化結果都收錄在公開的
+<a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-18-excessive-agency/evidence/day-18">Day 18 evidence checkpoint</a>。</p>
+<h2>同一個惡意提案，結果由控制面決定</h2>
+<p>7 組測試情境全都符合事前預測。9 個動作提案中，5 個寫入記憶體內的合成 ledger，4 個被阻擋：</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>結果</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>功能、權限與自主性都過大</td>
+<td>執行</td>
+<td>Agent 自動執行寄信，關鍵字警示沒有阻擋權</td>
+</tr>
+<tr>
+<td>移除寄信功能</td>
+<td>阻擋</td>
+<td><code>send_mail</code> 不在可用功能內</td>
+</tr>
+<tr>
+<td>使用獨立唯讀權限</td>
+<td>阻擋</td>
+<td>Agent 身分沒有下游寄信權限</td>
+</tr>
+<tr>
+<td>核准完全相同的寄信內容</td>
+<td>執行</td>
+<td>實際動作與人工檢閱的 envelope 相同</td>
+</tr>
+<tr>
+<td>核准後修改正文</td>
+<td>阻擋</td>
+<td>envelope SHA-256 改變，原核准失效</td>
+</tr>
+<tr>
+<td>三封信批次核准，其中一封命中警示</td>
+<td>兩封執行、一封阻擋</td>
+<td>警示信件退出批次，必須單獨檢閱</td>
+</tr>
+<tr>
+<td>用未列入規則的同義詞改寫</td>
+<td>執行</td>
+<td>literal keyword 沒有命中</td>
+</tr>
+</tbody>
+</table>
+<p>前三個案例使用完全相同的惡意 action envelope，SHA-256 都是
+<code>84bc2863bfbc15bb1623bc0852add7619ba47354aeb36b0c9c7d621c9208d1ef</code>。在功能、權限與自主性都過大的
+配置下，提案會執行；移除功能或移除權限，都能各自阻擋同一個提案。差異不在模型突然變乖，而是
+控制面不再讓模型具備完成動作的條件。</p>
+<h2>人工確認必須綁定真正要執行的內容</h2>
+<p>「寄出前問一下」仍然太模糊。使用者應該看到收件者、主旨、正文、附件與動作類型，系統再把核准
+綁定到同一份不可變的 action envelope。只要其中一個欄位在核准後改變，舊核准就應失效。</p>
+<p>本次實驗用 canonical JSON 計算 envelope SHA-256。安全草稿經過檢閱後可以寄出；另一個案例只在
+核准後改寫正文，hash 隨即不同，執行階段因 <code>approval_missing_or_stale</code> 而停止。Hash 在這裡用來
+驗證實驗中的內容綁定概念，不是可以直接搬去正式環境的簽章或身分驗證方案。</p>
+<p>批次核准不必一律禁止。使用者可以一次檢閱多封低風險信件，但每一封仍要有自己的 action
+envelope。命中風險訊號、收件者異常或影響較高的信件，應離開批次路徑，改成單獨確認。否則一封
+惡意草稿只要混在九封正常草稿中，就很容易利用審閱疲勞過關。</p>
+<h2>關鍵字警示不是第四種授權</h2>
+<p>我原本提出「搜尋危險關鍵字並做標註及警報」，這道防線有價值，但只能當輔助訊號。</p>
+<p>實驗中的規則能抓到 <code>salary</code> 與 <code>password</code>。批次案例命中 <code>password</code> 後，該封信被分離並要求單獨
+檢閱；可是另一封信把 <code>salary</code> 改寫成未列入規則的 <code>compensation</code>，規則就沒有標註，郵件仍依
+批次核准進入合成 ledger。</p>
+<p>攻擊者還可以用錯字、編碼、分句、圖片或其他語言繞過字面比對。關鍵字規則適合提高審閱優先順序、
+產生 audit event 或觸發警報，不適合回答「這個人能不能寄這封信」。授權仍要由後端根據可信的
+使用者身分、Agent 身分、動作、資源與政策，逐次進行完整的授權檢查；關鍵字是否命中，不能擴張
+原本沒有的權限。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/jaQ0eJvzZu-300.webp 300w, /assets/img/jaQ0eJvzZu-600.webp 600w, /assets/img/jaQ0eJvzZu-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/jaQ0eJvzZu-300.jpeg" alt="惡意寄信提案要越過功能、權限與人工核准三道防線才會產生合成副作用，任一道防線都能獨立阻擋；關鍵字警示只提供標註與警報，不具阻擋權。" width="1200" height="800" srcset="/assets/img/jaQ0eJvzZu-300.jpeg 300w, /assets/img/jaQ0eJvzZu-600.jpeg 600w, /assets/img/jaQ0eJvzZu-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<h2>把 Agent 當成受限制的執行主體</h2>
+<p>一個可落地的寄信流程可以採用以下順序：</p>
+<ol>
+<li>模型只能提出結構化動作與參數，提案本身不帶授權結論。</li>
+<li>後端從已驗證的 session 取得使用者身分，不採信模型聲稱的 user、role 或 <code>allow</code>。</li>
+<li>Agent 使用獨立且權限範圍受限的下游身分，不能沿用共用管理員帳號。</li>
+<li>後端逐次驗證 subject、Agent、action 與 resource，並讓不需要的功能從工具介面消失。</li>
+<li>風險規則只做標註、排序與警報。</li>
+<li>高影響動作要求使用者檢閱完整 envelope；批次中的例外改走單獨核准。</li>
+<li>執行前再次驗證 envelope 與核准版本，執行後留下受保護的 audit trail。</li>
+</ol>
+<p><picture><source type="image/webp" srcset="/assets/img/QKb3DSv1Wi-300.webp 300w, /assets/img/QKb3DSv1Wi-600.webp 600w, /assets/img/QKb3DSv1Wi-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/QKb3DSv1Wi-300.jpeg" alt="郵件 Agent 授權邊界架構圖：可信的使用者身分、Agent 身分與包含動作、資源、政策的 Agent 提案，由後端逐次進行完整的授權檢查；人工檢閱完整 envelope 也連到授權檢查。關鍵字規則僅以虛線提供標註與警報，不能擴張寄信權限；寄信執行使用 Agent 的獨立最小權限。" width="1200" height="800" srcset="/assets/img/QKb3DSv1Wi-300.jpeg 300w, /assets/img/QKb3DSv1Wi-600.jpeg 600w, /assets/img/QKb3DSv1Wi-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>OWASP 也要求授權由確定性邏輯完成，不能讓 LLM 自己判斷動作是否獲准；高影響動作則需要
+human-in-the-loop。在更完整的 Agent 系統中，Excessive Agency 可能表現為 OWASP Agentic Top 10 的
+<a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/">Tool Misuse、Identity &amp; Privilege Abuse 與 Cascading Failures</a>。</p>
+<p>這次實驗沒有證明人工一定看得出惡意內容，也沒有量測 Prompt Injection 成功率。因此，實驗結果只
+支持以下結論：<strong>即使 Agent 已提出危險動作，功能、下游權限與精確核准仍能各自限制副作用；關鍵字
+警示則不能取代其中任何一道。</strong></p>
+<p>下一篇會把鏡頭拉近工具介面本身：即使 Agent 有權呼叫某個工具，工具參數、回傳內容與底層 sink
+仍可能形成另一條注入路徑。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM03_ExcessiveAgency.md">OWASP LLM03:2026 Excessive Agency</a></li>
+<li><a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/">OWASP Top 10 for Agentic Applications 2026</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-18-excessive-agency/evidence/day-18">LLM Application Security Lab — Day 18 evidence checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10405352">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 18／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-26-vector-database-embedding-security/">上一篇：向量資料庫與 Embedding 的安全議題</a> · 下一篇：工具呼叫 / Function Calling 的風險</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-26-vector-database-embedding-security/" class="text-gray-900 hover:text-blue-600 transition">
+      向量資料庫與 Embedding 的安全議題
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-26T00:00:00.000Z">2026年08月26日</time>
+    <span>17 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">本文使用真實 Embedding、exact cosine 與 Qdrant 比較四種情境，說明相似度排名與租戶授權為什麼需要兩道獨立閘門，並整理向量反推、跨租戶檢索與同租戶投毒的防線。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-25-data-poisoning-knowledge-base/" class="text-gray-900 hover:text-blue-600 transition">
+      資料投毒與知識庫污染
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-25T00:00:00.000Z">2026年08月25日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從共編政策遭竄改、撤銷到重建知識庫，說明資料投毒如何持續污染系統，並用二十次生命週期實驗驗證：來源失效後，衍生語料不會自動同步失效。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-24-rag-attack-surface/" class="text-gray-900 hover:text-blue-600 transition">
+      RAG 架構的攻擊面全解
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-24T00:00:00.000Z">2026年08月24日</time>
+    <span>14 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">沿著資料來源、切塊、檢索、序列化與模型輸出拆解 RAG 攻擊面，並用十五次確定性追蹤分開驗證語料存在、被檢索器選取與模型偏航。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=258970f"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

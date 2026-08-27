@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Excessive Agency：Agent 的過度代理風險
+
+- Published: 2026-08-27T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/
+- Tags: ai-security, ai, security
+
+- Description: 以一個固定的惡意寄信提案為起點，拆解過度功能、過度權限與過度自主如何讓模型偏航造成真實副作用，並驗證最小權限、精確核准與批次警示的邊界。
+
+
 ### 向量資料庫與 Embedding 的安全議題
 
 - Published: 2026-08-26T00:00:00.000Z
