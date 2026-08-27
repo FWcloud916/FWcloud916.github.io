@@ -182,6 +182,6 @@ Top-k 只決定「取幾段」，不保證入選分數夠高，也不判斷內�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 17／31 篇**
 
-[上一篇：資料投毒與知識庫污染](https://imfw.io/posts/2026/2026-08-25-data-poisoning-knowledge-base/) · 下一篇：Excessive Agency：Agent 的過度代理風險
+[上一篇：資料投毒與知識庫污染](https://imfw.io/posts/2026/2026-08-25-data-poisoning-knowledge-base/) · [下一篇：Excessive Agency：Agent 的過度代理風險](https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/)
 
 <!-- series-nav:end -->
