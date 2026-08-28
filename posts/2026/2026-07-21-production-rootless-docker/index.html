@@ -65,8 +65,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d4391b4">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=d4391b4">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d7027a6">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=d7027a6">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -204,7 +204,7 @@
 
   <div class="prose prose-lg max-w-none">
     <blockquote>
-<p><strong>查核資訊：</strong> 本文於 2026-07-21 依 Docker 官方文件與 <code>skill-rootless-docker</code> 專案內容查核。Docker 支援版本、套件庫指令與各 Linux 發行版的安全限制可能變動，實際修改主機前請再次確認官方文件。</p>
+<p><strong>查核資訊：</strong> 本文於 2026-07-21 查核 Docker 官方文件與 <code>skill-rootless-docker</code> 專案內容，並於 2026-08-29 再次確認 Rootless Docker 的權限模型、必要條件與 cgroup 限制。Docker 的支援版本、套件庫指令與各 Linux 發行版的安全限制可能變動，實際修改主機前請再次確認官方文件。</p>
 </blockquote>
 <p>很多 Docker 教學都會把這行指令列為安裝後的第一件事：</p>
 <pre class="language-bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> <span class="token parameter variable">-aG</span> <span class="token function">docker</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span></code></pre>
@@ -286,7 +286,7 @@ dockerd（由 deployer 擁有，位於 user namespace）
 <li>Workload 是否依賴 80/443、Docker socket、bind mounts、devices 或嚴格的 cgroup limits？</li>
 <li>User service 能不能跨過 logout，並在 reboot 後自動啟動？</li>
 </ul>
-<p>如果 agent 一看到「幫我裝 Rootless Docker」就直接跑安裝，很容易把 audit 變成 mutation，甚至停掉還在提供服務的 rootful daemon。</p>
+<p>如果 agent 一看到「幫我裝 Rootless Docker」就直接跑安裝，很容易把唯讀盤點直接變成主機修改，甚至停掉還在提供服務的 rootful daemon。</p>
 <p><a href="https://github.com/FWcloud916/skill-rootless-docker"><code>rootless-docker-setup</code></a> 把工作拆成固定順序：</p>
 <ol>
 <li><strong>Read-only preflight</strong>：先收集 host 與 target user 狀態，不安裝套件、不用 <code>sudo</code>、不修改 service。</li>
@@ -346,7 +346,7 @@ readiness for user deployer. Do not change the host.</code></pre>
 <li>失敗與 rollback 方式。</li>
 </ul>
 <p>套件安裝完成後要立刻檢查 <code>docker.service</code> 和 <code>docker.socket</code>。Ubuntu 的 Docker packages 可能啟動 rootful system service；這不代表應該馬上停掉它，而是要回到前面核准過的 coexistence 或 migration 決策。</p>
-<p>也不要為了方便改用 <code>curl ... | sh</code>。Skill 優先採用 Docker 的 signed distribution packages；只有 packages 路徑不可行時，才下載官方 standalone installer 到具名檔案，讓使用者檢查後另行批准。</p>
+<p>也不要為了方便改用 <code>curl ... | sh</code>。Skill 優先採用 Docker 的 signed distribution packages；只有透過套件安裝不可行時，才下載官方 standalone installer 到具名檔案，讓使用者檢查後另行批准。</p>
 <p>Ubuntu、Debian 與 Fedora 的整體流程相同，但不要混用 package commands：</p>
 <table>
 <thead>
@@ -415,7 +415,7 @@ systemctl <span class="token parameter variable">--user</span> is-active docker.
 loginctl show-user <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token function">id</span> <span class="token parameter variable">-un</span><span class="token variable">)</span></span>"</span> <span class="token parameter variable">-p</span> Linger
 pgrep <span class="token parameter variable">-u</span> <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token function">id</span> <span class="token parameter variable">-u</span><span class="token variable">)</span></span>"</span> <span class="token parameter variable">-af</span> <span class="token string">'dockerd|rootlesskit'</span>
 <span class="token function">docker</span> run <span class="token parameter variable">--rm</span> hello-world</code></pre>
-<p>重點不是每個 command 都「有輸出」，而是證據彼此一致：</p>
+<p>重點不是每道命令都有輸出，而是證據彼此一致：</p>
 <ul>
 <li>active context 指向 rootless user socket；</li>
 <li><code>docker info</code> 的 Security Options 包含 <code>rootless</code>；</li>
@@ -424,15 +424,15 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 <li>user service 已 enable 且 active；</li>
 <li>linger 符合 reboot 後啟動需求；</li>
 <li>實際 container 能執行；</li>
-<li>對外連接埠能通過預期的 firewall path；</li>
+<li>對外服務能依預期經過 firewall path 連線；</li>
 <li>rootful daemon 是刻意停用，或刻意 coexist。</li>
 </ul>
-<p>最好再做一次真實的 login boundary 或 reboot 驗證。否則你測到的可能只是當前 shell 留下來的環境，不是能在主機重啟後自動恢復的 production service。</p>
+<p>最好再實際登出後重新登入，或重開機驗證。否則你測到的可能只是當前 shell 留下來的環境，不是能在主機重啟後自動恢復的 production service。</p>
 <h2>Rootless 的代價與不適用情境</h2>
 <p>Rootless 是更小的 host privilege，不是免費且透明的相容模式。</p>
 <h3>cgroup resource limits 可能沒有完整生效</h3>
-<p><a href="https://docs.docker.com/engine/security/rootless/tips/">Docker 官方的 Rootless tips</a>說明，rootless mode 的 <code>--cpus</code>、<code>--memory</code>、<code>--pids-limit</code> 等 cgroup flags，需要 cgroup v2 與 systemd。即使條件成立，預設也可能只 delegation 部分 controllers。</p>
-<p>因此 <code>docker compose.yml</code> 寫了 limit 不等於 kernel 真的 enforcement。需要 CPU、cpuset、I/O、memory 或 pids 控制的 workload，要檢查 <code>docker info</code>、可用 controllers 與 user service delegation。Docker 若警告某個 limit 被忽略，就不能把它列為已完成的 production guardrail。</p>
+<p><a href="https://docs.docker.com/engine/security/rootless/tips/">Docker 官方的 Rootless tips</a>說明，rootless mode 的 <code>--cpus</code>、<code>--memory</code>、<code>--pids-limit</code> 等 cgroup flags，需要 cgroup v2 與 systemd。即使條件成立，systemd 預設也可能只將部分 controllers 委派給非 root 使用者。</p>
+<p>因此，在 <code>docker compose.yml</code> 設定 limit，不代表 kernel 一定會強制執行。需要 CPU、cpuset、I/O、memory 或 pids 控制的 workload，要檢查 <code>docker info</code>、可用 controllers 與 user service delegation。Docker 若警告某個 limit 被忽略，就不能把它列為已完成的 production guardrail。</p>
 <h3>Bind mount 會遇到 UID/GID mapping</h3>
 <p>Container 內的 UID/GID 映射到 subordinate range 後，既有 host directory 的 ownership 可能不再符合預期。修正時應針對 workload 真正使用的窄路徑處理，不要為了讓 container 寫入，對大範圍目錄遞迴 <code>chown</code> 或開放權限。</p>
 <h3>特殊網路、device 與 orchestration 要另外評估</h3>
@@ -503,6 +503,10 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 <li><a href="https://docs.docker.com/engine/install/ubuntu/">Docker Docs — Install Docker Engine on Ubuntu</a></li>
 <li><a href="https://github.com/FWcloud916/skill-rootless-docker">skill-rootless-docker — GitHub repository</a></li>
 </ul>
+<!-- series-nav:start -->
+<hr>
+<p><strong>系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全</strong></p>
+<!-- series-nav:end -->
 
   </div>
 </article>
@@ -616,7 +620,7 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 
   <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
     <time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time>
-    <span>13 分鐘閱讀</span>
+    <span>14 分鐘閱讀</span>
   </div>
 
   
@@ -701,7 +705,7 @@ pgrep <span class="token parameter variable">-u</span> <span class="token string
 </section>
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=d4391b4"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=d7027a6"></script>
 
   </main>
 

@@ -61,8 +61,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d4391b4">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=d4391b4">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d7027a6">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=d7027a6">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -148,7 +148,7 @@
       <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
       <span>發布：<time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time></span>
       
-      <span>13 分鐘閱讀</span>
+      <span>14 分鐘閱讀</span>
     </div>
     
     <div class="mt-4 flex flex-wrap gap-2">
@@ -188,7 +188,7 @@
 
   <div class="prose prose-lg max-w-none">
     <blockquote>
-<p><strong>查核資訊：</strong> 本文於 2026-07-21 依 Linux man pages（namespaces(7)、cgroups(7)、unshare(1)）、OCI 規格 repo 與 Docker／Podman 官方文件查核。文中版本資訊（Docker Engine 29.x、Podman 6.0.x、OCI runtime-spec v1.3.0、image-spec v1.1.1）與各工具預設行為可能隨新版本變動；示範命令以使用 cgroups v2 的 Linux 環境為準。</p>
+<p><strong>查核資訊：</strong> 本文於 2026-07-21 查核 Linux man pages（namespaces(7)、cgroups(7)、unshare(1)）、OCI 規格 repository，以及 Docker 與 Podman 官方文件。文中使用的版本（Docker Engine 29.x、Podman 6.0.x、OCI runtime-spec v1.3.0、image-spec v1.1.1）與各工具的預設行為可能隨新版本變動；示範命令以採用 cgroups v2 的 Linux 環境為準。</p>
 </blockquote>
 <p>每天 <code>docker run</code> 或 <code>podman run</code>，卻說不清楚容器跟 VM 差在哪、image 的 layer 是什麼、namespace 又隔離了什麼——這是很多工程師的共同狀態。工具太好用，把底層藏得太乾淨。</p>
 <p>這篇文章要補的就是那個心智模型。我們會用原生 Linux 命令手工做出一個「容器」，親眼看到容器其實只是一個被限制的普通 process；再回頭看 Docker 與 Podman 這兩套工具，各自用什麼架構達成同一個目標。懂了這一層，日常那些「進不去、砍不掉、限制沒生效」的除錯會突然變簡單。</p>
@@ -200,7 +200,7 @@
 <li><strong>分發（registry）</strong>：打包好的東西要能推上去、拉下來、驗證內容沒被動過，部署才能自動化。</li>
 </ol>
 <p>這三件事在容器出現前都有各自的解法：打包靠 deb／rpm 或 VM image，隔離靠 VM 或乖乖約定，分發靠套件庫或檔案伺服器。2013 年 Docker 開源後真正的貢獻，是把三件事整合成一組順手的工作流程：<code>docker build</code>、<code>docker run</code>、<code>docker push</code>。Podman 後來走進同一個戰場，目標完全相同，只是架構選擇不同——這是文章後半段的主題。</p>
-<p>但不管哪套工具，底下做隔離的機制都不是它們發明的，而是 Linux kernel 本來就有的功能。所以先把工具放一邊，直接跟 kernel 打交道。</p>
+<p>Docker 與 Podman 底下的隔離機制都不是這兩套工具發明的，而是 Linux kernel 原本就有的功能。所以先把工具放一邊，直接跟 kernel 打交道。</p>
 <h2>容器不是 VM：它是一個被限制的 process</h2>
 <p>最常見的誤解是把容器當成「輕量 VM」。這個比喻在架構圖上看起來成立，在機制上完全不成立。</p>
 <p>VM 虛擬的是硬體：hypervisor 模擬出 CPU、記憶體與磁碟，上面跑一個完整的 guest OS，有自己的 kernel。容器沒有這些——容器裡的 process 就直接跑在 host 的 kernel 上，只是 kernel 限制了它「看得到什麼」與「用得了多少」。</p>
@@ -430,17 +430,17 @@
 </tr>
 </tbody>
 </table>
-<p>注意這張表裡沒有「誰的容器比較快、比較輕」——因為跑起來的東西是同一種：同樣的 OCI image、同樣的 kernel 機制。選擇 Docker 或 Podman，選的是<strong>管理容器的方式</strong>，不是容器本身。</p>
+<p>注意這張表沒有比較「誰的容器比較快、比較輕」，因為兩者執行的容器都使用 OCI image 與相同的 kernel 機制。選擇 Docker 或 Podman，選的是<strong>管理容器的方式</strong>，不是容器本身。</p>
 <h2>收尾：懂了 process，除錯就變簡單</h2>
 <p>回到開頭的心智模型：容器是被 namespaces、cgroups 與 rootfs 限制的普通 process。這句話能直接翻譯成除錯直覺：</p>
 <ul>
 <li><strong>容器裡看不到某個東西</strong>（process、網路介面、檔案）？那是某個 namespace 擋掉的，去 host 上看 <code>/proc/&lt;pid&gt;/ns/</code> 就知道它活在哪些 namespace 裡。</li>
 <li><strong>容器被莫名砍掉、Exit 137</strong>？那是 cgroup 的 <code>memory.max</code> 加 OOM killer，去 <code>/sys/fs/cgroup/</code> 對應目錄看 <code>memory.events</code> 有沒有 oom_kill。</li>
 <li><strong>在容器裡改的設定重啟後消失</strong>？layer 唯讀、可寫層跟著容器走，機制如此，該用 volume 就用 volume。</li>
-<li><strong><code>docker</code> 與 <code>podman</code> 之間遷移</strong>？image 與 registry 都是 OCI 標準，真正要遷的是 daemon 與 systemd 之間的管理方式差異。</li>
+<li><strong><code>docker</code> 與 <code>podman</code> 之間遷移</strong>？image 與 registry 都採用 OCI 標準，真正要處理的是 daemon 與 systemd 的管理方式差異。</li>
 </ul>
 <p>工具會一直換版本，kernel 機制十年來大致就是這一套。把這一層弄懂，上層不管是 Docker、Podman，還是 Kubernetes 底下的 containerd 與 CRI-O，看起來都是同一件事的不同包裝。</p>
-<p>下一步如果你關心的是「這些東西怎麼安全地上 production」，rootless 與權限邊界就是主戰場——歡迎接著讀 <a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">正式環境為什麼需要 Rootless Docker</a> 與 <a href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">Podman 也有 Rootless 問題嗎</a>。</p>
+<p>如果你關心的是「這些東西怎麼安全地上 production」，rootless 與權限邊界就是主戰場。相關細節可參考<a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">正式環境為什麼需要 Rootless Docker</a>與<a href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">Podman 也有 Rootless 問題嗎</a>。</p>
 <h2>參考資料</h2>
 <ul>
 <li><a href="https://man7.org/linux/man-pages/man7/namespaces.7.html">namespaces(7) — Linux manual page</a></li>
@@ -456,6 +456,10 @@
 <li><a href="https://docs.podman.io/">What is Podman? — Podman documentation</a></li>
 <li><a href="https://github.com/containers/crun">crun — GitHub</a></li>
 </ul>
+<!-- series-nav:start -->
+<hr>
+<p><strong>系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全</strong></p>
+<!-- series-nav:end -->
 
   </div>
 </article>
@@ -648,7 +652,7 @@
 </section>
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=d4391b4"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=d7027a6"></script>
 
   </main>
 

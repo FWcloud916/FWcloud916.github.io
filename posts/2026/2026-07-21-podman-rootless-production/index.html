@@ -63,8 +63,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d4391b4">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=d4391b4">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d7027a6">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=d7027a6">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -196,9 +196,9 @@
 
   <div class="prose prose-lg max-w-none">
     <blockquote>
-<p><strong>查核資訊：</strong> 本文於 2026-07-21 依 Podman 與 Docker 官方文件查核。Podman networking、Quadlet、Linux kernel 與各發行版的預設值可能變動，部署前請再次確認實際安裝版本的文件與主機設定。</p>
+<p><strong>查核資訊：</strong> 本文於 2026-07-21 查核 Podman 與 Docker 官方文件，並於 2026-08-29 再次確認 rootless networking、cgroup、Quadlet 與 API socket 的現行行為。Podman networking、Quadlet、Linux kernel 與各發行版的預設值可能變動，部署前請再次確認實際安裝版本的文件與主機設定。</p>
 </blockquote>
-<p>上一篇談<a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">正式環境為什麼需要 Rootless Docker</a>後，有人問了一個很合理的問題：</p>
+<p>談到<a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">正式環境為什麼需要 Rootless Docker</a>時，有人問了一個很合理的問題：</p>
 <blockquote>
 <p>Podman 本來就主打 rootless，又沒有 Docker daemon，它還會有一樣的問題嗎？</p>
 </blockquote>
@@ -239,7 +239,7 @@ containers（不超過該使用者的 host 權限）</code></pre>
 <li>既有 bind mount 的 ownership 可能不符合映射後的 UID/GID。</li>
 <li>Image 使用超出 mapping range 的高 UID/GID 時，pull、build 或啟動可能失敗。</li>
 </ul>
-<p>Podman 提供 <code>--userns=keep-id</code> 等工具改善部分 volume 使用情境，但它不會自動替所有既有資料目錄找出正確的 ownership 策略。Production migration 前仍應用實際 workload 測試，不要對大範圍目錄遞迴 <code>chown</code> 或直接放寬權限。</p>
+<p>Podman 提供 <code>--userns=keep-id</code> 等工具改善部分 volume 使用情境，但它不會自動替所有既有資料目錄找出正確的 ownership 策略。在 production migration 前，仍應使用實際 workload 測試，不要對大範圍目錄遞迴 <code>chown</code> 或直接放寬權限。</p>
 <h3>2. 特權連接埠與 rootless networking 仍需設計</h3>
 <p>非 root process 預設不能直接綁定 Linux 的特權連接埠（1024 以下），Rootless Podman 也不例外。<a href="https://github.com/containers/podman/blob/main/rootless.md">Podman 的 rootless 限制文件</a>建議使用 reverse proxy、firewall redirect，或經審核後調整 <code>net.ipv4.ip_unprivileged_port_start</code>。</p>
 <p>最容易說明與稽核的 production 架構通常是：</p>
@@ -256,7 +256,7 @@ rootless Podman container</code></pre>
 <p><a href="https://docs.podman.io/en/latest/markdown/podman-update.1.html">Podman 的 resource limit 文件</a>標示，多個 CPU 與 block I/O 選項不支援 rootless cgroup v1，在部分系統上非 root 使用者也可能沒有修改資源限制的權限。Podman 的 Quadlet 同樣要求 cgroup v2。</p>
 <p>需要嚴格 resource control 時，至少要確認：</p>
 <pre class="language-bash"><code class="language-bash"><span class="token function">podman</span> info <span class="token parameter variable">--format</span> <span class="token string">'{{.Host.CgroupsVersion}}'</span></code></pre>
-<p>接著對真實 container 製造可控制的負載，從 host cgroup 狀態或監控資料證明限制有效。設定檔存在，只能證明你提出了要求，不能證明 kernel 已 enforcement。</p>
+<p>接著對真實 container 製造可控制的負載，從 host cgroup 狀態或監控資料證明限制有效。設定檔存在，只能證明你提出了要求，不能證明 kernel 已強制執行。</p>
 <h3>4. <code>--privileged</code> 也不會把 rootless 變成 host root</h3>
 <p><a href="https://docs.podman.io/en/latest/markdown/podman-create.1.html#privileged">Podman 官方文件</a>明確說明：位於 user namespace 的 container，無法擁有超過啟動者的權限。</p>
 <p>這是一個安全優點，也是一個相容性邊界。即使加上 <code>--privileged</code>，rootless container 仍可能無法建立 device node、操作特定 host device、載入 kernel module，或完成需要真正 host capability 的工作。</p>
@@ -343,7 +343,7 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 </table>
 <p><picture><source type="image/webp" srcset="/assets/img/R30bcZ3VHL-300.webp 300w, /assets/img/R30bcZ3VHL-600.webp 600w, /assets/img/R30bcZ3VHL-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/R30bcZ3VHL-300.jpeg" alt="Rootless Podman 正式環境驗證流程，從 workload 盤點與 host privilege 判斷，依序檢查 UID/GID、網路、cgroup、storage、service lifecycle 與外部驗證。" width="1200" height="800" srcset="/assets/img/R30bcZ3VHL-300.jpeg 300w, /assets/img/R30bcZ3VHL-600.jpeg 600w, /assets/img/R30bcZ3VHL-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
 <h2>上線前的驗證清單</h2>
-<p>安裝成功不是完成。至少用 target user 的真實 login session 驗證：</p>
+<p>安裝成功不是完成。至少在 target user 的實際 login session 中驗證：</p>
 <pre class="language-bash"><code class="language-bash"><span class="token function">podman</span> info
 <span class="token function">podman</span> unshare <span class="token function">cat</span> /proc/self/uid_map
 <span class="token function">podman</span> info <span class="token parameter variable">--format</span> <span class="token string">'{{.Host.CgroupsVersion}}'</span>
@@ -377,6 +377,10 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 <li><a href="https://docs.docker.com/engine/security/rootless/">Docker Docs — Rootless mode</a></li>
 <li><a href="https://docs.docker.com/engine/security/rootless/tips/">Docker Docs — Rootless mode tips</a></li>
 </ul>
+<!-- series-nav:start -->
+<hr>
+<p><strong>系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全</strong></p>
+<!-- series-nav:end -->
 
   </div>
 </article>
@@ -452,7 +456,7 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 
   <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
     <time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time>
-    <span>13 分鐘閱讀</span>
+    <span>14 分鐘閱讀</span>
   </div>
 
   
@@ -563,7 +567,7 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 </section>
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=d4391b4"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=d7027a6"></script>
 
   </main>
 
