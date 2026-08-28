@@ -221,6 +221,6 @@ Function Calling 的安全價值，不在於把模型輸出變成「可信 JSON�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 19／31 篇**
 
-[上一篇：Excessive Agency：Agent 的過度代理風險](https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/) · 下一篇：供應鏈風險：模型、套件與 MCP Server
+[上一篇：Excessive Agency：Agent 的過度代理風險](https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/) · [下一篇：供應鏈風險：模型、套件與 MCP Server](https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/)
 
 <!-- series-nav:end -->
