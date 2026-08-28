@@ -150,6 +150,6 @@ human-in-the-loop。在更完整的 Agent 系統中，Excessive Agency 可能表
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 18／31 篇**
 
-[上一篇：向量資料庫與 Embedding 的安全議題](https://imfw.io/posts/2026/2026-08-26-vector-database-embedding-security/) · 下一篇：工具呼叫 / Function Calling 的風險
+[上一篇：向量資料庫與 Embedding 的安全議題](https://imfw.io/posts/2026/2026-08-26-vector-database-embedding-security/) · [下一篇：工具呼叫 / Function Calling 的風險](https://imfw.io/posts/2026/2026-08-28-tool-calling-security/)
 
 <!-- series-nav:end -->
