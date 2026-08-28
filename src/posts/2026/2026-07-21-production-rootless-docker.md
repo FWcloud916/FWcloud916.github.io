@@ -10,7 +10,7 @@ tags:
 description: 從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。
 ---
 
-> **查核資訊：** 本文於 2026-07-21 依 Docker 官方文件與 `skill-rootless-docker` 專案內容查核。Docker 支援版本、套件庫指令與各 Linux 發行版的安全限制可能變動，實際修改主機前請再次確認官方文件。
+> **查核資訊：** 本文於 2026-07-21 查核 Docker 官方文件與 `skill-rootless-docker` 專案內容，並於 2026-08-29 再次確認 Rootless Docker 的權限模型、必要條件與 cgroup 限制。Docker 的支援版本、套件庫指令與各 Linux 發行版的安全限制可能變動，實際修改主機前請再次確認官方文件。
 
 很多 Docker 教學都會把這行指令列為安裝後的第一件事：
 
@@ -142,7 +142,7 @@ Rootless Docker 的安裝命令不長，真正麻煩的是命令前後的決策�
 - Workload 是否依賴 80/443、Docker socket、bind mounts、devices 或嚴格的 cgroup limits？
 - User service 能不能跨過 logout，並在 reboot 後自動啟動？
 
-如果 agent 一看到「幫我裝 Rootless Docker」就直接跑安裝，很容易把 audit 變成 mutation，甚至停掉還在提供服務的 rootful daemon。
+如果 agent 一看到「幫我裝 Rootless Docker」就直接跑安裝，很容易把唯讀盤點直接變成主機修改，甚至停掉還在提供服務的 rootful daemon。
 
 [`rootless-docker-setup`](https://github.com/FWcloud916/skill-rootless-docker) 把工作拆成固定順序：
 
@@ -237,7 +237,7 @@ Ubuntu 通常需要 `uidmap`、`dbus-user-session`、`slirp4netns`、`fuse-overl
 
 套件安裝完成後要立刻檢查 `docker.service` 和 `docker.socket`。Ubuntu 的 Docker packages 可能啟動 rootful system service；這不代表應該馬上停掉它，而是要回到前面核准過的 coexistence 或 migration 決策。
 
-也不要為了方便改用 `curl ... | sh`。Skill 優先採用 Docker 的 signed distribution packages；只有 packages 路徑不可行時，才下載官方 standalone installer 到具名檔案，讓使用者檢查後另行批准。
+也不要為了方便改用 `curl ... | sh`。Skill 優先採用 Docker 的 signed distribution packages；只有透過套件安裝不可行時，才下載官方 standalone installer 到具名檔案，讓使用者檢查後另行批准。
 
 Ubuntu、Debian 與 Fedora 的整體流程相同，但不要混用 package commands：
 
@@ -324,7 +324,7 @@ pgrep -u "$(id -u)" -af 'dockerd|rootlesskit'
 docker run --rm hello-world
 ```
 
-重點不是每個 command 都「有輸出」，而是證據彼此一致：
+重點不是每道命令都有輸出，而是證據彼此一致：
 
 - active context 指向 rootless user socket；
 - `docker info` 的 Security Options 包含 `rootless`；
@@ -333,10 +333,10 @@ docker run --rm hello-world
 - user service 已 enable 且 active；
 - linger 符合 reboot 後啟動需求；
 - 實際 container 能執行；
-- 對外連接埠能通過預期的 firewall path；
+- 對外服務能依預期經過 firewall path 連線；
 - rootful daemon 是刻意停用，或刻意 coexist。
 
-最好再做一次真實的 login boundary 或 reboot 驗證。否則你測到的可能只是當前 shell 留下來的環境，不是能在主機重啟後自動恢復的 production service。
+最好再實際登出後重新登入，或重開機驗證。否則你測到的可能只是當前 shell 留下來的環境，不是能在主機重啟後自動恢復的 production service。
 
 ## Rootless 的代價與不適用情境
 
@@ -344,9 +344,9 @@ Rootless 是更小的 host privilege，不是免費且透明的相容模式。
 
 ### cgroup resource limits 可能沒有完整生效
 
-[Docker 官方的 Rootless tips](https://docs.docker.com/engine/security/rootless/tips/)說明，rootless mode 的 `--cpus`、`--memory`、`--pids-limit` 等 cgroup flags，需要 cgroup v2 與 systemd。即使條件成立，預設也可能只 delegation 部分 controllers。
+[Docker 官方的 Rootless tips](https://docs.docker.com/engine/security/rootless/tips/)說明，rootless mode 的 `--cpus`、`--memory`、`--pids-limit` 等 cgroup flags，需要 cgroup v2 與 systemd。即使條件成立，systemd 預設也可能只將部分 controllers 委派給非 root 使用者。
 
-因此 `docker compose.yml` 寫了 limit 不等於 kernel 真的 enforcement。需要 CPU、cpuset、I/O、memory 或 pids 控制的 workload，要檢查 `docker info`、可用 controllers 與 user service delegation。Docker 若警告某個 limit 被忽略，就不能把它列為已完成的 production guardrail。
+因此，在 `docker compose.yml` 設定 limit，不代表 kernel 一定會強制執行。需要 CPU、cpuset、I/O、memory 或 pids 控制的 workload，要檢查 `docker info`、可用 controllers 與 user service delegation。Docker 若警告某個 limit 被忽略，就不能把它列為已完成的 production guardrail。
 
 ### Bind mount 會遇到 UID/GID mapping
 
@@ -399,3 +399,11 @@ Kubernetes 與多節點 orchestration 更不是「把每台 host 改成 Rootless
 - [Docker Docs — Isolate containers with a user namespace](https://docs.docker.com/engine/security/userns-remap/)
 - [Docker Docs — Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
 - [skill-rootless-docker — GitHub repository](https://github.com/FWcloud916/skill-rootless-docker)
+
+<!-- series-nav:start -->
+
+---
+
+**系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全**
+
+<!-- series-nav:end -->

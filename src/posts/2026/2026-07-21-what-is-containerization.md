@@ -8,7 +8,7 @@ tags:
 description: 容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootfs 限制的普通 Linux process。本文用原生 Linux 命令手工做出一個容器，再回頭解釋 Docker 與 Podman 各自用什麼架構達成同一個 OCI 目標。
 ---
 
-> **查核資訊：** 本文於 2026-07-21 依 Linux man pages（namespaces(7)、cgroups(7)、unshare(1)）、OCI 規格 repo 與 Docker／Podman 官方文件查核。文中版本資訊（Docker Engine 29.x、Podman 6.0.x、OCI runtime-spec v1.3.0、image-spec v1.1.1）與各工具預設行為可能隨新版本變動；示範命令以使用 cgroups v2 的 Linux 環境為準。
+> **查核資訊：** 本文於 2026-07-21 查核 Linux man pages（namespaces(7)、cgroups(7)、unshare(1)）、OCI 規格 repository，以及 Docker 與 Podman 官方文件。文中使用的版本（Docker Engine 29.x、Podman 6.0.x、OCI runtime-spec v1.3.0、image-spec v1.1.1）與各工具的預設行為可能隨新版本變動；示範命令以採用 cgroups v2 的 Linux 環境為準。
 
 每天 `docker run` 或 `podman run`，卻說不清楚容器跟 VM 差在哪、image 的 layer 是什麼、namespace 又隔離了什麼——這是很多工程師的共同狀態。工具太好用，把底層藏得太乾淨。
 
@@ -24,7 +24,7 @@ description: 容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootf
 
 這三件事在容器出現前都有各自的解法：打包靠 deb／rpm 或 VM image，隔離靠 VM 或乖乖約定，分發靠套件庫或檔案伺服器。2013 年 Docker 開源後真正的貢獻，是把三件事整合成一組順手的工作流程：`docker build`、`docker run`、`docker push`。Podman 後來走進同一個戰場，目標完全相同，只是架構選擇不同——這是文章後半段的主題。
 
-但不管哪套工具，底下做隔離的機制都不是它們發明的，而是 Linux kernel 本來就有的功能。所以先把工具放一邊，直接跟 kernel 打交道。
+Docker 與 Podman 底下的隔離機制都不是這兩套工具發明的，而是 Linux kernel 原本就有的功能。所以先把工具放一邊，直接跟 kernel 打交道。
 
 ## 容器不是 VM：它是一個被限制的 process
 
@@ -227,7 +227,7 @@ OCI 維護三份規格，正好對應容器化的三個環節：
 | 服務化 | daemon 自帶 restart policy | 交給 systemd／Quadlet |
 | 容器的父 process | dockerd 這一系 | 你的 shell 或 systemd |
 
-注意這張表裡沒有「誰的容器比較快、比較輕」——因為跑起來的東西是同一種：同樣的 OCI image、同樣的 kernel 機制。選擇 Docker 或 Podman，選的是**管理容器的方式**，不是容器本身。
+注意這張表沒有比較「誰的容器比較快、比較輕」，因為兩者執行的容器都使用 OCI image 與相同的 kernel 機制。選擇 Docker 或 Podman，選的是**管理容器的方式**，不是容器本身。
 
 ## 收尾：懂了 process，除錯就變簡單
 
@@ -236,11 +236,11 @@ OCI 維護三份規格，正好對應容器化的三個環節：
 - **容器裡看不到某個東西**（process、網路介面、檔案）？那是某個 namespace 擋掉的，去 host 上看 `/proc/<pid>/ns/` 就知道它活在哪些 namespace 裡。
 - **容器被莫名砍掉、Exit 137**？那是 cgroup 的 `memory.max` 加 OOM killer，去 `/sys/fs/cgroup/` 對應目錄看 `memory.events` 有沒有 oom_kill。
 - **在容器裡改的設定重啟後消失**？layer 唯讀、可寫層跟著容器走，機制如此，該用 volume 就用 volume。
-- **`docker` 與 `podman` 之間遷移**？image 與 registry 都是 OCI 標準，真正要遷的是 daemon 與 systemd 之間的管理方式差異。
+- **`docker` 與 `podman` 之間遷移**？image 與 registry 都採用 OCI 標準，真正要處理的是 daemon 與 systemd 的管理方式差異。
 
 工具會一直換版本，kernel 機制十年來大致就是這一套。把這一層弄懂，上層不管是 Docker、Podman，還是 Kubernetes 底下的 containerd 與 CRI-O，看起來都是同一件事的不同包裝。
 
-下一步如果你關心的是「這些東西怎麼安全地上 production」，rootless 與權限邊界就是主戰場——歡迎接著讀 [正式環境為什麼需要 Rootless Docker](https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/) 與 [Podman 也有 Rootless 問題嗎](https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/)。
+如果你關心的是「這些東西怎麼安全地上 production」，rootless 與權限邊界就是主戰場。相關細節可參考[正式環境為什麼需要 Rootless Docker](https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/)與[Podman 也有 Rootless 問題嗎](https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/)。
 
 ## 參考資料
 
@@ -256,3 +256,11 @@ OCI 維護三份規格，正好對應容器化的三個環節：
 - [Docker Engine 29 release notes](https://docs.docker.com/engine/release-notes/29/)
 - [What is Podman? — Podman documentation](https://docs.podman.io/)
 - [crun — GitHub](https://github.com/containers/crun)
+
+<!-- series-nav:start -->
+
+---
+
+**系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全**
+
+<!-- series-nav:end -->

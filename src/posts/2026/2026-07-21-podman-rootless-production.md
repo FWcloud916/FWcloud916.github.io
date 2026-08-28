@@ -9,9 +9,9 @@ tags:
 description: 從 daemon、API socket、user namespace、網路、cgroup、storage 與 systemd，比較 Rootless Podman 和 Rootless Docker 在正式環境的共同限制與關鍵差異。
 ---
 
-> **查核資訊：** 本文於 2026-07-21 依 Podman 與 Docker 官方文件查核。Podman networking、Quadlet、Linux kernel 與各發行版的預設值可能變動，部署前請再次確認實際安裝版本的文件與主機設定。
+> **查核資訊：** 本文於 2026-07-21 查核 Podman 與 Docker 官方文件，並於 2026-08-29 再次確認 rootless networking、cgroup、Quadlet 與 API socket 的現行行為。Podman networking、Quadlet、Linux kernel 與各發行版的預設值可能變動，部署前請再次確認實際安裝版本的文件與主機設定。
 
-上一篇談[正式環境為什麼需要 Rootless Docker](https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/)後，有人問了一個很合理的問題：
+談到[正式環境為什麼需要 Rootless Docker](https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/)時，有人問了一個很合理的問題：
 
 > Podman 本來就主打 rootless，又沒有 Docker daemon，它還會有一樣的問題嗎？
 
@@ -71,7 +71,7 @@ containers（不超過該使用者的 host 權限）
 - 既有 bind mount 的 ownership 可能不符合映射後的 UID/GID。
 - Image 使用超出 mapping range 的高 UID/GID 時，pull、build 或啟動可能失敗。
 
-Podman 提供 `--userns=keep-id` 等工具改善部分 volume 使用情境，但它不會自動替所有既有資料目錄找出正確的 ownership 策略。Production migration 前仍應用實際 workload 測試，不要對大範圍目錄遞迴 `chown` 或直接放寬權限。
+Podman 提供 `--userns=keep-id` 等工具改善部分 volume 使用情境，但它不會自動替所有既有資料目錄找出正確的 ownership 策略。在 production migration 前，仍應使用實際 workload 測試，不要對大範圍目錄遞迴 `chown` 或直接放寬權限。
 
 ### 2. 特權連接埠與 rootless networking 仍需設計
 
@@ -103,7 +103,7 @@ Compose 或 CLI 寫了 CPU、memory、pids 與 I/O limit，不代表 kernel 一�
 podman info --format '{{.Host.CgroupsVersion}}'
 ```
 
-接著對真實 container 製造可控制的負載，從 host cgroup 狀態或監控資料證明限制有效。設定檔存在，只能證明你提出了要求，不能證明 kernel 已 enforcement。
+接著對真實 container 製造可控制的負載，從 host cgroup 狀態或監控資料證明限制有效。設定檔存在，只能證明你提出了要求，不能證明 kernel 已強制執行。
 
 ### 4. `--privileged` 也不會把 rootless 變成 host root
 
@@ -198,7 +198,7 @@ Podman 並不是「完全沒有 Rootless Docker 問題的 Docker 替代品」。
 
 ## 上線前的驗證清單
 
-安裝成功不是完成。至少用 target user 的真實 login session 驗證：
+安裝成功不是完成。至少在 target user 的實際 login session 中驗證：
 
 ```bash
 podman info
@@ -239,3 +239,11 @@ Production 真正需要的不是「Podman 比 Docker 安全」這句結論，而
 - [Podman Project — Rootless tutorial](https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md)
 - [Docker Docs — Rootless mode](https://docs.docker.com/engine/security/rootless/)
 - [Docker Docs — Rootless mode tips](https://docs.docker.com/engine/security/rootless/tips/)
+
+<!-- series-nav:start -->
+
+---
+
+**系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全**
+
+<!-- series-nav:end -->
