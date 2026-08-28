@@ -61,8 +61,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=71134d1">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=71134d1">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d4391b4">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=d4391b4">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -518,6 +518,50 @@
   
     <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/" class="text-gray-900 hover:text-blue-600 transition">
+      Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-28T00:00:00.000Z">2026年08月28日</time>
+    <span>11 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+      
+      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #automation
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
     <a href="/posts/2026/2026-07-21-production-rootless-docker/" class="text-gray-900 hover:text-blue-600 transition">
       正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署
     </a>
@@ -572,44 +616,6 @@
 </article>
 
   
-    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-07-13-docker-basics-guide/" class="text-gray-900 hover:text-blue-600 transition">
-      Docker 基礎學習路線：從 Container、Image 到 Dockerfile
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-07-13T00:00:00.000Z">2026年07月13日</time>
-    <span>2 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">Docker 初學者的閱讀順序與實作路線，依序理解 container、image、Dockerfile，再完成第一個 nginx 與 Node.js image。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
-    
-      
-    
-      
-      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #Docker
-      </a>
-      
-    
-      
-      <a href="/tags/docker-learning-path/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #docker-learning-path
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-  
   </div>
 </section>
 
@@ -642,7 +648,7 @@
 </section>
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=71134d1"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=d4391b4"></script>
 
   </main>
 

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation - FW Blog</title>
+  <meta name="description" content="用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation - FW Blog">
+  <meta property="og:description" content="用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-28T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="Docker">
+  
+  <meta property="article:tag" content="devops">
+  
+  <meta property="article:tag" content="automation">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation - FW Blog">
+  <meta name="twitter:description" content="用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=d4391b4">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=d4391b4">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation",
+    "description": "用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。",
+    "url": "https://imfw.io/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/",
+    "datePublished": "2026-08-28T00:00:00.000Z",
+    "dateModified": "2026-08-28T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["Docker","devops","automation"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-28T00:00:00.000Z">2026年08月28日</time></span>
+      
+      <span>11 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/docker/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Docker
+        </a>
+        
+      
+        
+        <a href="/tags/devops/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #devops
+        </a>
+        
+      
+        
+        <a href="/tags/automation/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #automation
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/containers/" class="text-blue-600 hover:text-blue-800 transition">容器技術</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-28 查核 Docker 官方的 build、Dockerfile 與 cache 文件，並在 arm64 Colima 環境重現文中實驗；使用的版本為 Docker client 29.6.2、server 29.2.1 與 Buildx v0.35.0。BuildKit、base image、package index 與網路狀態都可能影響 build 結果；文中的秒數只代表這台機器的觀察結果，不能視為跨環境的效能保證。</p>
+</blockquote>
+<p>前面三篇先把容器的 process 模型、Rootless Docker 與 Podman 的權限邊界攤開：</p>
+<ul>
+<li><a href="https://imfw.io/posts/2026/2026-07-21-what-is-containerization/">Docker 與 Podman 要達成的是同一件事：什麼是容器化</a></li>
+<li><a href="https://imfw.io/posts/2026/2026-07-21-production-rootless-docker/">正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署</a></li>
+<li><a href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制</a></li>
+</ul>
+<p>這篇接著回到幾乎每個專案都會碰到、也最容易被一句「Docker 有 cache」帶過的 build 問題：</p>
+<blockquote>
+<p>為什麼只改一行應用程式，下一次 build 卻又把全部 Python 套件下載、建 wheel、安裝一次？</p>
+</blockquote>
+<p>簡單來說，Docker 不會只因為「dependencies 沒有變」就沿用 dependency installation 的結果。Builder 會根據 Dockerfile 指令、前一步的結果，以及該指令讀取的檔案判斷能否使用 cache。較前面的步驟只要失效，後續步驟就必須重跑。</p>
+<p>如果 Dockerfile 先執行 <code>COPY . .</code>，再安裝 dependencies，README、測試、應用程式，以及其他仍在 build context 裡的檔案都會成為 cache 判斷的輸入。這些輸入只要有一項改變，dependency installation 的 cache 就可能一起失效。問題不在 cache 壞掉，而是 dependency installation 的 cache boundary 納入了經常變動的應用程式碼。</p>
+<p>本文聚焦在 Dockerfile 的 cache 判讀方法：build context 包含什麼、cache key 看什麼、第一個 miss 在哪裡，以及 <code>CACHED</code> 到底證明了什麼。後續文章會沿用相同服務，實作 multi-stage、lockfile、cache mount、non-root 與最小 runtime image，再討論 production-ready Dockerfile 應具備的條件。</p>
+<h2>Build 的輸入不只有 Dockerfile，還有 context</h2>
+<p>執行下面這行時，最後的 <code>.</code> 不是裝飾：</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> example <span class="token builtin class-name">.</span></code></pre>
+<p><code>.</code> 指定目前目錄為 build context。Dockerfile 裡的 <code>COPY</code> 與 <code>ADD</code> 只能從 context 取得一般本機檔案；builder 也會根據這些檔案的內容與 metadata，判斷該步驟能否使用 cache。Docker 官方的 <a href="https://docs.docker.com/build/concepts/context/">build context 文件</a>把 context 定義為 build 可以存取的檔案集合，而不是「Dockerfile 所在資料夾」的另一個名字。</p>
+<p>這個差異會直接影響 <code>COPY</code> 的輸入範圍。假設 repository 長這樣：</p>
+<pre class="language-text"><code class="language-text">.
+├── app/
+├── tests/
+├── evidence/
+├── pyproject.toml
+├── uv.lock
+├── README.md
+└── Dockerfile</code></pre>
+<p>當 Dockerfile 使用 <code>COPY . .</code>，builder 要考慮的就不只有 <code>app/</code>。<code>tests/</code>、<code>evidence/</code> 與 README 如果沒有被 <code>.dockerignore</code> 排除，也會留在 context，成為這次 <code>COPY</code> 的輸入。</p>
+<p>因此第一個診斷問題不是「Docker 為什麼沒 cache」，而是：</p>
+<blockquote>
+<p>第一個 cache 失效的 Dockerfile 指令，實際做了什麼事情？</p>
+</blockquote>
+<p>如果沒辦法拆解這個問題，調換幾行指令或清掉 cache，可能只是在碰運氣。</p>
+<h2><code>.dockerignore</code> 排除 context 中不需要的路徑，Dockerfile 決定 cache boundary</h2>
+<p>Builder 執行 Dockerfile 前，<code>.dockerignore</code> 會把符合 pattern 的路徑從 context 排除。這項排除能減少傳輸，也能避免把 <code>.git</code>、本機 virtual environment、測試 cache 或 <code>.env</code> 帶進 build，並降低無關檔案使 cache 失效的機會。</p>
+<p><a href="https://github.com/FWcloud916/docker-containerization-lab/tree/dockerfile-layer-cache-optimization">公開 Docker lab</a> 使用的 <code>.dockerignore</code> 排除了以下項目：</p>
+<pre class="language-dockerignore"><code class="language-dockerignore">.git
+.github
+.venv
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+.env
+.DS_Store
+tests</code></pre>
+<p>這份 <code>.dockerignore</code> 有兩個限制：它不是 secret manager，也不能修正 Dockerfile 的指令順序。</p>
+<p>第一，<code>.dockerignore</code> 是 context filter，不是 secret manager。排除 <code>.env</code> 可以避免 <code>COPY</code> 直接把該檔案帶進 image，但不能證明其他檔案不含 secret，也無法安全提供 build 過程真正需要的 credentials。Build secret 會留到後續文章討論。</p>
+<p>第二，<code>.dockerignore</code> 不能修正 Dockerfile 的指令順序。假設 <code>COPY . .</code> 仍包含 <code>app/</code>、README 與實驗證據，這些檔案只要有一項改變，整個 <code>COPY</code> 的 cache key 就可能改變。排除不需要的輸入，與依照變動頻率把輸入拆成不同步驟，是兩件事。</p>
+<h2>Image layer 和 build cache 是兩個不同的概念</h2>
+<p>討論 Dockerfile 時，常用「每一行都是一層」快速描述 image 結構。但要找出哪一個 build step 為什麼沒有命中 cache，還需要再深入理解 image layer 與 build cache 的差異。</p>
+<p>Image layer 記錄 image filesystem 相較前一層的變更。Build cache 則是 builder 用來判斷能否重用某個 build step 既有結果的紀錄。<code>RUN</code>、<code>COPY</code> 會改變 filesystem；<code>WORKDIR</code>、<code>ENV</code> 等指令也會影響 image config 或後續執行環境。診斷 cache 時，不應只計算最終 image 有幾個 filesystem layer，而要檢查 BuildKit 對每個 step 顯示的是 <code>CACHED</code> 還是重新執行。</p>
+<p>這次實驗的 API Dockerfile 採用以下常見寫法：</p>
+<pre class="language-dockerfile"><code class="language-dockerfile"><span class="token comment"># syntax=docker/dockerfile:1</span>
+<span class="token instruction"><span class="token keyword">FROM</span> python:3.13-slim</span>
+
+<span class="token instruction"><span class="token keyword">ENV</span> PYTHONDONTWRITEBYTECODE=1 <span class="token operator">\</span>
+    PYTHONUNBUFFERED=1</span>
+
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+
+<span class="token instruction"><span class="token keyword">COPY</span> . .</span>
+<span class="token instruction"><span class="token keyword">RUN</span> python -m pip install --no-cache-dir .</span>
+
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 8000</span>
+<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"uvicorn"</span>, <span class="token string">"app.main:app"</span>, <span class="token string">"--host"</span>, <span class="token string">"0.0.0.0"</span>, <span class="token string">"--port"</span>, <span class="token string">"8000"</span>]</span></code></pre>
+<p>這份 Dockerfile 能成功 build，也能啟動 FastAPI、PostgreSQL 與 Nginx，但 cache boundary 的切分方式很差。Dependency install 的直接 parent 是 <code>COPY . .</code>；該 <code>COPY</code> 一旦 miss，<code>pip install</code> 就會跟著重跑，不會只根據未變的 <code>pyproject.toml</code> 沿用先前結果。</p>
+<p>另外，<code>pip install --no-cache-dir</code> 控制的是 pip download cache 是否留在 image 中；BuildKit 是否重用整個 <code>RUN</code> step，則是不同機制。<code>--no-cache-dir</code> 不會改變 Docker build cache 的判斷方式。</p>
+<h2>Cache key 到底看什麼</h2>
+<p>Docker 官方的 <a href="https://docs.docker.com/build/cache/invalidation/">cache invalidation 說明</a>可以整理成四項原則：</p>
+<ol>
+<li>Builder 從 base image 開始，依序為每個指令尋找可利用的 cache record。</li>
+<li>Builder 處理多數指令時，會比較目前的 Dockerfile 指令與先前留下的 cache record。只要指令內容改變，或前一個 build step 的結果不同，Builder 就不會利用該 cache record。</li>
+<li><code>ADD</code>、<code>COPY</code>，以及使用 bind mount 的 <code>RUN --mount=type=bind</code>，還會根據相關檔案的 metadata 計算 checksum。</li>
+<li>某個 build step 的 cache 一旦失效，後續依賴該結果的步驟也必須重新執行。</li>
+</ol>
+<p>這四項原則還有一個容易誤判的細節：Docker 官方文件明確說明，檔案的 <code>mtime</code> 不納入 <code>ADD</code>／<code>COPY</code> cache checksum。如果只更新檔案時間戳，檔案內容與其他相關 metadata 都不變，<code>mtime</code> 本身不會造成 cache miss。</p>
+<p>這和許多人使用傳統 build tool 累積的直覺不同。檔案時間變新，不代表 Docker 一定重建；反過來，整次 build 花費的實際時間（wall time）變短，也不能取代 <code>--progress=plain</code> 顯示的 step 狀態，直接當成 cache 命中的證據。</p>
+<h2>用實驗觀察輸入變更如何影響 cache</h2>
+<p>實驗在同一個 FastAPI 專案與同一份 Dockerfile 上執行三種 build 情境。完整環境、程序與結果記錄在公開 repo 的 <a href="https://github.com/FWcloud916/docker-containerization-lab/blob/dockerfile-layer-cache-optimization/evidence/dockerfile-layer-cache-optimization-results.md"><code>dockerfile-layer-cache-optimization-results.md</code></a>。</p>
+<p>實驗在 arm64 Mac 的 Colima 上執行。Docker client 版本為 29.6.2、server 為 29.2.1，Buildx 為 v0.35.0；Docker VM 使用 Ubuntu 24.04.4 LTS 與 overlayfs。每種 build 情境都使用 <code>--progress=plain</code> 顯示完整 step：</p>
+<pre class="language-bash"><code class="language-bash">/usr/bin/time <span class="token parameter variable">-p</span> <span class="token function">docker</span> build <span class="token punctuation">\</span>
+  <span class="token parameter variable">--progress</span><span class="token operator">=</span>plain <span class="token punctuation">\</span>
+  <span class="token parameter variable">-t</span> docker-containerization-lab-api:<span class="token operator">&lt;</span>checkpoint<span class="token operator">></span> <span class="token builtin class-name">.</span></code></pre>
+<p>三個輸入情境如下：</p>
+<ol>
+<li>不修改任何 source，在 cache 已存在的情況下再次 build（warm build）。</li>
+<li>只執行 <code>touch app/main.py</code> 更新 <code>mtime</code>，不改變檔案內容。</li>
+<li>暫時在 <code>app/main.py</code> 加入一行 comment，但不修改 dependency declaration。</li>
+</ol>
+<p>觀察結果如下：</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th><code>COPY . .</code></th>
+<th><code>pip install</code></th>
+<th style="text-align:right">實際花費時間（wall time）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>未修改輸入（warm build）</td>
+<td><code>CACHED</code></td>
+<td><code>CACHED</code></td>
+<td style="text-align:right">2.11 秒</td>
+</tr>
+<tr>
+<td>只更新 <code>mtime</code></td>
+<td><code>CACHED</code></td>
+<td><code>CACHED</code></td>
+<td style="text-align:right">1.22 秒</td>
+</tr>
+<tr>
+<td>application source 內容改變</td>
+<td>executed</td>
+<td>executed（該 step 8.8 秒）</td>
+<td style="text-align:right">11.32 秒</td>
+</tr>
+</tbody>
+</table>
+<p>在上述環境與輸入條件下，實驗得到兩個可重現的結論。</p>
+<p>第一，只更新 <code>mtime</code> 時，<code>COPY</code> 與 dependency installation 都維持 <code>CACHED</code>，結果符合 Docker 官方的 checksum 說明。</p>
+<p>第二，只修改 application source 內容時，<code>COPY . .</code> 的 cache 先失效，後續的 <code>RUN python -m pip install --no-cache-dir .</code> 便重新執行。Dependency declaration 雖然沒有改變，卻沒有獨立的 cache boundary；該 <code>RUN</code> 接到的 parent rootfs 結果已經不同，因此無法利用原 cache record。</p>
+<p>1.22、2.11 與 11.32 秒不能用來預測其他主機。三種 build 情境的 registry metadata lookup、CPU、disk 與網路狀態都不完全相同。其他環境可以重複驗證的是 BuildKit step 狀態：哪些 step 顯示 <code>CACHED</code>、哪些重新執行，以及第一個 cache miss 如何影響後續步驟。</p>
+<h2><code>RUN</code> 成功命中 cache，也可能拿到舊套件</h2>
+<p>Build cache 會重用相同輸入已經產生的結果，不會替使用者判斷套件夠不夠新。</p>
+<p>Docker 官方文件以 <code>RUN apt-get -y update</code> 說明這個邊界。對一般 <code>RUN</code>，cache lookup 不會檢查指令在 container 內修改了哪些檔案，也不會因為時間經過一週就自動失效。只要指令內容與前一個 build step 的結果相同，Builder 就可能利用先前的 cache record。</p>
+<p>因此，build 速度與 dependencies 是否為目前應採用的版本，是兩個不同問題。Production build 至少要分開處理以下三件事：</p>
+<ul>
+<li>可重現性：在 build input 與必要環境條件固定時，再次 build 能得到一致的預期產物；需要控制 lockfile、base image 身分與 build input。</li>
+<li>更新政策：何時更新 lockfile、base image 或 package index。</li>
+<li>強制重算：經過審核後使用 <code>--no-cache</code>、<code>--no-cache-filter</code> 或改變特定 stage 的輸入。</li>
+</ul>
+<p>清除全部 cache 會讓所有 build step 重新執行，可能增加 build 時間，但不會自動滿足可重現性所需的條件。反過來，所有 step 都命中 cache，也不能證明 image 已經更新。</p>
+<h2>Cache mount 是下載最佳化，不是 runtime dependency</h2>
+<p>BuildKit 支援在 <code>RUN</code> 中使用 cache mount，例如將 package manager 的下載 cache 掛載到該 step 的指定路徑。Docker 的 <a href="https://docs.docker.com/build/cache/optimize/">cache optimization 文件</a>強調，cache mount 只能影響效能；即使 cache 為空、內容遭其他 build 改寫，或遭 garbage collection 清除，build 仍必須成功。</p>
+<p>概念上可以寫成：</p>
+<pre class="language-dockerfile"><code class="language-dockerfile"><span class="token instruction"><span class="token keyword">RUN</span> <span class="token options"><span class="token property">--mount</span><span class="token punctuation">=</span><span class="token string">type=cache,target=/root/.cache/pip</span></span> <span class="token operator">\</span>
+    python -m pip install .</span></code></pre>
+<p>Cache mount 能降低 step 重新執行時的下載成本，但不能修正前面示範的 parent invalidation。Application source 一旦改變，<code>RUN</code> 仍會重新執行；cache mount 只讓 package manager 有機會利用既有下載內容。</p>
+<p>最佳化應先切分正確的 cache boundary，再為不可避免的重跑加入 cache mount。順序如果反過來，build 可能稍快，但 Dockerfile 仍沒有正確表達 dependency 關係。</p>
+<h2>找 cache 問題，不要先執行 <code>docker buildx prune</code></h2>
+<p><code>docker buildx prune</code> 會移除 build cache。這個命令用來管理 cache 容量，不是診斷 cache miss。還沒找出第一個 cache 失效的 step 就先執行 prune，會讓所有步驟都變成 miss，反而消除原本要觀察的證據。</p>
+<p>診斷 cache miss 時，可以按照以下順序檢查：</p>
+<ol>
+<li>使用 <code>--progress=plain</code> 顯示每個 build step 的完整結果。</li>
+<li>找出第一個沒有顯示 <code>CACHED</code> 的 Dockerfile step。</li>
+<li>確認該 step 執行的指令、前一個 build step，以及直接讀取的檔案。</li>
+<li>確認 <code>.dockerignore</code> 是否已排除不需要進入 context 的路徑。</li>
+<li>區分「source bytes 改變」「dependency declaration 改變」「base image 改變」與「刻意更新套件」四種事件。</li>
+<li>只有在驗證沒有既有 cache 的 cold build，或需要管理磁碟容量時，才清除 cache，並在測試結果中記錄清除原因。</li>
+</ol>
+<p>這套順序也能避免另一種常見錯誤：為了讓 build 顯示漂亮的 <code>CACHED</code>，把真正會影響產物的檔案排除出 context，或留到 build 之外才提供。Cache hit 必須先對應正確的輸入，才有討論速度的意義。</p>
+<h2>找出失效邊界後，再改造 Dockerfile</h2>
+<p>這次實驗已找出最先失效的 cache boundary：<code>COPY . .</code> 同時包含 dependency metadata、application source 與其他納入 context 的檔案。後續文章會沿用相同 lab，逐步改造 production Dockerfile：</p>
+<ul>
+<li>先複製 dependency declaration 與 lockfile，再安裝 dependencies。</li>
+<li>將 application source 放在較後面的獨立 <code>COPY</code> step。</li>
+<li>使用 multi-stage 分開 build tools 與 runtime。</li>
+<li>比較有無 cache mount 的 build 行為與改造前後的 image size，並檢查實際檔案內容及 non-root 執行狀態。</li>
+<li>確認最佳化後的 build 在 cold cache、warm cache 與只修改 source 的情境下都能成功。</li>
+</ul>
+<p>Dockerfile 應正確表達 dependency 關係。Dependency installation 如果只依賴 lockfile，README 或 application source 就不應先成為該步驟的 parent。</p>
+<p>Builder 只會根據 Dockerfile 描述的 dependency 關係，判斷能否利用既有結果。正確切分 cache boundary，build 才能兼顧速度與可解釋性，並在輸入改變時確實重跑。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://docs.docker.com/build/concepts/context/">Docker Docs — Build context</a></li>
+<li><a href="https://docs.docker.com/build/cache/invalidation/">Docker Docs — Build cache invalidation</a></li>
+<li><a href="https://docs.docker.com/build/cache/optimize/">Docker Docs — Optimize cache usage in builds</a></li>
+<li><a href="https://docs.docker.com/build/building/best-practices/">Docker Docs — Building best practices</a></li>
+<li><a href="https://docs.docker.com/reference/dockerfile/">Docker Docs — Dockerfile reference</a></li>
+<li><a href="https://github.com/FWcloud916/docker-containerization-lab/tree/dockerfile-layer-cache-optimization">docker-containerization-lab — Dockerfile layer and cache experiment</a></li>
+</ul>
+<!-- series-nav:start -->
+<hr>
+<p><strong>系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全</strong></p>
+<p>推薦文章：<a href="https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/">Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制</a></p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-21-podman-rootless-production/" class="text-gray-900 hover:text-blue-600 transition">
+      Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time>
+    <span>9 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從 daemon、API socket、user namespace、網路、cgroup、storage 與 systemd，比較 Rootless Podman 和 Rootless Docker 在正式環境的共同限制與關鍵差異。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/podman/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Podman
+      </a>
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-21-production-rootless-docker/" class="text-gray-900 hover:text-blue-600 transition">
+      正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-21-what-is-containerization/" class="text-gray-900 hover:text-blue-600 transition">
+      Docker 與 Podman 要達成的是同一件事：什麼是容器化
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time>
+    <span>13 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">容器不是縮小版 VM，而是被 namespaces、cgroups 與 rootfs 限制的普通 Linux process。本文用原生 Linux 命令手工做出一個容器，再回頭解釋 Docker 與 Podman 各自用什麼架構達成同一個 OCI 目標。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/podman/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Podman
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=d4391b4"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

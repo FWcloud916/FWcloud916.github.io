@@ -30,6 +30,16 @@ Author: FW (https://imfw.io/about/)
 - Description: 從模型權重、Python 套件到第三方 MCP Server，拆解不可變身分、雜湊、來源證明、可執行格式與執行時權限，並以離線固定矩陣建立 ALLOW、REVIEW、BLOCK 接入判斷。
 
 
+### Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation
+
+- Published: 2026-08-28T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/
+- Tags: Docker, devops, automation
+
+- Description: 用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。
+
+
 ### 工具呼叫 / Function Calling 的風險
 
 - Published: 2026-08-28T00:00:00.000Z
