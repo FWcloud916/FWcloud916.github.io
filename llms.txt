@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 工具呼叫 / Function Calling 的風險
+
+- Published: 2026-08-28T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-28-tool-calling-security/
+- Tags: ai-security, ai, security, api
+
+- Description: 從一個通過 JSON Schema 的 loopback URL 出發，拆解工具參數、後端授權、SSRF、命令注入與工具回傳內容的信任邊界，並以離線固定矩陣驗證逐次重判的作用。
+
+
 ### Excessive Agency：Agent 的過度代理風險
 
 - Published: 2026-08-27T00:00:00.000Z

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>工具呼叫 / Function Calling 的風險 - FW Blog</title>
+  <meta name="description" content="從一個通過 JSON Schema 的 loopback URL 出發，拆解工具參數、後端授權、SSRF、命令注入與工具回傳內容的信任邊界，並以離線固定矩陣驗證逐次重判的作用。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-28-tool-calling-security/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="工具呼叫 / Function Calling 的風險 - FW Blog">
+  <meta property="og:description" content="從一個通過 JSON Schema 的 loopback URL 出發，拆解工具參數、後端授權、SSRF、命令注入與工具回傳內容的信任邊界，並以離線固定矩陣驗證逐次重判的作用。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-28-tool-calling-security/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="工具呼叫 / Function Calling 的風險 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-28T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  <meta property="article:tag" content="api">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="工具呼叫 / Function Calling 的風險 - FW Blog">
+  <meta name="twitter:description" content="從一個通過 JSON Schema 的 loopback URL 出發，拆解工具參數、後端授權、SSRF、命令注入與工具回傳內容的信任邊界，並以離線固定矩陣驗證逐次重判的作用。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="工具呼叫 / Function Calling 的風險 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=4997c83">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=4997c83">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "工具呼叫 / Function Calling 的風險",
+    "description": "從一個通過 JSON Schema 的 loopback URL 出發，拆解工具參數、後端授權、SSRF、命令注入與工具回傳內容的信任邊界，並以離線固定矩陣驗證逐次重判的作用。",
+    "url": "https://imfw.io/posts/2026/2026-08-28-tool-calling-security/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-28-tool-calling-security/",
+    "datePublished": "2026-08-28T00:00:00.000Z",
+    "dateModified": "2026-08-28T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security","api"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">工具呼叫 / Function Calling 的風險</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-28T00:00:00.000Z">2026年08月28日</time></span>
+      
+      <span>11 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+        
+        <a href="/tags/api/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #api
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-15 查核 OpenAI Function calling、OWASP LLM Top 10 2026、
+CWE-918 與 CWE-78 官方資料，並引用同日完成的固定合成實驗。API 行為與安全分類仍可能更新，
+實作前請重新確認官方文件。</p>
+</blockquote>
+<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span><span class="token property">"url"</span><span class="token operator">:</span><span class="token string">"http://127.0.0.1:8080/admin"</span><span class="token punctuation">}</span></code></pre>
+<p>這是一段合法的 JSON。只要工具將 <code>url</code> 欄位定義為字串，這段參數也能通過最基本的 JSON Schema
+驗證。然而，通過格式驗證不代表應用程式可以代替使用者連上這個目的地。</p>
+<p>Function Calling 很容易製造一種錯覺：模型沒有直接碰資料庫、HTTP client 或檔案系統，只輸出結構化
+參數，所以系統已經比自由文字安全。結構化介面確實縮小了解析歧義，卻沒有回答最重要的問題：
+<strong>這次動作是否應該執行？參數是否適合送進這個 sink？執行結果又能不能被下一個模型當成指令？</strong></p>
+<p>我一開始的判斷只有六個字：後端逐次重判。</p>
+<p>做完反例與固定實驗後，我把它展開成更具體的邊界：</p>
+<blockquote>
+<p>模型只能提出工具名稱與參數。應用程式先驗證資料形狀，再以可信身分、後端正本與固定政策逐次
+重判；通過後交給不接受指令字串的安全 adapter。工具回傳內容仍是不可信資料，不能取得下一次
+工具呼叫的授權能力。</p>
+</blockquote>
+<p>這篇要處理的不是「如何讓模型正確呼叫函式」，而是呼叫已經成形之後，應用程式如何避免把模型
+輸出直接升格成 HTTP request、shell command 或下一輪的可信指令。</p>
+<h2>Function Calling 只完成協定，不完成授權</h2>
+<p>依照 <a href="https://developers.openai.com/api/docs/guides/function-calling">OpenAI Function calling 指南</a>，
+典型流程是：應用程式向模型提供工具定義，模型回傳包含工具名稱與參數的 tool call；應用程式解析
+參數並執行自己的程式碼，再把 <code>function_call_output</code> 送回模型。真正呼叫 HTTP client、查詢資料庫
+或寫入檔案的，始終是應用程式。</p>
+<p>Strict mode 能要求模型輸出符合指定的 JSON Schema。官方文件要求所有 properties 都列為 required，
+並將 <code>additionalProperties</code> 設為 <code>false</code>。這很有價值：拼錯欄位、少傳必要資料或偷偷塞入未宣告的
+<code>approved: true</code>，都能在介面邊界被拒絕。</p>
+<p>但 Schema 能表達的「有效」，不等於業務與安全上的「允許」。例如：</p>
+<table>
+<thead>
+<tr>
+<th>參數</th>
+<th>Schema 能回答</th>
+<th>Schema 單獨無法回答</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>url: string</code></td>
+<td>是否存在、是否為字串、是否符合格式</td>
+<td>是否允許連到該目的地、解析後 IP 是否安全、重新導向後是否仍允許</td>
+</tr>
+<tr>
+<td><code>output_name: string</code></td>
+<td>長度與字元格式是否符合宣告</td>
+<td>是否會被拼進 shell、是否發生路徑穿越、是否覆寫既有檔案</td>
+</tr>
+<tr>
+<td><code>document_id: string</code></td>
+<td>ID 的形狀是否正確</td>
+<td>登入者是否能讀這份文件、文件是否屬於同一租戶</td>
+</tr>
+<tr>
+<td><code>approved: boolean</code></td>
+<td>值是否為布林</td>
+<td>誰核准、核准哪一組參數、核准是否仍有效</td>
+</tr>
+</tbody>
+</table>
+<p>因此，<code>strict: true</code> 是資料形狀閘門，不是授權閘門。若 schema 本身接受任意字串，模型只是更穩定地
+產生危險字串；若 schema 接受 <code>approved</code>，模型也只是更穩定地替自己填上「已核准」。</p>
+<h2>一次工具呼叫至少跨過四個邊界</h2>
+<p>把工具呼叫畫成單一箭頭，會掩蓋中間不同性質的判斷。我會把它拆成四道閘門：</p>
+<pre class="language-text"><code class="language-text">模型提案
+  → 1. Schema：資料形狀是否符合契約？
+  → 2. Policy：可信身分、資源正本與這次動作是否允許？
+  → 3. Adapter：參數能否以安全資料結構交給底層能力？
+  → 4. Result boundary：回傳內容如何標記、縮限並送回模型？</code></pre>
+<p>第一道處理語法與結構；第二道才做授權與目的地政策；第三道防止資料在 sink 前重新變成指令；
+第四道則避免外部內容藉由工具回傳值取得下一輪控制權。四道閘門不能彼此代替。</p>
+<p>這也解釋了「後端逐次重判」裡的「逐次」：不是驗證一次工具定義就永久信任，也不是同一個 session
+核准過一次就一路放行。每一次呼叫都要用後端掌握的登入者身分、租戶、資源狀態與政策重新決定；
+高影響動作還要核對使用者實際看過的完整參數。</p>
+<h2>風險一：合法 URL 仍可能把後端變成代理人</h2>
+<p><a href="https://cwe.mitre.org/data/definitions/918.html">CWE-918</a> 所描述的 Server-Side Request Forgery
+（SSRF），重點不在 URL 字串「長得不像網址」，而在伺服器根據外部輸入發出請求，因而連上原本
+不應存取的目的地。對工具介面來說，模型產生的 URL 就是這類外部輸入。</p>
+<p>一個只檢查 <code>http</code> 或 <code>https</code> scheme 的 fetch 工具，可能仍接受 loopback、link-local、private
+network、雲端 metadata endpoint 或內部管理介面。呼叫前只比對原始 hostname 也不夠，因為 DNS
+解析、IPv4／IPv6 表示法、重新導向與 URL parser 差異，都可能造成應用程式檢查的目的地與實際
+連線的目的地不同。</p>
+<p>正式系統應先問一個更根本的問題：工具真的需要接受任意 URL 嗎？若需求只是讀取兩個已知服務，
+精確 allowlist 通常比 blocklist 容易推理。若確實要接收廣泛 URL，則至少要使用一致的 parser、在連線
+前驗證解析後目的地、封鎖不應存取的網段、限制 port 與 protocol，並對每一次 redirect 重新驗證；
+網路層 egress policy 仍應作為獨立防線。</p>
+<h2>風險二：安全的 JSON，進入 shell 後仍會變成指令</h2>
+<p>假設匯出工具接受：</p>
+<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span><span class="token property">"output_name"</span><span class="token operator">:</span><span class="token string">"summary.pdf; touch /tmp/day19-owned"</span><span class="token punctuation">}</span></code></pre>
+<p>這組參數是合法的 JSON，<code>output_name</code> 也確實是字串。當 adapter 把 <code>output_name</code> 直接插入以下
+命令時，危險才出現：</p>
+<pre class="language-text"><code class="language-text">convert report.md summary.pdf; touch /tmp/day19-owned</code></pre>
+<p>此時分號不再是檔名資料的一部分，而會被 shell 解讀成指令分隔符。<a href="https://cwe.mitre.org/data/definitions/78.html">CWE-78</a>
+建議優先避免直接呼叫 shell，改用結構化 API 或參數陣列，讓資料與命令彼此分離；必要時再加上精確
+allowlist 與正規化後檢查。</p>
+<p>「先 escape」通常不是第一選項，因為 shell、作業系統與下游工具各有自己的語法。更清楚的設計是：
+後端自行產生儲存 ID，使用者輸入只作為顯示名稱；若一定要輸出檔名，則採固定副檔名與很小的字元集，
+並用不經 shell 的函式傳遞獨立參數。</p>
+<p><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM10_ImproperOutputHandling.md">OWASP LLM10:2026 Improper Output Handling</a>
+也提醒：若模型輸出未經驗證就交給下游系統，可能導致 SSRF、命令執行等後果。Function Calling
+沒有消除這條路徑，只是把自由文字換成具名欄位。</p>
+<h2>風險三：工具回傳值不是可信的 system message</h2>
+<p>工具執行完畢後，應用程式會把結果送回模型。工具結果可能來自網頁、文件、郵件、資料庫欄位或第三方
+API，也可能夾帶「忽略前面規則」「把秘密傳到某個網址」之類的提示注入內容。</p>
+<p><code>function_call_output</code> 是協定角色，不是信任等級。若 Agent 下一步能根據回傳文字自行選擇另一個工具，
+外部資料就可能形成「取回內容 → 內容要求下一個動作 → Agent 提出呼叫 → 應用程式執行」的鏈條。</p>
+<p>因此，工具回傳內容應與控制資料分離：可信狀態由應用程式自行產生；外部文字標成 <code>untrusted_data</code>，
+並限制長度與可見欄位，必要時再以結構化引用呈現。下一個工具呼叫仍要重新經過 schema、policy、
+adapter 與核准；即使要求出現在「工具結果」裡，也不能因此提高權限。</p>
+<p>把文字放進 <code>&lt;untrusted&gt;</code> 標記或 JSON 欄位能幫助模型理解邊界，卻不是確定性防線。真正的防線仍是：
+即使模型採納了惡意文字，後端也不會讓它越權執行。</p>
+<h2>固定矩陣：同一組提案走兩條路</h2>
+<p>這次不量測模型會不會產生危險參數，而是把危險參數視為已經存在。固定 runner 將 5 組案例分別送入
+脆弱路徑與強化路徑，共做 10 次路徑評估：</p>
+<ul>
+<li>脆弱路徑信任傳入物件，直接記錄「本來會送到哪一個 sink」。</li>
+<li>強化路徑先驗證嚴格 schema，再套用固定目的地政策與輸出名稱規則；工具結果則以不可信資料封裝。</li>
+</ul>
+<p>所有 sink 都只記錄記憶體內事件。實驗沒有呼叫模型、連上網路、啟動 subprocess，也沒有執行 shell
+命令或呼叫外部服務。固定程式、fixture、事前預測與淨化結果收錄在公開的
+<a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-19-tool-calling-security/evidence/day-19">Day 19 evidence checkpoint</a>。</p>
+<p>5 組案例全部符合事前預測：</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>為什麼值得測</th>
+<th>脆弱路徑</th>
+<th>強化路徑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>公開 allowlist URL</td>
+<td>確認防線沒有封鎖正常用途</td>
+<td>模擬 fetch</td>
+<td>允許並模擬 fetch</td>
+</tr>
+<tr>
+<td>加入 <code>approved: true</code></td>
+<td>呼叫者能否自帶授權資訊</td>
+<td>接受並模擬 fetch</td>
+<td><code>additionalProperties: false</code> 拒絕</td>
+</tr>
+<tr>
+<td><code>127.0.0.1</code> 管理介面</td>
+<td>字串通過 schema 後是否仍檢查目的地</td>
+<td>模擬 fetch</td>
+<td>目的地政策拒絕</td>
+</tr>
+<tr>
+<td>含 shell 分號的輸出名稱</td>
+<td>字串是否被直接拼成命令</td>
+<td>記錄 would-be shell</td>
+<td>安全檔名規則拒絕</td>
+</tr>
+<tr>
+<td>工具結果內含下一步指令</td>
+<td>外部文字是否取得控制權</td>
+<td>標成可信指令並暴露</td>
+<td>標成不可信資料並封裝</td>
+</tr>
+</tbody>
+</table>
+<p>實驗結果顯示，脆弱路徑有 4 次到達模擬 sink，另有 1 次把工具結果暴露為可信指令；強化路徑只有
+乾淨 URL 到達模擬 sink，3 次由確定性規則阻擋，1 次將工具結果封裝為不可信資料。整個實驗共記錄
+5 個記憶體內事件；模型呼叫、網路呼叫、<code>subprocess</code> 與外部副作用均為 0。</p>
+<p>這組結果特別顯示兩個不同層次。偽造的 <code>approved</code> 是資料形狀問題，嚴格 schema 可以直接排除；
+loopback URL 與 shell metacharacters 卻都能是合法字串，必須分別由目的地政策與安全 adapter 處理。
+若只說「我們已驗證 JSON」，後兩個案例仍會穿過。</p>
+<h2>實驗沒有證明什麼</h2>
+<p>這不是模型或 Function Calling 框架的比較，也不是 Prompt Injection 成功率。工具回傳案例只驗證程式
+有沒有保存信任分類與序列化邊界，沒有模型參與，因此不能宣稱模型一定會忽略惡意內容。</p>
+<p>URL 規則刻意維持小範圍，只示範精確 origin allowlist 與 loopback 拒絕。這組規則沒有涵蓋 DNS
+rebinding、重新導向重判、所有特殊網段、proxy 行為或 parser confusion。命令案例只記錄
+would-be shell 字串，從未真的啟動 shell。</p>
+<p>因此，結果只支持以下結論：<strong>結構驗證能排除未宣告欄位，但語意授權、目的地限制、sink adapter 與
+工具結果的信任分類仍要分開實作；模型提案不能跳過任何一道。</strong></p>
+<h2>實作時，我會先檢查這八件事</h2>
+<ol>
+<li><strong>模型只提案。</strong> Tool name 與 arguments 都是不可信輸入，不直接代表允許執行。</li>
+<li><strong>Schema 採封閉契約。</strong> 開啟 strict mode、列出 required 欄位，並拒絕額外欄位；授權資訊不放在
+模型可填的物件裡。</li>
+<li><strong>每次重新授權。</strong> 從 session 或後端身分系統取得可信使用者與租戶，以資源正本和固定政策重判。</li>
+<li><strong>目的地採正向限制。</strong> 能用固定 resource ID 或 exact allowlist，就不接受任意 URL；必要時驗證
+解析後 IP 與每次 redirect，並設定網路層的 egress 控制。</li>
+<li><strong>sink 不接指令字串。</strong> 優先使用參數化查詢、結構化 SDK、argument array 與後端產生的檔案 ID。</li>
+<li><strong>核准綁定完整動作。</strong> 高影響操作要讓使用者看到實際參數；參數一旦改變，原核准立即失效。</li>
+<li><strong>工具結果維持不可信。</strong> 只回傳必要欄位、限制大小、保留來源，且不能藉內容取得新的工具權限。</li>
+<li><strong>保留縱深防禦。</strong> 最小權限、sandbox、逾時、rate limit、audit log 與 circuit breaker 處理單一閘門
+失守後的影響範圍。</li>
+</ol>
+<p>在 <a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/">OWASP Top 10 for Agentic Applications 2026</a>
+的語境裡，這些問題可落在 Tool Misuse and Exploitation 等 Agentic 風險。不過，分類名稱本身不是
+控制措施。應用程式仍要記錄每次呼叫的決策：誰要求什麼動作、後端套用哪一條授權或目的地限制規則、
+哪一道閘門允許或拒絕，以及最後是否真的產生副作用。</p>
+<p>Function Calling 的安全價值，不在於把模型輸出變成「可信 JSON」，而在於它提供了一個明確、可測試
+的仲介點。只要應用程式守住這個點，模型可以犯錯，外部內容可以帶著惡意指令，底層能力仍不必照做。</p>
+<p>下一篇會把範圍擴到供應鏈：模型、套件與 MCP Server 都可能把新的程式碼、提示內容、工具介面與
+更新管道帶進系統。到時要問的不只是哪一次工具呼叫安全，而是提供這項能力的來源是否值得信任。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://developers.openai.com/api/docs/guides/function-calling">OpenAI Function calling</a></li>
+<li><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM10_ImproperOutputHandling.md">OWASP LLM10:2026 Improper Output Handling</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/918.html">CWE-918: Server-Side Request Forgery</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/78.html">CWE-78: OS Command Injection</a></li>
+<li><a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/">OWASP Top 10 for Agentic Applications 2026</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-19-tool-calling-security/evidence/day-19">LLM Application Security Lab — Day 19 evidence checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10405695">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 19／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/">上一篇：Excessive Agency：Agent 的過度代理風險</a> · 下一篇：供應鏈風險：模型、套件與 MCP Server</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-27-excessive-agency-risk/" class="text-gray-900 hover:text-blue-600 transition">
+      Excessive Agency：Agent 的過度代理風險
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-27T00:00:00.000Z">2026年08月27日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">以一個固定的惡意寄信提案為起點，拆解過度功能、過度權限與過度自主如何讓模型偏航造成真實副作用，並驗證最小權限、精確核准與批次警示的邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-26-vector-database-embedding-security/" class="text-gray-900 hover:text-blue-600 transition">
+      向量資料庫與 Embedding 的安全議題
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-26T00:00:00.000Z">2026年08月26日</time>
+    <span>17 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">本文使用真實 Embedding、exact cosine 與 Qdrant 比較四種情境，說明相似度排名與租戶授權為什麼需要兩道獨立閘門，並整理向量反推、跨租戶檢索與同租戶投毒的防線。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-25-data-poisoning-knowledge-base/" class="text-gray-900 hover:text-blue-600 transition">
+      資料投毒與知識庫污染
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-25T00:00:00.000Z">2026年08月25日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從共編政策遭竄改、撤銷到重建知識庫，說明資料投毒如何持續污染系統，並用二十次生命週期實驗驗證：來源失效後，衍生語料不會自動同步失效。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=4997c83"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

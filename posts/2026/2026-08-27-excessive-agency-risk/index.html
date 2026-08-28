@@ -61,8 +61,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=2922cc8">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=2922cc8">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=4997c83">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=4997c83">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -352,7 +352,7 @@ human-in-the-loop。在更完整的 Agent 系統中，Excessive Agency 可能表
 <!-- series-nav:start -->
 <hr>
 <p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 18／31 篇</strong></p>
-<p><a href="https://imfw.io/posts/2026/2026-08-26-vector-database-embedding-security/">上一篇：向量資料庫與 Embedding 的安全議題</a> · 下一篇：工具呼叫 / Function Calling 的風險</p>
+<p><a href="https://imfw.io/posts/2026/2026-08-26-vector-database-embedding-security/">上一篇：向量資料庫與 Embedding 的安全議題</a> · <a href="https://imfw.io/posts/2026/2026-08-28-tool-calling-security/">下一篇：工具呼叫 / Function Calling 的風險</a></p>
 <!-- series-nav:end -->
 
   </div>
@@ -363,6 +363,56 @@ human-in-the-loop。在更完整的 Agent 系統中，Excessive Agency 可能表
 <section class="mt-12" aria-labelledby="related-posts-title">
   <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
   <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-28-tool-calling-security/" class="text-gray-900 hover:text-blue-600 transition">
+      工具呼叫 / Function Calling 的風險
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-28T00:00:00.000Z">2026年08月28日</time>
+    <span>11 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從一個通過 JSON Schema 的 loopback URL 出發，拆解工具參數、後端授權、SSRF、命令注入與工具回傳內容的信任邊界，並以離線固定矩陣驗證逐次重判的作用。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/api/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #api
+      </a>
+      
+    
+  </div>
+  
+</article>
+
   
     <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
@@ -452,50 +502,6 @@ human-in-the-loop。在更完整的 Agent 系統中，Excessive Agency 可能表
 </article>
 
   
-    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-08-24-rag-attack-surface/" class="text-gray-900 hover:text-blue-600 transition">
-      RAG 架構的攻擊面全解
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-08-24T00:00:00.000Z">2026年08月24日</time>
-    <span>14 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">沿著資料來源、切塊、檢索、序列化與模型輸出拆解 RAG 攻擊面，並用十五次確定性追蹤分開驗證語料存在、被檢索器選取與模型偏航。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
-    
-      
-    
-      
-      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai-security
-      </a>
-      
-    
-      
-      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai
-      </a>
-      
-    
-      
-      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #security
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-  
   </div>
 </section>
 
@@ -503,7 +509,7 @@ human-in-the-loop。在更完整的 Agent 系統中，Excessive Agency 可能表
 
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=2922cc8"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=4997c83"></script>
 
   </main>
 
