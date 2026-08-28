@@ -16,7 +16,8 @@
       "/posts/2020/2020-03-08-docker-basic-image/",
       "/posts/2020/2020-03-15-docker-basic-dockerfile/",
       "/posts/2026/2026-07-21-production-rootless-docker/",
-      "/posts/2026/2026-07-21-podman-rootless-production/"
+      "/posts/2026/2026-07-21-podman-rootless-production/",
+      "/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/"
     ]
   },
   {
