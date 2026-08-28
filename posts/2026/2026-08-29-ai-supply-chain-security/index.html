@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>供應鏈風險：模型、套件與 MCP Server - FW Blog</title>
+  <meta name="description" content="從模型權重、Python 套件到第三方 MCP Server，拆解不可變身分、雜湊、來源證明、可執行格式與執行時權限，並以離線固定矩陣建立 ALLOW、REVIEW、BLOCK 接入判斷。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="供應鏈風險：模型、套件與 MCP Server - FW Blog">
+  <meta property="og:description" content="從模型權重、Python 套件到第三方 MCP Server，拆解不可變身分、雜湊、來源證明、可執行格式與執行時權限，並以離線固定矩陣建立 ALLOW、REVIEW、BLOCK 接入判斷。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="供應鏈風險：模型、套件與 MCP Server - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-29T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  <meta property="article:tag" content="api">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="供應鏈風險：模型、套件與 MCP Server - FW Blog">
+  <meta name="twitter:description" content="從模型權重、Python 套件到第三方 MCP Server，拆解不可變身分、雜湊、來源證明、可執行格式與執行時權限，並以離線固定矩陣建立 ALLOW、REVIEW、BLOCK 接入判斷。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="供應鏈風險：模型、套件與 MCP Server - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=71134d1">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=71134d1">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "供應鏈風險：模型、套件與 MCP Server",
+    "description": "從模型權重、Python 套件到第三方 MCP Server，拆解不可變身分、雜湊、來源證明、可執行格式與執行時權限，並以離線固定矩陣建立 ALLOW、REVIEW、BLOCK 接入判斷。",
+    "url": "https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/",
+    "datePublished": "2026-08-29T00:00:00.000Z",
+    "dateModified": "2026-08-29T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security","api"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">供應鏈風險：模型、套件與 MCP Server</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-29T00:00:00.000Z">2026年08月29日</time></span>
+      
+      <span>15 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+        
+        <a href="/tags/api/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #api
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-15 查核 OWASP LLM04:2026、Hugging Face Hub、SLSA v1.2
+與 Model Context Protocol 2026-07-28 官方資料，並引用同日完成的固定合成實驗。規格、工具與
+供應鏈建議仍可能更新，實際接入前請重新確認官方文件。</p>
+</blockquote>
+<pre class="language-text"><code class="language-text">下載模型 → 安裝套件 → 加入 MCP Server → Agent 多了一項能力</code></pre>
+<p>這條流程看起來只是開發環境設定，實際上每一個箭頭都會引入外部製作與維護的元件；這些元件可能
+執行程式碼，也可能取得系統權限。模型權重會進入載入器，Python 套件會在安裝或 import 後執行，MCP Server 則可能
+讀檔、連線、取得 token，再把工具介面交給 Agent。</p>
+<p>如果只問「這個專案有沒有很多 stars」「套件名稱是不是看過」「檔案有沒有簽章」，我們得到的只是
+零散線索，還沒有足以放行的判斷。</p>
+<p>我一開始的判斷只有五個字：證據鏈優先。</p>
+<p>完成現況盤點與固定矩陣後，我把它展開成一套接入規則：</p>
+<blockquote>
+<p>外部元件不能只靠名稱、人氣、雜湊、簽章或 tool annotations 放行。接入前要把不可變身分、位元
+完整性、來源與建置證明、可執行格式、執行時權限及更新差異串成證據鏈；證據完整且符合既定政策
+才 <code>ALLOW</code>，資訊不足先 <code>REVIEW</code>，完整性不符、危險格式或權限漂移則 <code>BLOCK</code>。</p>
+</blockquote>
+<p>這篇不會下載一個陌生模型、安裝疑似惡意套件，或真的啟動第三方 MCP Server。我要處理的是更早的
+一道關卡：在元件取得執行機會以前，應用團隊要收集哪些證據，又該如何把證據變成一致的決策。</p>
+<h2>供應鏈不是一份依賴清單，而是一串信任轉移</h2>
+<p><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM04_SupplyChain.md">OWASP LLM04:2026 Supply Chain</a>
+把範圍放得很廣：模型、資料、adapter、轉換流程、套件與部署基礎設施都在供應鏈裡。這些元件不只
+提供資料，也可能改變程式如何執行、模型如何回應，以及 Agent 能接觸哪些外部能力。</p>
+<p>傳統 SBOM 能回答「用了哪些軟體元件」，AI 應用還要追問模型、資料與 adapter。OWASP 因此同時
+提到 SBOM 與 AIBOM，以及簽章、雜湊和 provenance。這些資料的共同價值，是讓團隊能把目前執行的
+位元組追溯到某個明確來源與流程，而不是只記得一個顯示名稱。</p>
+<p>不過，證據之間不能互相冒充。我會把接入判斷拆成五個問題：</p>
+<table>
+<thead>
+<tr>
+<th>問題</th>
+<th>要回答什麼</th>
+<th>常見證據</th>
+<th>單獨仍無法證明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>身分</td>
+<td>我拿到的到底是哪一版？</td>
+<td>immutable ref、完整 digest、精確版本</td>
+<td>來源可信、內容安全</td>
+</tr>
+<tr>
+<td>完整性</td>
+<td>位元組有沒有被換掉？</td>
+<td>SHA-256、簽章驗證結果</td>
+<td>建置者可信、行為安全</td>
+</tr>
+<tr>
+<td>來源</td>
+<td>誰在何時、用什麼流程產出？</td>
+<td>provenance、attestation、reviewed builder</td>
+<td>artifact 沒有惡意行為</td>
+</tr>
+<tr>
+<td>可執行性</td>
+<td>載入或安裝時會跑什麼？</td>
+<td>檔案格式、install hook、remote code 設定</td>
+<td>執行後只取得必要權限</td>
+</tr>
+<tr>
+<td>權限</td>
+<td>元件在執行時能碰什麼？</td>
+<td>filesystem roots、egress hosts、secret scopes、tool snapshot</td>
+<td>下一次更新仍維持相同能力</td>
+</tr>
+</tbody>
+</table>
+<p>這五題形成的是證據鏈，不是五選一。只有 digest，最多能知道位元組是否相同；只有簽章，最多能知道
+簽署者與內容是否對得上；只有 sandbox，也只能在元件取得執行機會後限制損害。Digest、簽章與
+sandbox 都很重要，卻處理不同問題。</p>
+<h2>模型權重檔：大量數值，也可能帶來載入風險</h2>
+<p>模型名稱最容易造成錯覺。<code>latest</code>、分支名稱、model card 標題或下載頁面都是方便人閱讀的標記，卻
+可能指向會變動的內容。若部署只記錄名稱，重新建置時拿到另一組位元組，團隊甚至無法判斷行為差異
+來自程式、prompt，還是模型本身。</p>
+<p>因此，第一步是固定不可變版本與完整 digest，並在載入前重新比對。這讓重現、回復舊版與事件調查有一個
+共同座標，但 digest 只回答「是不是同一份位元組」，不回答「這份位元組該不該執行」。</p>
+<p>第二步是檢查格式與載入行為。<a href="https://huggingface.co/docs/hub/security-pickle">Hugging Face Hub 的 Pickle Scanning 文件</a>
+明確提醒，反序列化 pickle 可能執行任意程式碼；掃描器能降低風險，卻不是萬無一失的保證。已簽署的
+commit 可以協助確認來源，但不能因此證明其中的檔案安全。</p>
+<p>這裡有一個很重要的分界：</p>
+<ul>
+<li>改用 <code>safetensors</code> 之類不以任意程式碼反序列化為設計目標的格式，可以縮小「載入時執行程式碼」
+的攻擊面。</li>
+<li>但安全格式不會證明模型沒有 behavioral backdoor、惡意微調或資料投毒。位元組可以安全載入，模型
+行為仍可能不符合需求。</li>
+</ul>
+<p>所以模型接入至少要分成 artifact intake 與 behavior evaluation。Artifact intake 檢查身分、雜湊、
+來源、格式及 remote code；behavior evaluation 才用固定測試集、紅隊案例與部署後監控評估行為。
+若只用一句「模型已驗證」概括兩個階段，後續的人就不知道究竟驗證了什麼。</p>
+<h2>套件：鎖住版本，還沒鎖住來源與建置流程</h2>
+<p>套件管理器的 lock file 是必要基礎。精確版本與 artifact hash 可以防止依賴解析在不同時間任意漂移，
+也能在取得檔案後比對內容。若沒有精確版本與 artifact hash，連「本次部署是不是昨天測過的那一版」
+都難以回答。</p>
+<p>但 lock file 不會自動證明以下事情：</p>
+<ul>
+<li>名稱是不是預期的專案，而不是 typo、dependency confusion 或 slopsquatting 產生的近似名稱。</li>
+<li>發布帳號是否被接管，或正常套件的新版本是否混入惡意內容。</li>
+<li>sdist 或 wheel 經過哪個 builder、使用哪些來源與步驟產生。</li>
+<li>安裝 hook、原生 extension 或 import-time code 會執行什麼。</li>
+<li>transitive dependency 是否新增了網路、檔案或憑證存取能力。</li>
+</ul>
+<p><a href="https://slsa.dev/spec/v1.2/">SLSA v1.2</a> 將 build provenance 用來描述 artifact 在哪裡、何時、如何
+被產出。Build provenance 補上的是「產出過程」證據，不是另一個 checksum。正式流程可以依風險
+要求來源 commit、建置服務身分、可驗證 attestation、簽章與可重現建置；即使是同一個組織內的元件，
+也不應跳過來源與建置審查。</p>
+<p>套件更新時，我不只看版本差異，還會看 lock diff 與能力差異：新增了哪些直接或間接依賴、是否從
+wheel 改成需要本機建置的 sdist、是否出現 install script、是否新增原生程式碼，以及執行時是否需要
+新的環境變數、網路目的地或檔案路徑。版本識別只是變更索引，不是核准本身。</p>
+<h2>MCP Server：審的不只是工具名稱，而是另一個執行邊界</h2>
+<p>第三方 MCP Server 常被描述成「替 Agent 增加工具」，但從風險角度看，它更接近一個帶著傳輸、
+認證、工具定義、資源存取與更新管道的外部程式。即使工具名稱只是 <code>search_docs</code>，server 的 process
+仍可能看到檔案、環境變數與網路；遠端 server 則牽涉 access token、上游 API 與多租戶邊界。</p>
+<p><a href="https://modelcontextprotocol.io/specification/2026-07-28">Model Context Protocol 2026-07-28 規格</a>
+把授權資料存取與工具執行的決定留給使用者與應用程式。規格也提醒，tool annotations 除非來自可信
+server，否則應視為不可信；remote MCP 的 access token 必須綁定 MCP Server 這個 audience，server
+也不得把 client token 直接轉送給上游 API。</p>
+<p>因此，審查 MCP Server 時不能只截一張 tool list。我會保存一份可比較的 capability snapshot：</p>
+<table>
+<thead>
+<tr>
+<th>層次</th>
+<th>接入前要記錄</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Server 身分</td>
+<td>repository、publisher、immutable release、artifact digest、provenance</td>
+</tr>
+<tr>
+<td>啟動方式</td>
+<td>local command 或 remote endpoint、參數、工作目錄、更新方式</td>
+</tr>
+<tr>
+<td>工具介面</td>
+<td>tool 名稱、description、input schema 的完整快照與 SHA-256</td>
+</tr>
+<tr>
+<td>本機權限</td>
+<td>可讀寫的 filesystem roots、可見的環境變數名稱、是否能啟動子程序</td>
+</tr>
+<tr>
+<td>網路權限</td>
+<td>outbound host allowlist、port、redirect 與 DNS 政策</td>
+</tr>
+<tr>
+<td>認證</td>
+<td>token audience、scope、保存位置、是否與上游憑證分離</td>
+</tr>
+<tr>
+<td>變更</td>
+<td>新增或移除工具、schema 變動、權限擴張、publisher 或 artifact 變更</td>
+</tr>
+</tbody>
+</table>
+<p>這裡的 <code>tool annotations</code> 可以當說明或風險提示，不能當授權來源。真正的權限由 process sandbox、
+filesystem mount、network egress、secret injection 與後端政策決定。Server 更新後若多了一個工具、
+擴大一個 root 或新增 outbound host，即使版本簽章有效，也應視為需要重新核准的 capability drift。</p>
+<h2>用 ALLOW、REVIEW、BLOCK 取代模糊的「看起來可以」</h2>
+<p>接入流程如果只有通過與失敗，團隊很容易把「資訊不夠」誤當成「沒有發現問題」。我採用三種決策：</p>
+<ul>
+<li><code>ALLOW</code>：必要證據完整，artifact 與 capability 都符合事前定義的政策。</li>
+<li><code>REVIEW</code>：尚未發現確定違規，但缺少必要證據；補齊以前不能進入執行環境。</li>
+<li><code>BLOCK</code>：完整性不符、格式或載入方式違反政策、token passthrough，或已核准能力發生漂移。</li>
+</ul>
+<p><code>REVIEW</code> 不是比較客氣的 allow，而是流程中的停止狀態，表示目前無法做出可辯護的決定。若有時間
+壓力，正確動作是縮小功能、改用已核准版本，或由風險擁有者留下有期限的例外，而不是把缺少證據
+改寫成低風險。</p>
+<p>決策順序也很重要。若 artifact hash 已不相符，就不需要因為 provenance 欄位齊全而繼續放行；若
+模型格式是政策明確禁止的 pickle，簽章有效也不能覆蓋格式閘門；若 MCP Server 的 filesystem roots
+與 outbound hosts 已擴張，舊核准也應立即失效。</p>
+<h2>先盤點示範應用，而不是先下載可疑元件</h2>
+<p>這次實作分成兩部分。第一部分直接讀取公開 Lab commit 中已版控的 <code>uv.lock</code> 與實驗定義，不 import
+候選套件、不載入模型，也不啟動 MCP Server。結果如下：</p>
+<table>
+<thead>
+<tr>
+<th>元件</th>
+<th>觀察到的證據</th>
+<th>判斷</th>
+<th>缺口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python 套件</td>
+<td>32 個 locked packages、436 個 artifact hashes</td>
+<td><code>REVIEW</code></td>
+<td>沒有記錄 build provenance</td>
+</tr>
+<tr>
+<td>模型引用</td>
+<td>15 個引用全都有完整 digest，共 2 組唯一 name/digest</td>
+<td><code>REVIEW</code></td>
+<td>沒有記錄 artifact format、簽章或 provenance</td>
+</tr>
+<tr>
+<td>MCP Server</td>
+<td>檢查 3 個宣告路徑，皆不存在</td>
+<td><code>NOT_CONFIGURED</code></td>
+<td>沒有 server 與 capability 可供判斷</td>
+</tr>
+</tbody>
+</table>
+<p>這不表示 Lab 使用的套件或模型已經不安全；目前保存的證據只是不足以支持更強的供應鏈聲明。
+32 個套件與 436 個 artifact hashes 可以支持版本固定與完整性比對，但 artifact hashes 沒有告訴我們
+每個 artifact 的建置者與建置流程。15 個完整 digest 可以支持模型身分重現，但 model digests 沒有
+告訴我們檔案格式與來源證明。</p>
+<p>MCP 的 <code>NOT_CONFIGURED</code> 也要小心解讀。<code>NOT_CONFIGURED</code> 只表示這個 commit 在 <code>.mcp.json</code>、<code>mcp.json</code> 與
+<code>config/mcp.json</code> 三個宣告路徑沒有設定，不能推論使用者層級、其他 client 或外部環境完全沒有 MCP
+Server。沒有觀察到設定，和證明不存在，是兩種不同陳述。</p>
+<h2>固定矩陣：三類元件各測三種決策</h2>
+<p>第二部分使用 9 份固定合成 manifest，模型、套件與 MCP Server 各三份。每個案例都先寫下預期結果，
+再交給同一個確定性 policy runner；runner 不做模糊評分，也不呼叫模型。</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>關鍵證據或違規</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完整模型證據</td>
+<td>immutable ref、digest、provenance、允許格式皆符合</td>
+<td><code>ALLOW</code></td>
+</tr>
+<tr>
+<td>可變模型且無 digest</td>
+<td>缺 immutable ref 與 SHA-256</td>
+<td><code>REVIEW</code></td>
+</tr>
+<tr>
+<td>已簽署 pickle 模型</td>
+<td>來源可辨認，但格式違反政策</td>
+<td><code>BLOCK</code></td>
+</tr>
+<tr>
+<td>完整套件證據</td>
+<td>精確版本、digest、provenance 皆符合</td>
+<td><code>ALLOW</code></td>
+</tr>
+<tr>
+<td>套件缺 provenance</td>
+<td>有版本與 hash，不知道如何產出</td>
+<td><code>REVIEW</code></td>
+</tr>
+<tr>
+<td>套件 hash mismatch</td>
+<td>實際位元組與核准證據不同</td>
+<td><code>BLOCK</code></td>
+</tr>
+<tr>
+<td>完整 MCP 宣告</td>
+<td>tool snapshot、roots、hosts、secret names、token policy 皆符合</td>
+<td><code>ALLOW</code></td>
+</tr>
+<tr>
+<td>只有 tool annotations</td>
+<td>缺身分、來源與 capability 證據</td>
+<td><code>REVIEW</code></td>
+</tr>
+<tr>
+<td>MCP capability drift</td>
+<td>roots 與 outbound hosts 比核准版本擴張</td>
+<td><code>BLOCK</code></td>
+</tr>
+</tbody>
+</table>
+<p>9 組案例全都符合事前預測，分布正好是 3 <code>ALLOW</code>、3 <code>REVIEW</code>、3 <code>BLOCK</code>。模型、套件與 MCP
+Server 各貢獻一種決策，因此結果不是靠某一類元件特例湊出來。</p>
+<p>整個實驗的模型呼叫、網路呼叫、套件安裝、artifact 載入、MCP Server 啟動、subprocess 與外部副作用
+都是 0。固定程式、fixture、原始證據雜湊與淨化摘要收錄在公開的
+<a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-20-ai-supply-chain-security/evidence/day-20">Day 20 evidence checkpoint</a>。</p>
+<p>其中最值得保留的反例是「已簽署 pickle」。如果把簽章當成最高通行證，這個案例會被放行；把來源與
+可執行格式分開後，判斷就很清楚：簽章可以支持「誰發布了這些位元組」，卻不能把違反載入政策的格式
+變安全。同樣地，MCP Server 原本通過審查，也不能把未來擴張的 filesystem root 與 outbound host
+一起自動核准。</p>
+<h2>實驗沒有證明什麼</h2>
+<p>這套 runner 不是惡意程式掃描器、模型安全評測、套件 registry、簽章驗證器、SLSA conformance
+checker、MCP client 或 sandbox。這套 runner 沒有驗證真實 attestation、重現建置、反序列化權重、
+import 套件，也沒有連上任何第三方服務。</p>
+<p><code>ALLOW</code> 只表示合成證據符合這一版小型 intake policy，不代表元件不存在未知漏洞或惡意行為；
+<code>BLOCK</code> 也只對應明確政策條件，不是全世界通用的危險分類。正式系統還需要漏洞管理、行為測試、
+sandbox、最小權限、egress control、secret scope、監控、回復舊版與事件應變。</p>
+<p>現況盤點同樣有邊界。這次盤點唯讀存取指定的版控檔案，沒有掃描開發者家目錄、IDE 設定、CI secret
+或雲端環境。限定盤點範圍是刻意的選擇：文章需要一個可公開重現、沒有碰觸私人設定的證據範圍，而
+不是假裝完成整台機器的鑑識。</p>
+<p>因此，這組結果支持一項範圍較小、但可實作的結論：<strong>外部元件的接入決策必須同時保存身分、完整性、來源、
+可執行性與權限證據；任何單一徽章、雜湊、簽章或說明欄位，都不能替整條證據鏈背書。</strong></p>
+<h2>接入外部元件前，我會檢查這十二件事</h2>
+<ol>
+<li><strong>固定不可變身分。</strong> 保存完整 digest、精確套件版本或 immutable release，不只記 <code>latest</code>、branch
+或顯示名稱。</li>
+<li><strong>比對取得的位元組。</strong> 在安裝、載入或啟動前驗證 SHA-256 或簽章；不符就 <code>BLOCK</code>，不能靠重新
+下載直到「剛好成功」。</li>
+<li><strong>保存來源與建置證據。</strong> 記錄 publisher、source commit、builder、provenance／attestation 與
+審閱時間；簽章只證明簽署關係，不代表安全。</li>
+<li><strong>檢查 executable format。</strong> 模型是否使用 pickle、是否要求 remote code；套件是否有 install
+hook、sdist 或原生 extension；MCP Server 如何啟動。</li>
+<li><strong>核對名稱與所有權。</strong> 確認 registry namespace、repository、publisher 與維護權轉移，防止 typo、
+dependency confusion 與相似名稱誤裝。</li>
+<li><strong>展開 transitive dependencies。</strong> 檢查新增、移除與來源變動，不只看直接依賴的一行版本號。</li>
+<li><strong>保存工具與 schema 快照。</strong> 對 MCP tool list、description 與 input schema 取 hash；annotation
+只當說明，不當授權。</li>
+<li><strong>列出實際 capability。</strong> 明確限制 filesystem roots、outbound hosts、subprocess、secret names、
+token audience 與 scope。</li>
+<li><strong>把更新視為新決策。</strong> Artifact、publisher、tool schema 或 capability 任一改變，都重新走 intake；
+不沿用舊版核准。</li>
+<li><strong>讓 <code>REVIEW</code> 真正停止部署。</strong> 證據缺失時先隔離，補齊或建立有期限、有負責人的例外，不預設
+放行。</li>
+<li><strong>隔離第一次執行。</strong> 即使 intake 通過，仍在最小權限、受控 egress、無生產 secret 的環境測試，
+並準備快速回復舊版。</li>
+<li><strong>留下可查詢的決策紀錄。</strong> 保存誰在何時依哪一版政策核准哪個 digest 與 capability snapshot，
+讓事件發生時能回答受影響範圍。</li>
+</ol>
+<p>這份清單的核心不是收集越多文件越好，而是讓每一份證據都對應一個問題。若團隊說「有 SBOM」，就
+追問 SBOM 是否涵蓋模型與 MCP Server；若團隊說「有簽章」，就追問簽章驗證了誰、哪一份 artifact，
+以及 runtime capability 是否另行審查；若團隊說「跑在 sandbox」，就追問 sandbox 實際允許哪些
+檔案、網路與 secret。</p>
+<p>供應鏈管理很容易停在採購審查與合規文件，沒有持續核對實際部署的 artifact 與權限。比較可靠的
+做法，是把 intake policy 寫成可測試規則，讓 CI 對 artifact 與 capability diff 做 fail-closed 檢查，
+再由人工處理真正需要判斷的 <code>REVIEW</code>。CI 負責一致性，人工審查負責接受哪一種風險；CI 和人工審查
+都不能只看元件的自我宣告。</p>
+<p>前兩篇把 Agent 的動作拆成「模型提案、後端授權、工具 adapter 與結果邊界」。這一篇再往前追：提供
+模型、套件與工具能力的元件，本身也必須先通過接入邊界。下一篇會把這些缺口串在一起，回顧一條從
+間接注入、檢索污染、工具濫用到資料外洩的端到端 Agent 攻擊鏈。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM04_SupplyChain.md">OWASP LLM04:2026 Supply Chain</a></li>
+<li><a href="https://huggingface.co/docs/hub/security-pickle">Hugging Face Hub — Pickle Scanning</a></li>
+<li><a href="https://slsa.dev/spec/v1.2/">SLSA v1.2 Specification</a></li>
+<li><a href="https://modelcontextprotocol.io/specification/2026-07-28">Model Context Protocol Specification 2026-07-28</a></li>
+<li><a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/">OWASP Top 10 for Agentic Applications 2026</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-20-ai-supply-chain-security/evidence/day-20">LLM Application Security Lab — Day 20 evidence checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10405830">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 20／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-28-tool-calling-security/">上一篇：工具呼叫 / Function Calling 的風險</a> · 下一篇：第三週回顧：一次端到端的 Agent 攻擊鏈</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-28-tool-calling-security/" class="text-gray-900 hover:text-blue-600 transition">
+      工具呼叫 / Function Calling 的風險
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-28T00:00:00.000Z">2026年08月28日</time>
+    <span>11 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從一個通過 JSON Schema 的 loopback URL 出發，拆解工具參數、後端授權、SSRF、命令注入與工具回傳內容的信任邊界，並以離線固定矩陣驗證逐次重判的作用。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/api/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #api
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-27-excessive-agency-risk/" class="text-gray-900 hover:text-blue-600 transition">
+      Excessive Agency：Agent 的過度代理風險
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-27T00:00:00.000Z">2026年08月27日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">以一個固定的惡意寄信提案為起點，拆解過度功能、過度權限與過度自主如何讓模型偏航造成真實副作用，並驗證最小權限、精確核准與批次警示的邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-26-vector-database-embedding-security/" class="text-gray-900 hover:text-blue-600 transition">
+      向量資料庫與 Embedding 的安全議題
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-26T00:00:00.000Z">2026年08月26日</time>
+    <span>17 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">本文使用真實 Embedding、exact cosine 與 Qdrant 比較四種情境，說明相似度排名與租戶授權為什麼需要兩道獨立閘門，並整理向量反推、跨租戶檢索與同租戶投毒的防線。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=71134d1"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

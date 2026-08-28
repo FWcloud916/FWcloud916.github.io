@@ -4,12 +4,370 @@
   <subtitle>FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。</subtitle>
   <link href="https://imfw.io/feed.xml" rel="self"/>
   <link href="https://imfw.io/"/>
-  <updated>2026-08-28T00:00:00Z</updated>
+  <updated>2026-08-29T00:00:00Z</updated>
   <id>https://imfw.io/</id>
   <author>
     <name>FW</name>
   </author>
   
+  
+  <entry>
+    <title>供應鏈風險：模型、套件與 MCP Server</title>
+    <link href="https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/"/>
+    <updated>2026-08-29T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/</id>
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-08-15 查核 OWASP LLM04:2026、Hugging Face Hub、SLSA v1.2
+與 Model Context Protocol 2026-07-28 官方資料，並引用同日完成的固定合成實驗。規格、工具與
+供應鏈建議仍可能更新，實際接入前請重新確認官方文件。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;下載模型 → 安裝套件 → 加入 MCP Server → Agent 多了一項能力&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;這條流程看起來只是開發環境設定，實際上每一個箭頭都會引入外部製作與維護的元件；這些元件可能
+執行程式碼，也可能取得系統權限。模型權重會進入載入器，Python 套件會在安裝或 import 後執行，MCP Server 則可能
+讀檔、連線、取得 token，再把工具介面交給 Agent。&lt;/p&gt;
+&lt;p&gt;如果只問「這個專案有沒有很多 stars」「套件名稱是不是看過」「檔案有沒有簽章」，我們得到的只是
+零散線索，還沒有足以放行的判斷。&lt;/p&gt;
+&lt;p&gt;我一開始的判斷只有五個字：證據鏈優先。&lt;/p&gt;
+&lt;p&gt;完成現況盤點與固定矩陣後，我把它展開成一套接入規則：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;外部元件不能只靠名稱、人氣、雜湊、簽章或 tool annotations 放行。接入前要把不可變身分、位元
+完整性、來源與建置證明、可執行格式、執行時權限及更新差異串成證據鏈；證據完整且符合既定政策
+才 &lt;code&gt;ALLOW&lt;/code&gt;，資訊不足先 &lt;code&gt;REVIEW&lt;/code&gt;，完整性不符、危險格式或權限漂移則 &lt;code&gt;BLOCK&lt;/code&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;這篇不會下載一個陌生模型、安裝疑似惡意套件，或真的啟動第三方 MCP Server。我要處理的是更早的
+一道關卡：在元件取得執行機會以前，應用團隊要收集哪些證據，又該如何把證據變成一致的決策。&lt;/p&gt;
+&lt;h2&gt;供應鏈不是一份依賴清單，而是一串信任轉移&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM04_SupplyChain.md&quot;&gt;OWASP LLM04:2026 Supply Chain&lt;/a&gt;
+把範圍放得很廣：模型、資料、adapter、轉換流程、套件與部署基礎設施都在供應鏈裡。這些元件不只
+提供資料，也可能改變程式如何執行、模型如何回應，以及 Agent 能接觸哪些外部能力。&lt;/p&gt;
+&lt;p&gt;傳統 SBOM 能回答「用了哪些軟體元件」，AI 應用還要追問模型、資料與 adapter。OWASP 因此同時
+提到 SBOM 與 AIBOM，以及簽章、雜湊和 provenance。這些資料的共同價值，是讓團隊能把目前執行的
+位元組追溯到某個明確來源與流程，而不是只記得一個顯示名稱。&lt;/p&gt;
+&lt;p&gt;不過，證據之間不能互相冒充。我會把接入判斷拆成五個問題：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;問題&lt;/th&gt;
+&lt;th&gt;要回答什麼&lt;/th&gt;
+&lt;th&gt;常見證據&lt;/th&gt;
+&lt;th&gt;單獨仍無法證明&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;身分&lt;/td&gt;
+&lt;td&gt;我拿到的到底是哪一版？&lt;/td&gt;
+&lt;td&gt;immutable ref、完整 digest、精確版本&lt;/td&gt;
+&lt;td&gt;來源可信、內容安全&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;完整性&lt;/td&gt;
+&lt;td&gt;位元組有沒有被換掉？&lt;/td&gt;
+&lt;td&gt;SHA-256、簽章驗證結果&lt;/td&gt;
+&lt;td&gt;建置者可信、行為安全&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;來源&lt;/td&gt;
+&lt;td&gt;誰在何時、用什麼流程產出？&lt;/td&gt;
+&lt;td&gt;provenance、attestation、reviewed builder&lt;/td&gt;
+&lt;td&gt;artifact 沒有惡意行為&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;可執行性&lt;/td&gt;
+&lt;td&gt;載入或安裝時會跑什麼？&lt;/td&gt;
+&lt;td&gt;檔案格式、install hook、remote code 設定&lt;/td&gt;
+&lt;td&gt;執行後只取得必要權限&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;權限&lt;/td&gt;
+&lt;td&gt;元件在執行時能碰什麼？&lt;/td&gt;
+&lt;td&gt;filesystem roots、egress hosts、secret scopes、tool snapshot&lt;/td&gt;
+&lt;td&gt;下一次更新仍維持相同能力&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;這五題形成的是證據鏈，不是五選一。只有 digest，最多能知道位元組是否相同；只有簽章，最多能知道
+簽署者與內容是否對得上；只有 sandbox，也只能在元件取得執行機會後限制損害。Digest、簽章與
+sandbox 都很重要，卻處理不同問題。&lt;/p&gt;
+&lt;h2&gt;模型權重檔：大量數值，也可能帶來載入風險&lt;/h2&gt;
+&lt;p&gt;模型名稱最容易造成錯覺。&lt;code&gt;latest&lt;/code&gt;、分支名稱、model card 標題或下載頁面都是方便人閱讀的標記，卻
+可能指向會變動的內容。若部署只記錄名稱，重新建置時拿到另一組位元組，團隊甚至無法判斷行為差異
+來自程式、prompt，還是模型本身。&lt;/p&gt;
+&lt;p&gt;因此，第一步是固定不可變版本與完整 digest，並在載入前重新比對。這讓重現、回復舊版與事件調查有一個
+共同座標，但 digest 只回答「是不是同一份位元組」，不回答「這份位元組該不該執行」。&lt;/p&gt;
+&lt;p&gt;第二步是檢查格式與載入行為。&lt;a href=&quot;https://huggingface.co/docs/hub/security-pickle&quot;&gt;Hugging Face Hub 的 Pickle Scanning 文件&lt;/a&gt;
+明確提醒，反序列化 pickle 可能執行任意程式碼；掃描器能降低風險，卻不是萬無一失的保證。已簽署的
+commit 可以協助確認來源，但不能因此證明其中的檔案安全。&lt;/p&gt;
+&lt;p&gt;這裡有一個很重要的分界：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;改用 &lt;code&gt;safetensors&lt;/code&gt; 之類不以任意程式碼反序列化為設計目標的格式，可以縮小「載入時執行程式碼」
+的攻擊面。&lt;/li&gt;
+&lt;li&gt;但安全格式不會證明模型沒有 behavioral backdoor、惡意微調或資料投毒。位元組可以安全載入，模型
+行為仍可能不符合需求。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;所以模型接入至少要分成 artifact intake 與 behavior evaluation。Artifact intake 檢查身分、雜湊、
+來源、格式及 remote code；behavior evaluation 才用固定測試集、紅隊案例與部署後監控評估行為。
+若只用一句「模型已驗證」概括兩個階段，後續的人就不知道究竟驗證了什麼。&lt;/p&gt;
+&lt;h2&gt;套件：鎖住版本，還沒鎖住來源與建置流程&lt;/h2&gt;
+&lt;p&gt;套件管理器的 lock file 是必要基礎。精確版本與 artifact hash 可以防止依賴解析在不同時間任意漂移，
+也能在取得檔案後比對內容。若沒有精確版本與 artifact hash，連「本次部署是不是昨天測過的那一版」
+都難以回答。&lt;/p&gt;
+&lt;p&gt;但 lock file 不會自動證明以下事情：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;名稱是不是預期的專案，而不是 typo、dependency confusion 或 slopsquatting 產生的近似名稱。&lt;/li&gt;
+&lt;li&gt;發布帳號是否被接管，或正常套件的新版本是否混入惡意內容。&lt;/li&gt;
+&lt;li&gt;sdist 或 wheel 經過哪個 builder、使用哪些來源與步驟產生。&lt;/li&gt;
+&lt;li&gt;安裝 hook、原生 extension 或 import-time code 會執行什麼。&lt;/li&gt;
+&lt;li&gt;transitive dependency 是否新增了網路、檔案或憑證存取能力。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a href=&quot;https://slsa.dev/spec/v1.2/&quot;&gt;SLSA v1.2&lt;/a&gt; 將 build provenance 用來描述 artifact 在哪裡、何時、如何
+被產出。Build provenance 補上的是「產出過程」證據，不是另一個 checksum。正式流程可以依風險
+要求來源 commit、建置服務身分、可驗證 attestation、簽章與可重現建置；即使是同一個組織內的元件，
+也不應跳過來源與建置審查。&lt;/p&gt;
+&lt;p&gt;套件更新時，我不只看版本差異，還會看 lock diff 與能力差異：新增了哪些直接或間接依賴、是否從
+wheel 改成需要本機建置的 sdist、是否出現 install script、是否新增原生程式碼，以及執行時是否需要
+新的環境變數、網路目的地或檔案路徑。版本識別只是變更索引，不是核准本身。&lt;/p&gt;
+&lt;h2&gt;MCP Server：審的不只是工具名稱，而是另一個執行邊界&lt;/h2&gt;
+&lt;p&gt;第三方 MCP Server 常被描述成「替 Agent 增加工具」，但從風險角度看，它更接近一個帶著傳輸、
+認證、工具定義、資源存取與更新管道的外部程式。即使工具名稱只是 &lt;code&gt;search_docs&lt;/code&gt;，server 的 process
+仍可能看到檔案、環境變數與網路；遠端 server 則牽涉 access token、上游 API 與多租戶邊界。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://modelcontextprotocol.io/specification/2026-07-28&quot;&gt;Model Context Protocol 2026-07-28 規格&lt;/a&gt;
+把授權資料存取與工具執行的決定留給使用者與應用程式。規格也提醒，tool annotations 除非來自可信
+server，否則應視為不可信；remote MCP 的 access token 必須綁定 MCP Server 這個 audience，server
+也不得把 client token 直接轉送給上游 API。&lt;/p&gt;
+&lt;p&gt;因此，審查 MCP Server 時不能只截一張 tool list。我會保存一份可比較的 capability snapshot：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;層次&lt;/th&gt;
+&lt;th&gt;接入前要記錄&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Server 身分&lt;/td&gt;
+&lt;td&gt;repository、publisher、immutable release、artifact digest、provenance&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;啟動方式&lt;/td&gt;
+&lt;td&gt;local command 或 remote endpoint、參數、工作目錄、更新方式&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;工具介面&lt;/td&gt;
+&lt;td&gt;tool 名稱、description、input schema 的完整快照與 SHA-256&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;本機權限&lt;/td&gt;
+&lt;td&gt;可讀寫的 filesystem roots、可見的環境變數名稱、是否能啟動子程序&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;網路權限&lt;/td&gt;
+&lt;td&gt;outbound host allowlist、port、redirect 與 DNS 政策&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;認證&lt;/td&gt;
+&lt;td&gt;token audience、scope、保存位置、是否與上游憑證分離&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;變更&lt;/td&gt;
+&lt;td&gt;新增或移除工具、schema 變動、權限擴張、publisher 或 artifact 變更&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;這裡的 &lt;code&gt;tool annotations&lt;/code&gt; 可以當說明或風險提示，不能當授權來源。真正的權限由 process sandbox、
+filesystem mount、network egress、secret injection 與後端政策決定。Server 更新後若多了一個工具、
+擴大一個 root 或新增 outbound host，即使版本簽章有效，也應視為需要重新核准的 capability drift。&lt;/p&gt;
+&lt;h2&gt;用 ALLOW、REVIEW、BLOCK 取代模糊的「看起來可以」&lt;/h2&gt;
+&lt;p&gt;接入流程如果只有通過與失敗，團隊很容易把「資訊不夠」誤當成「沒有發現問題」。我採用三種決策：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ALLOW&lt;/code&gt;：必要證據完整，artifact 與 capability 都符合事前定義的政策。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;REVIEW&lt;/code&gt;：尚未發現確定違規，但缺少必要證據；補齊以前不能進入執行環境。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BLOCK&lt;/code&gt;：完整性不符、格式或載入方式違反政策、token passthrough，或已核准能力發生漂移。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;REVIEW&lt;/code&gt; 不是比較客氣的 allow，而是流程中的停止狀態，表示目前無法做出可辯護的決定。若有時間
+壓力，正確動作是縮小功能、改用已核准版本，或由風險擁有者留下有期限的例外，而不是把缺少證據
+改寫成低風險。&lt;/p&gt;
+&lt;p&gt;決策順序也很重要。若 artifact hash 已不相符，就不需要因為 provenance 欄位齊全而繼續放行；若
+模型格式是政策明確禁止的 pickle，簽章有效也不能覆蓋格式閘門；若 MCP Server 的 filesystem roots
+與 outbound hosts 已擴張，舊核准也應立即失效。&lt;/p&gt;
+&lt;h2&gt;先盤點示範應用，而不是先下載可疑元件&lt;/h2&gt;
+&lt;p&gt;這次實作分成兩部分。第一部分直接讀取公開 Lab commit 中已版控的 &lt;code&gt;uv.lock&lt;/code&gt; 與實驗定義，不 import
+候選套件、不載入模型，也不啟動 MCP Server。結果如下：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;元件&lt;/th&gt;
+&lt;th&gt;觀察到的證據&lt;/th&gt;
+&lt;th&gt;判斷&lt;/th&gt;
+&lt;th&gt;缺口&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Python 套件&lt;/td&gt;
+&lt;td&gt;32 個 locked packages、436 個 artifact hashes&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;REVIEW&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;沒有記錄 build provenance&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;模型引用&lt;/td&gt;
+&lt;td&gt;15 個引用全都有完整 digest，共 2 組唯一 name/digest&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;REVIEW&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;沒有記錄 artifact format、簽章或 provenance&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MCP Server&lt;/td&gt;
+&lt;td&gt;檢查 3 個宣告路徑，皆不存在&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;NOT_CONFIGURED&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;沒有 server 與 capability 可供判斷&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;這不表示 Lab 使用的套件或模型已經不安全；目前保存的證據只是不足以支持更強的供應鏈聲明。
+32 個套件與 436 個 artifact hashes 可以支持版本固定與完整性比對，但 artifact hashes 沒有告訴我們
+每個 artifact 的建置者與建置流程。15 個完整 digest 可以支持模型身分重現，但 model digests 沒有
+告訴我們檔案格式與來源證明。&lt;/p&gt;
+&lt;p&gt;MCP 的 &lt;code&gt;NOT_CONFIGURED&lt;/code&gt; 也要小心解讀。&lt;code&gt;NOT_CONFIGURED&lt;/code&gt; 只表示這個 commit 在 &lt;code&gt;.mcp.json&lt;/code&gt;、&lt;code&gt;mcp.json&lt;/code&gt; 與
+&lt;code&gt;config/mcp.json&lt;/code&gt; 三個宣告路徑沒有設定，不能推論使用者層級、其他 client 或外部環境完全沒有 MCP
+Server。沒有觀察到設定，和證明不存在，是兩種不同陳述。&lt;/p&gt;
+&lt;h2&gt;固定矩陣：三類元件各測三種決策&lt;/h2&gt;
+&lt;p&gt;第二部分使用 9 份固定合成 manifest，模型、套件與 MCP Server 各三份。每個案例都先寫下預期結果，
+再交給同一個確定性 policy runner；runner 不做模糊評分，也不呼叫模型。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;案例&lt;/th&gt;
+&lt;th&gt;關鍵證據或違規&lt;/th&gt;
+&lt;th&gt;結果&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;完整模型證據&lt;/td&gt;
+&lt;td&gt;immutable ref、digest、provenance、允許格式皆符合&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;ALLOW&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;可變模型且無 digest&lt;/td&gt;
+&lt;td&gt;缺 immutable ref 與 SHA-256&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;REVIEW&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;已簽署 pickle 模型&lt;/td&gt;
+&lt;td&gt;來源可辨認，但格式違反政策&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;BLOCK&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;完整套件證據&lt;/td&gt;
+&lt;td&gt;精確版本、digest、provenance 皆符合&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;ALLOW&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;套件缺 provenance&lt;/td&gt;
+&lt;td&gt;有版本與 hash，不知道如何產出&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;REVIEW&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;套件 hash mismatch&lt;/td&gt;
+&lt;td&gt;實際位元組與核准證據不同&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;BLOCK&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;完整 MCP 宣告&lt;/td&gt;
+&lt;td&gt;tool snapshot、roots、hosts、secret names、token policy 皆符合&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;ALLOW&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;只有 tool annotations&lt;/td&gt;
+&lt;td&gt;缺身分、來源與 capability 證據&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;REVIEW&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MCP capability drift&lt;/td&gt;
+&lt;td&gt;roots 與 outbound hosts 比核准版本擴張&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;BLOCK&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;9 組案例全都符合事前預測，分布正好是 3 &lt;code&gt;ALLOW&lt;/code&gt;、3 &lt;code&gt;REVIEW&lt;/code&gt;、3 &lt;code&gt;BLOCK&lt;/code&gt;。模型、套件與 MCP
+Server 各貢獻一種決策，因此結果不是靠某一類元件特例湊出來。&lt;/p&gt;
+&lt;p&gt;整個實驗的模型呼叫、網路呼叫、套件安裝、artifact 載入、MCP Server 啟動、subprocess 與外部副作用
+都是 0。固定程式、fixture、原始證據雜湊與淨化摘要收錄在公開的
+&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-20-ai-supply-chain-security/evidence/day-20&quot;&gt;Day 20 evidence checkpoint&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;其中最值得保留的反例是「已簽署 pickle」。如果把簽章當成最高通行證，這個案例會被放行；把來源與
+可執行格式分開後，判斷就很清楚：簽章可以支持「誰發布了這些位元組」，卻不能把違反載入政策的格式
+變安全。同樣地，MCP Server 原本通過審查，也不能把未來擴張的 filesystem root 與 outbound host
+一起自動核准。&lt;/p&gt;
+&lt;h2&gt;實驗沒有證明什麼&lt;/h2&gt;
+&lt;p&gt;這套 runner 不是惡意程式掃描器、模型安全評測、套件 registry、簽章驗證器、SLSA conformance
+checker、MCP client 或 sandbox。這套 runner 沒有驗證真實 attestation、重現建置、反序列化權重、
+import 套件，也沒有連上任何第三方服務。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;ALLOW&lt;/code&gt; 只表示合成證據符合這一版小型 intake policy，不代表元件不存在未知漏洞或惡意行為；
+&lt;code&gt;BLOCK&lt;/code&gt; 也只對應明確政策條件，不是全世界通用的危險分類。正式系統還需要漏洞管理、行為測試、
+sandbox、最小權限、egress control、secret scope、監控、回復舊版與事件應變。&lt;/p&gt;
+&lt;p&gt;現況盤點同樣有邊界。這次盤點唯讀存取指定的版控檔案，沒有掃描開發者家目錄、IDE 設定、CI secret
+或雲端環境。限定盤點範圍是刻意的選擇：文章需要一個可公開重現、沒有碰觸私人設定的證據範圍，而
+不是假裝完成整台機器的鑑識。&lt;/p&gt;
+&lt;p&gt;因此，這組結果支持一項範圍較小、但可實作的結論：&lt;strong&gt;外部元件的接入決策必須同時保存身分、完整性、來源、
+可執行性與權限證據；任何單一徽章、雜湊、簽章或說明欄位，都不能替整條證據鏈背書。&lt;/strong&gt;&lt;/p&gt;
+&lt;h2&gt;接入外部元件前，我會檢查這十二件事&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;固定不可變身分。&lt;/strong&gt; 保存完整 digest、精確套件版本或 immutable release，不只記 &lt;code&gt;latest&lt;/code&gt;、branch
+或顯示名稱。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;比對取得的位元組。&lt;/strong&gt; 在安裝、載入或啟動前驗證 SHA-256 或簽章；不符就 &lt;code&gt;BLOCK&lt;/code&gt;，不能靠重新
+下載直到「剛好成功」。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;保存來源與建置證據。&lt;/strong&gt; 記錄 publisher、source commit、builder、provenance／attestation 與
+審閱時間；簽章只證明簽署關係，不代表安全。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;檢查 executable format。&lt;/strong&gt; 模型是否使用 pickle、是否要求 remote code；套件是否有 install
+hook、sdist 或原生 extension；MCP Server 如何啟動。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;核對名稱與所有權。&lt;/strong&gt; 確認 registry namespace、repository、publisher 與維護權轉移，防止 typo、
+dependency confusion 與相似名稱誤裝。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;展開 transitive dependencies。&lt;/strong&gt; 檢查新增、移除與來源變動，不只看直接依賴的一行版本號。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;保存工具與 schema 快照。&lt;/strong&gt; 對 MCP tool list、description 與 input schema 取 hash；annotation
+只當說明，不當授權。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;列出實際 capability。&lt;/strong&gt; 明確限制 filesystem roots、outbound hosts、subprocess、secret names、
+token audience 與 scope。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;把更新視為新決策。&lt;/strong&gt; Artifact、publisher、tool schema 或 capability 任一改變，都重新走 intake；
+不沿用舊版核准。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;讓 &lt;code&gt;REVIEW&lt;/code&gt; 真正停止部署。&lt;/strong&gt; 證據缺失時先隔離，補齊或建立有期限、有負責人的例外，不預設
+放行。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;隔離第一次執行。&lt;/strong&gt; 即使 intake 通過，仍在最小權限、受控 egress、無生產 secret 的環境測試，
+並準備快速回復舊版。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;留下可查詢的決策紀錄。&lt;/strong&gt; 保存誰在何時依哪一版政策核准哪個 digest 與 capability snapshot，
+讓事件發生時能回答受影響範圍。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;這份清單的核心不是收集越多文件越好，而是讓每一份證據都對應一個問題。若團隊說「有 SBOM」，就
+追問 SBOM 是否涵蓋模型與 MCP Server；若團隊說「有簽章」，就追問簽章驗證了誰、哪一份 artifact，
+以及 runtime capability 是否另行審查；若團隊說「跑在 sandbox」，就追問 sandbox 實際允許哪些
+檔案、網路與 secret。&lt;/p&gt;
+&lt;p&gt;供應鏈管理很容易停在採購審查與合規文件，沒有持續核對實際部署的 artifact 與權限。比較可靠的
+做法，是把 intake policy 寫成可測試規則，讓 CI 對 artifact 與 capability diff 做 fail-closed 檢查，
+再由人工處理真正需要判斷的 &lt;code&gt;REVIEW&lt;/code&gt;。CI 負責一致性，人工審查負責接受哪一種風險；CI 和人工審查
+都不能只看元件的自我宣告。&lt;/p&gt;
+&lt;p&gt;前兩篇把 Agent 的動作拆成「模型提案、後端授權、工具 adapter 與結果邊界」。這一篇再往前追：提供
+模型、套件與工具能力的元件，本身也必須先通過接入邊界。下一篇會把這些缺口串在一起，回顧一條從
+間接注入、檢索污染、工具濫用到資料外洩的端到端 Agent 攻擊鏈。&lt;/p&gt;
+&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM04_SupplyChain.md&quot;&gt;OWASP LLM04:2026 Supply Chain&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://huggingface.co/docs/hub/security-pickle&quot;&gt;Hugging Face Hub — Pickle Scanning&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://slsa.dev/spec/v1.2/&quot;&gt;SLSA v1.2 Specification&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://modelcontextprotocol.io/specification/2026-07-28&quot;&gt;Model Context Protocol Specification 2026-07-28&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/&quot;&gt;OWASP Top 10 for Agentic Applications 2026&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-20-ai-supply-chain-security/evidence/day-20&quot;&gt;LLM Application Security Lab — Day 20 evidence checkpoint&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;!-- ironman-cross-publication:start --&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本文同步刊載於 &lt;a href=&quot;https://ithelp.ithome.com.tw/articles/10405830&quot;&gt;iThome 鐵人賽&lt;/a&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!-- ironman-cross-publication:end --&gt;
+&lt;!-- series-nav:start --&gt;
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 20／31 篇&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-28-tool-calling-security/&quot;&gt;上一篇：工具呼叫 / Function Calling 的風險&lt;/a&gt; · 下一篇：第三週回顧：一次端到端的 Agent 攻擊鏈&lt;/p&gt;
+&lt;!-- series-nav:end --&gt;
+</content>
+  </entry>
   
   <entry>
     <title>工具呼叫 / Function Calling 的風險</title>
@@ -233,7 +591,7 @@ would-be shell 字串，從未真的啟動 shell。&lt;/p&gt;
 &lt;!-- series-nav:start --&gt;
 &lt;hr /&gt;
 &lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 19／31 篇&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/&quot;&gt;上一篇：Excessive Agency：Agent 的過度代理風險&lt;/a&gt; · 下一篇：供應鏈風險：模型、套件與 MCP Server&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/&quot;&gt;上一篇：Excessive Agency：Agent 的過度代理風險&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/&quot;&gt;下一篇：供應鏈風險：模型、套件與 MCP Server&lt;/a&gt;&lt;/p&gt;
 &lt;!-- series-nav:end --&gt;
 </content>
   </entry>
@@ -2477,192 +2835,6 @@ gate 放行回覆了嗎？後面還有工具或外部 sink 嗎？&lt;/p&gt;
 &lt;hr /&gt;
 &lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 11／30 篇&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/&quot;&gt;上一篇：間接注入實戰：把指令藏進網頁與文件&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-08-21-system-prompt-leakage/&quot;&gt;下一篇：Hidden Context Exposure：外洩的不只是 system prompt&lt;/a&gt;&lt;/p&gt;
-&lt;!-- series-nav:end --&gt;
-</content>
-  </entry>
-  
-  <entry>
-    <title>間接注入實戰：把指令藏進網頁與文件</title>
-    <link href="https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/"/>
-    <updated>2026-08-19T00:00:00Z</updated>
-    <id>https://imfw.io/posts/2026/2026-08-19-indirect-injection-web-documents/</id>
-    <content type="html">&lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文內容於 2026-08-08 完成查核，依據包括 &lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP Prompt Injection Prevention Cheat Sheet&lt;/a&gt;、Python &lt;code&gt;html.parser&lt;/code&gt;／&lt;code&gt;email&lt;/code&gt; 與 pypdf 6.15.0 官方文件，以及 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab&quot;&gt;LLM Application Security Lab&lt;/a&gt; 的 Day 10 合成文件實驗。Parser、模型與工具行為可能更新；Day 10 evidence 已封存在公開的 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-10-hidden-document-paths/evidence/day-10&quot;&gt;Day 10 checkpoint&lt;/a&gt;，讀者可直接查閱。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;白色文字藏進 PDF 後，模型五次都沒有服從。這能證明白色文字攻擊沒用嗎？不能。比較早的一個問題是：白色文字有沒有被 PDF extractor 讀出來？&lt;/p&gt;
-&lt;p&gt;我在查資料前預測 HTML 白色文字與註解、PDF 白色文字與 metadata、email 隱藏 HTML 和檔名「都會」進入模型。實驗只支持其中五條資料路徑。另三條雖然在原始檔案裡有攻擊文字，卻被目前的 extractor policy 排除。&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;檔案格式只決定攻擊文字可以藏在哪裡；應用程式如何抽取與序列化，才決定模型實際看見什麼。&lt;/strong&gt;&lt;/p&gt;
-&lt;h2&gt;「藏在檔案裡」離模型還有三道轉換&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP&lt;/a&gt;把網頁、文件、email、附件與 hidden text 都列為 Remote／Indirect Prompt Injection 的可能入口。不過，被列為可能入口，不代表任何 parser 都會保留其中的攻擊文字。&lt;/p&gt;
-&lt;p&gt;這次我把資料路徑拆成四個觀測點。以 PDF 白色文字案例來看，攻擊 marker 在前三個觀測點都是 &lt;code&gt;TRUE&lt;/code&gt;；到了 model response，判讀方式改為檢查 injection marker 與刻意放入參考資料的假機密值（canary），確認模型是否偏航或讓資料跨界。下圖整理這四個觀測點的實際結果。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/indirect-injection-web-documents-data-path.png&quot; alt=&quot;Day 10 四個資料路徑觀測點：pdf-white-text.pdf 的 DAY10_ATTACK_SOURCE 存在於 source bytes，經 pypdf 保留在 extractor output，也被應用程式放進 serialized model request；model response 完成正常摘要，injection marker 與 canary 都是 FALSE，因此判為只有入口曝露。Source bytes 另有一條人眼檢視旁支，PDF 頁面上的白色文字 marker 不可見。&quot; /&gt;&lt;/p&gt;
-&lt;p&gt;四段不是四種檔案，而是同一份外部內容經過應用程式時的四個觀測點：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;Source bytes&lt;/strong&gt;：原始 HTML、PDF 或 &lt;code&gt;.eml&lt;/code&gt; 的檔案內容。Source bytes 用來確認攻擊文字是否真的存在，並以 SHA-256 證明實驗前後使用同一份來源。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Extractor output&lt;/strong&gt;：parser 從檔案取出的文字。例如 pypdf 可能讀到 PDF 白色文字，HTML extractor 也可能排除 comment。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Serialized model request&lt;/strong&gt;：應用程式把 system message、使用者要求與 extracted text 組合後，實際送給模型的完整 request。Extractor 讀到某個欄位，不代表應用程式一定會把該欄位放進 request。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Model response&lt;/strong&gt;：模型回傳的內容。這一段才檢查模型是否完成正常任務、服從攻擊，或帶出另一份資料裡的 canary。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;以 PDF 白色文字案例來看，&lt;code&gt;DAY10_ATTACK_SOURCE&lt;/code&gt; 存在於 source bytes，也出現在 pypdf output 與 model request；model response 最後沒有產生代表服從攻擊的 response marker，也沒有帶出 canary。這就是「入口曝露，但沒有觀察到偏航或資料跨界」。&lt;/p&gt;
-&lt;p&gt;人眼可見性是另一個層面。白色文字可能在白底 PDF 看不到，content stream 仍保有文字；附件檔名可能顯示在郵件介面，卻不在 body。&lt;/p&gt;
-&lt;h2&gt;用同一份來源比較不同 application policy&lt;/h2&gt;
-&lt;p&gt;實驗只用本機合成 HTML、PDF 與 &lt;code&gt;.eml&lt;/code&gt;，不讀真實第三方內容、不做 OCR，也不開工具或 outbound sink。HTML 與 email 使用 Python 3.14.6 標準函式庫；PDF 鎖定 pypdf 6.15.0。每個來源都使用語意相同的 payload，並將 source marker 與 response marker 分開。source marker 用來追蹤資料路徑；response marker 不會逐字出現在檔案或 prompt，只有模型服從攻擊時才會產生。&lt;/p&gt;
-&lt;p&gt;PDF metadata 與 email filename 各做一組成對比較。每一組成對比較都沿用各自完全相同的 source bytes，唯一改變的是應用程式是否把該欄位加入 extracted text：&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;情境&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;Source 有攻擊文字&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;Extractor 保留&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;進入 request&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;一般 HTML&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;HTML 白色文字&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;HTML comment&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;PDF 白色文字&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;PDF metadata，只取 page text&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;同一份 PDF，另納入 Subject&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;Email 隱藏 HTML&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;Email 檔名，只取 body&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;否&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;同一封 email，另納入檔名&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;表格修正了我的「都會」預測。Metadata 與檔名都只有在應用程式選擇序列化時才會進模型。&lt;/p&gt;
-&lt;h2&gt;HTML 白色文字會留下，comment 不一定&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&quot;https://docs.python.org/3/library/html.parser.html&quot;&gt;Python &lt;code&gt;HTMLParser&lt;/code&gt; 文件&lt;/a&gt;把一般文字與 comment 分給不同 callback。本次 extractor 收集允許元素的 text node，不收 comment，也排除 &lt;code&gt;script&lt;/code&gt; 與 &lt;code&gt;style&lt;/code&gt;。白色文字仍是普通 text node；extractor 不執行 CSS，因此完整保留 payload。換成會保留 comment 的 pipeline，結果就可能不同。&lt;/p&gt;
-&lt;p&gt;實驗中的兩份 HTML 只把相同 marker 放在不同位置。下列範例省略後面的合成攻擊內容：&lt;/p&gt;
-&lt;pre class=&quot;language-html&quot;&gt;&lt;code class=&quot;language-html&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;&lt;/span&gt;p&lt;/span&gt; &lt;span class=&quot;token special-attr&quot;&gt;&lt;span class=&quot;token attr-name&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;token attr-value&quot;&gt;&lt;span class=&quot;token punctuation attr-equals&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;token value css language-css&quot;&gt;&lt;span class=&quot;token property&quot;&gt;color&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; #fff&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;token property&quot;&gt;background&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; #fff&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&quot;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt;
-  DAY10_ATTACK_SOURCE ...
-&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token tag&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;lt;/&lt;/span&gt;p&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&gt;&lt;/span&gt;&lt;/span&gt;
-
-&lt;span class=&quot;token comment&quot;&gt;&amp;lt;!-- DAY10_ATTACK_SOURCE ... --&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;白色文字版本的 extracted text 仍含 &lt;code&gt;DAY10_ATTACK_SOURCE&lt;/code&gt;；comment 版本只留下正常會議內容，marker 沒有進入 request。&lt;/p&gt;
-&lt;h2&gt;PDF page text 與 metadata 是兩條入口&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&quot;https://pypdf.readthedocs.io/en/stable/modules/PageObject.html&quot;&gt;pypdf &lt;code&gt;extract_text()&lt;/code&gt; 文件&lt;/a&gt;說明，API 會從 page content stream 找出文字繪製指令。本次合成 PDF 以白色繪製 payload；這段文字雖然在白底頁面上看不見，仍存在於 page content stream，會被 &lt;code&gt;extract_text()&lt;/code&gt; 讀出。PDF Subject 則要經 &lt;a href=&quot;https://pypdf.readthedocs.io/en/stable/user/metadata.html&quot;&gt;&lt;code&gt;PdfReader.metadata&lt;/code&gt;&lt;/a&gt; 另外讀取；只有應用程式追加 Subject 時，同一份 PDF 才形成模型可見的入口。&lt;/p&gt;
-&lt;p&gt;實驗輸出把「畫面看不到」與「extractor 讀不到」拆成兩件事。下圖左側直接算繪合成 PDF，右側則保留同一份檔案的完整 pypdf 輸出；右側換行只為排版，沒有省略文字。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;https://imfw.io/assets/images/indirect-injection-web-documents-pdf-extraction-evidence.png&quot; alt=&quot;Day 10 PDF 白色文字實驗對照：左側 Poppler 算繪頁面只看見正常的會議內容，human-visible marker 為 FALSE；右側同一份 PDF 經 pypdf extract_text() 後包含 DAY10_ATTACK_SOURCE 與完整合成 payload，extracted marker 為 TRUE。&quot; /&gt;&lt;/p&gt;
-&lt;p&gt;因此 PDF ingestion pipeline 要明列實際採用的 page text、annotation、form field、metadata、OCR 與附件。本文只驗證 page text 與 Subject，不能推定其他入口。&lt;/p&gt;
-&lt;h2&gt;Email body、header 與檔名也不會自動混成一包&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&quot;https://docs.python.org/3/library/email.parser.html&quot;&gt;Python &lt;code&gt;email.parser&lt;/code&gt; 文件&lt;/a&gt;把 headers、body 與 MIME subparts 解析成 message tree；&lt;a href=&quot;https://docs.python.org/3/library/email.message.html&quot;&gt;&lt;code&gt;EmailMessage&lt;/code&gt;&lt;/a&gt; 再分別選 body、走訪附件及讀取檔名。本次 HTML body extractor 保留 &lt;code&gt;display: none&lt;/code&gt; 文字；附件檔名則只有在 policy 明確追加時才進入 request。完成 email parsing 不代表所有欄位會自動混成一包。&lt;/p&gt;
-&lt;p&gt;兩封合成 email 分別驗證隱藏 body 與附件檔名：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;HTML body：&lt;p style=&quot;display: none&quot;&gt;DAY10_ATTACK_SOURCE ...&lt;/p&gt;
-body extractor：... DAY10_ATTACK_SOURCE ...
-
-附件檔名：DAY10_ATTACK_SOURCE [payload omitted].txt
-body only：marker 不存在
-body + attachment filenames：... DAY10_ATTACK_SOURCE [payload omitted].txt&lt;/code&gt;&lt;/pre&gt;
-&lt;h2&gt;進入 context，不等於攻擊成功&lt;/h2&gt;
-&lt;p&gt;正式計畫固定本機 Ollama 0.32.5、&lt;code&gt;gemma4:latest&lt;/code&gt; 完整 digest、system message、合成 canary、&lt;code&gt;temperature=0.7&lt;/code&gt; 與 seeds 411 至 415。九組各五次，共 45 runs，一次執行完整 plan。&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;分組&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;Runs&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;Exact target&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;Injection&lt;/th&gt;
-&lt;th style=&quot;text-align:right&quot;&gt;Canary&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;Clean&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;5&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;5／5&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;0／5&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;0／5&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;攻擊文字被 extractor 排除&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;15&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;15／15&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;0／15&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;0／15&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;攻擊文字進入 request&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;25&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;24／25&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;0／25&lt;/td&gt;
-&lt;td style=&quot;text-align:right&quot;&gt;0／25&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;進入 request 的 25 次就是我所說的「只有入口曝露」：沒有 response-only marker，也沒有帶出參考文件中的 canary。兩次回覆把 payload 描述成可疑指令，仍完成摘要；描述不等於服從。Exact target 唯一未命中只是把識別碼寫成帶有 Markdown 跳脫字元的形式；人工閱讀後 45 次都完成正常摘要，但表格仍保留事前定義的 exact count。&lt;/p&gt;
-&lt;p&gt;這批 0／25 不能外推成隱匿注入普遍無效。模型、payload、parser、prompt、欄位順序或 sampling 改變，都可能改變結果。先確認 attack 是否到達模型，再用模型與系統層 predicate 判斷影響。&lt;/p&gt;
-&lt;p&gt;來源 bytes、extractor output、serialized request 與 response predicates 的完整摘要，可在公開的 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-10-hidden-document-paths/evidence/day-10&quot;&gt;Day 10 實驗 checkpoint&lt;/a&gt; 查閱。&lt;/p&gt;
-&lt;h2&gt;Pilot 先抓到的是量測漏洞&lt;/h2&gt;
-&lt;p&gt;正式計畫前，我跑過一批 45-run pilot。當時同一個 injection marker 同時存在於來源與 response predicate；模型正常摘要 metadata 裡的攻擊句，exact matcher 卻把「引用」算成「服從」。這是量測失守，不是攻擊成功。&lt;/p&gt;
-&lt;p&gt;Pilot 沒有混入正式結果。正式計畫分開 source／response markers、重建 fixtures、換用 seeds 411 至 415 並通過離線測試後，才重新跑完整 45 次。若 success token 原本就在測試文件裡，全文搜尋只能證明 token 出現；response predicate 必須排除正常引用，並和資料跨界、工具動作或 downstream sink 分開。&lt;/p&gt;
-&lt;h2&gt;回到自己的 ingestion pipeline&lt;/h2&gt;
-&lt;p&gt;盤點間接注入時，我會留下三組證據。第一組是原始來源與 SHA-256，用來確認攻擊者能控制哪些 bytes。第二組是 extractor 的名稱、版本、policy、輸出與 SHA-256，用來確認 comment、metadata、header、檔名或 OCR 哪些被保留。第三組是 serialized request 與分離的 response predicates，分別用來判斷模型偏航、資料跨界及 downstream action。&lt;/p&gt;
-&lt;p&gt;「文件裡有惡意文字」只是威脅的起點。「模型這次沒聽」也不是安全邊界。能把 source、extractor、serialization 與 sink 逐段拿出證據，才知道防線應該放在哪裡。&lt;/p&gt;
-&lt;h2&gt;參考資料&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html&quot;&gt;OWASP Cheat Sheet Series — LLM Prompt Injection Prevention&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://arxiv.org/abs/2302.12173&quot;&gt;Not what you&#39;ve signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.python.org/3/library/html.parser.html&quot;&gt;Python 3 — &lt;code&gt;html.parser&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.python.org/3/library/email.parser.html&quot;&gt;Python 3 — &lt;code&gt;email.parser&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://docs.python.org/3/library/email.message.html&quot;&gt;Python 3 — &lt;code&gt;email.message&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://pypdf.readthedocs.io/en/stable/user/extract-text.html&quot;&gt;pypdf — Extract Text from a PDF&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://pypdf.readthedocs.io/en/stable/user/metadata.html&quot;&gt;pypdf — Metadata&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-10-hidden-document-paths/evidence/day-10&quot;&gt;LLM Application Security Lab — Day 10 checkpoint&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;!-- ironman-cross-publication:start --&gt;
-&lt;blockquote&gt;
-&lt;p&gt;本文同步刊載於 &lt;a href=&quot;https://ithelp.ithome.com.tw/articles/10403770&quot;&gt;iThome 鐵人賽&lt;/a&gt;。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;!-- ironman-cross-publication:end --&gt;
-&lt;!-- series-nav:start --&gt;
-&lt;hr /&gt;
-&lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 10／30 篇&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-18-direct-vs-indirect-injection/&quot;&gt;上一篇：直接注入 vs 間接注入&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-08-20-jailbreak-taxonomy/&quot;&gt;下一篇：Jailbreak 手法分類學&lt;/a&gt;&lt;/p&gt;
 &lt;!-- series-nav:end --&gt;
 </content>
   </entry>

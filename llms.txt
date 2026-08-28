@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 供應鏈風險：模型、套件與 MCP Server
+
+- Published: 2026-08-29T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/
+- Tags: ai-security, ai, security, api
+
+- Description: 從模型權重、Python 套件到第三方 MCP Server，拆解不可變身分、雜湊、來源證明、可執行格式與執行時權限，並以離線固定矩陣建立 ALLOW、REVIEW、BLOCK 接入判斷。
+
+
 ### 工具呼叫 / Function Calling 的風險
 
 - Published: 2026-08-28T00:00:00.000Z
