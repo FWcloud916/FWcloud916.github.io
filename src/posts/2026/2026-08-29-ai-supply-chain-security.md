@@ -274,6 +274,6 @@ sandbox、最小權限、egress control、secret scope、監控、回復舊版�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 20／31 篇**
 
-[上一篇：工具呼叫 / Function Calling 的風險](https://imfw.io/posts/2026/2026-08-28-tool-calling-security/) · 下一篇：第三週回顧：一次端到端的 Agent 攻擊鏈
+[上一篇：工具呼叫 / Function Calling 的風險](https://imfw.io/posts/2026/2026-08-28-tool-calling-security/) · [下一篇：第三週回顧：一次端到端的 Agent 攻擊鏈](https://imfw.io/posts/2026/2026-08-30-end-to-end-agent-attack-chain/)
 
 <!-- series-nav:end -->
