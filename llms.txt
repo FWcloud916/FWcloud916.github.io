@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 第三週回顧：一次端到端的 Agent 攻擊鏈
+
+- Published: 2026-08-30T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-30-end-to-end-agent-attack-chain/
+- Tags: ai-security, ai, security
+
+- Description: 追蹤污染的 RAG 文件如何經檢索進入模型，讓 Agent 讀取合成案件資料，最後透過工具把資料送進記憶體內 sink；再以四個確定性控制點說明，模型提出的工具呼叫仍須由應用程式重新核准。
+
+
 ### 供應鏈風險：模型、套件與 MCP Server
 
 - Published: 2026-08-29T00:00:00.000Z
