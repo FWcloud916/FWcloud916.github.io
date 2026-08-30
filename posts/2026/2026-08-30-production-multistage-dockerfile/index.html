@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image - FW Blog</title>
+  <meta name="description" content="承接 Dockerfile cache 實驗，用同一套 FastAPI lab 實作 multi-stage、lockfile-first、BuildKit cache mount 與 non-root runtime，並比較 Debian slim、Alpine、distroless 的大小、相容性與操作邊界。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-08-30-production-multistage-dockerfile/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image - FW Blog">
+  <meta property="og:description" content="承接 Dockerfile cache 實驗，用同一套 FastAPI lab 實作 multi-stage、lockfile-first、BuildKit cache mount 與 non-root runtime，並比較 Debian slim、Alpine、distroless 的大小、相容性與操作邊界。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-08-30-production-multistage-dockerfile/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-08-30T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="Docker">
+  
+  <meta property="article:tag" content="devops">
+  
+  <meta property="article:tag" content="security">
+  
+  <meta property="article:tag" content="automation">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image - FW Blog">
+  <meta name="twitter:description" content="承接 Dockerfile cache 實驗，用同一套 FastAPI lab 實作 multi-stage、lockfile-first、BuildKit cache mount 與 non-root runtime，並比較 Debian slim、Alpine、distroless 的大小、相容性與操作邊界。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=7b81cad">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=7b81cad">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image",
+    "description": "承接 Dockerfile cache 實驗，用同一套 FastAPI lab 實作 multi-stage、lockfile-first、BuildKit cache mount 與 non-root runtime，並比較 Debian slim、Alpine、distroless 的大小、相容性與操作邊界。",
+    "url": "https://imfw.io/posts/2026/2026-08-30-production-multistage-dockerfile/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-08-30-production-multistage-dockerfile/",
+    "datePublished": "2026-08-30T00:00:00.000Z",
+    "dateModified": "2026-08-30T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["Docker","devops","security","automation"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-08-30T00:00:00.000Z">2026年08月30日</time></span>
+      
+      <span>13 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/docker/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #Docker
+        </a>
+        
+      
+        
+        <a href="/tags/devops/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #devops
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+        
+        <a href="/tags/automation/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #automation
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/containers/" class="text-blue-600 hover:text-blue-800 transition">容器技術</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-30 查核 Docker、uv 與 Distroless 官方文件，並在 arm64 Colima 環境完成實驗；使用 Docker client 29.6.2、server 29.2.1、Buildx 0.35.0 與 uv 0.11.25。文中的秒數與 image 大小只代表這台機器、這組 dependencies 和當時上游 image 的觀察結果，不是跨架構或跨專案的效能保證。</p>
+</blockquote>
+<p>在 <a href="https://imfw.io/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/">Dockerfile 為什麼越改越慢？</a> 的實驗中，有一個沒優化的 Dockerfile：先 <code>COPY . .</code>，再安裝 dependencies。只要 application source 改變，dependency installation 就跟著重新執行。</p>
+<p>找出第一個 cache 失效的 step 之後，真正的工作才開始。</p>
+<p>Production Dockerfile 不能只追求「下一次 build 有沒有變快」。它還要回答：dependency layer 的輸入是否清楚？Build tool 是否留在 runtime？Process 以誰的身分執行？Image 換成 Alpine 或 distroless 之後，native dependency 是否真的能載入？</p>
+<p>這篇沿用同一套 FastAPI、PostgreSQL 與 Nginx lab，把先前觀察到的 cache 問題改造成可驗證的 multi-stage build。我會先完成 Debian slim 版本，再用完全相同的 API 測試比較 Alpine 與 distroless。重點不是選出「全世界最小的 image」，而是看懂每一次縮減究竟拿掉了什麼，又增加了哪些相容性與維運成本。</p>
+<h2>Multi-stage 要分開的是責任，不只是檔案大小</h2>
+<p>Docker 的 multi-stage build 允許一份 Dockerfile 使用多個 <code>FROM</code>。後面的 stage 可用 <code>COPY --from</code> 取用前面 stage 的產物，不必把前面 stage 的完整 filesystem 帶進最終 image。</p>
+<p>這個機制很適合把兩種責任拆開：</p>
+<ul>
+<li>Builder stage 負責安裝 dependency tool、解析 lockfile、下載套件與建立 virtual environment。</li>
+<li>Runtime stage 只負責啟動應用程式，接收執行時真正需要的 artifact。</li>
+</ul>
+<p>這裡的 artifact 是 <code>/app/.venv</code> 與 <code>/app/app</code>。<code>uv</code>、lockfile、<code>pyproject.toml</code>、tests，以及 builder 裡的 package cache 都不必出現在 runtime。</p>
+<p>但 multi-stage 不是安全沙盒。它不會自動修正有漏洞的 dependency，不會阻止應用程式以 root 執行，也不會讓錯誤傳入 build 的 secret 自動變安全。它提供的是一條明確的 artifact 邊界；哪些東西跨過邊界，仍由 Dockerfile 作者決定。</p>
+<h2>先固定實驗輸入，再談結果</h2>
+<p>這次公開 lab 使用下列主要輸入：</p>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>Image 或工具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Debian slim builder/runtime</td>
+<td><code>python:3.13-slim</code>，固定至實驗當下的 digest</td>
+</tr>
+<tr>
+<td>Alpine builder/runtime</td>
+<td><code>python:3.13-alpine</code>，固定至實驗當下的 digest</td>
+</tr>
+<tr>
+<td>Distroless builder</td>
+<td><code>python:3.13-slim-trixie</code>，與 slim 使用同一個 digest</td>
+</tr>
+<tr>
+<td>Distroless runtime</td>
+<td><code>gcr.io/distroless/python3-debian13:nonroot</code>，固定至實驗當下的 digest</td>
+</tr>
+<tr>
+<td>Dependency tool</td>
+<td><code>uv==0.11.25</code></td>
+</tr>
+</tbody>
+</table>
+<p>這份 checkpoint 以 digest 鎖定同一組 image bytes。單獨寫 <code>python:3.13-slim</code> 時，tag 日後可以指向新版 image；固定 digest 後，build 不會在沒有修改 Dockerfile 的情況下默默換掉 base image。</p>
+<p>代價也很直接：digest 不會自己取得後續安全修補。Production 流程仍要定期檢查上游更新、審核變更、更新 digest，然後重新執行測試。可重現性與更新速度是兩條不同的控制，不能只做其中一條。</p>
+<h2>完整 slim Dockerfile</h2>
+<p>主要版本使用 Debian slim：</p>
+<pre class="language-dockerfile"><code class="language-dockerfile"><span class="token comment"># syntax=docker/dockerfile:1</span>
+
+<span class="token instruction"><span class="token keyword">ARG</span> PYTHON_IMAGE=python:3.13-slim@sha256:7ce4b6dfe35e55397b7cda544f8a13f191b7ae28dc5aad71fe664dbc9bc2623f</span>
+<span class="token instruction"><span class="token keyword">ARG</span> UV_VERSION=0.11.25</span>
+
+<span class="token instruction"><span class="token keyword">FROM</span> <span class="token variable">${PYTHON_IMAGE}</span> <span class="token keyword">AS</span> builder</span>
+<span class="token instruction"><span class="token keyword">ARG</span> UV_VERSION</span>
+
+<span class="token instruction"><span class="token keyword">ENV</span> PYTHONDONTWRITEBYTECODE=1 <span class="token operator">\</span>
+    PYTHONUNBUFFERED=1 <span class="token operator">\</span>
+    UV_COMPILE_BYTECODE=1 <span class="token operator">\</span>
+    UV_LINK_MODE=copy</span>
+
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+
+<span class="token instruction"><span class="token keyword">RUN</span> python -m pip install --no-cache-dir <span class="token string">"uv==${UV_VERSION}"</span></span>
+
+<span class="token instruction"><span class="token keyword">COPY</span> pyproject.toml uv.lock ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> <span class="token options"><span class="token property">--mount</span><span class="token punctuation">=</span><span class="token string">type=cache,id=uv-slim,target=/root/.cache/uv</span></span> <span class="token operator">\</span>
+    uv sync --frozen --no-dev --no-install-project</span>
+
+<span class="token instruction"><span class="token keyword">FROM</span> <span class="token variable">${PYTHON_IMAGE}</span> <span class="token keyword">AS</span> runtime</span>
+
+<span class="token instruction"><span class="token keyword">ARG</span> APP_UID=10001</span>
+<span class="token instruction"><span class="token keyword">ARG</span> APP_GID=10001</span>
+
+<span class="token instruction"><span class="token keyword">ENV</span> PYTHONDONTWRITEBYTECODE=1 <span class="token operator">\</span>
+    PYTHONUNBUFFERED=1 <span class="token operator">\</span>
+    PATH=<span class="token string">"/app/.venv/bin:${PATH}"</span></span>
+
+<span class="token instruction"><span class="token keyword">RUN</span> groupadd --gid <span class="token string">"${APP_GID}"</span> app <span class="token operator">\</span>
+    &amp;&amp; useradd --uid <span class="token string">"${APP_UID}"</span> --gid <span class="token string">"${APP_GID}"</span> <span class="token operator">\</span>
+        --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin app</span>
+
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">builder</span> <span class="token property">--chown</span><span class="token punctuation">=</span><span class="token string">app:app</span></span> /app/.venv /app/.venv</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--chown</span><span class="token punctuation">=</span><span class="token string">app:app</span></span> app /app/app</span>
+
+<span class="token instruction"><span class="token keyword">USER</span> app</span>
+
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 8000</span>
+<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"/app/.venv/bin/python"</span>, <span class="token string">"-m"</span>, <span class="token string">"uvicorn"</span>, <span class="token string">"app.main:app"</span>, <span class="token string">"--host"</span>, <span class="token string">"0.0.0.0"</span>, <span class="token string">"--port"</span>, <span class="token string">"8000"</span>]</span></code></pre>
+<p>這份 Dockerfile 有四條刻意建立的邊界：base image 與 tool version、dependency metadata、builder artifact，以及 runtime source。接下來逐一拆開。</p>
+<h2>Lockfile-first 讓 dependency layer 只讀取必要輸入</h2>
+<p>前一版先 <code>COPY . .</code>，dependency installation 的 parent filesystem 因此包含 application source。新版先複製 <code>pyproject.toml</code> 與 <code>uv.lock</code>：</p>
+<pre class="language-dockerfile"><code class="language-dockerfile"><span class="token instruction"><span class="token keyword">COPY</span> pyproject.toml uv.lock ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> <span class="token options"><span class="token property">--mount</span><span class="token punctuation">=</span><span class="token string">type=cache,id=uv-slim,target=/root/.cache/uv</span></span> <span class="token operator">\</span>
+    uv sync --frozen --no-dev --no-install-project</span></code></pre>
+<p>Application source 要到 runtime stage 的最後才複製。只改 <code>app/main.py</code> 時，dependency metadata 沒有改，<code>uv sync</code> 那一層就能繼續使用既有 layer cache。</p>
+<p><code>uv sync --frozen</code> 要求使用現有 lockfile，不在 build 中重新鎖版；<code>--no-dev</code> 不安裝 development dependency；<code>--no-install-project</code> 則先不安裝目前專案本身。組合後，dependency layer 只負責依據已提交的 lockfile 建立 production dependency environment。</p>
+<p>這不是說所有專案都必須複製整個 virtual environment。Node.js、Go、Rust 或 Java 會有不同 artifact；Python 專案如果包含需要系統函式庫的 native extension，也必須確認 runtime 提供相容的動態函式庫。可以搬的是「已經定義並驗證的 runtime artifact」，不是任意 builder 目錄。</p>
+<h2>Layer cache 與 cache mount 解決不同問題</h2>
+<p><code>RUN --mount=type=cache</code> 容易和 Docker layer cache 混在一起。這兩者其實負責不同層次：</p>
+<ul>
+<li>Layer cache 決定整個 <code>RUN uv sync ...</code> 是否需要執行。</li>
+<li>Cache mount 在該 <code>RUN</code> 必須執行時，提供 package manager 可利用的下載或建置快取。</li>
+</ul>
+<p>如果 lockfile bytes 改變，<code>COPY pyproject.toml uv.lock</code> 的結果就改變，後面的 <code>RUN</code> 必須重新執行。Cache mount 不會把這個 step 偽裝成 <code>CACHED</code>；它只讓重新執行的 uv 有機會避免再次下載相同套件。</p>
+<p>因此 Dockerfile 的正確順序仍然是：先切好 dependency cache boundary，再加入 cache mount。Cache mount 不能補救把 application source 放在 dependency layer 前面的設計錯誤。</p>
+<p>Cache mount 也不能成為 build 正確性的必要條件。BuildKit 可能清除它，CI 也可能在全新的 builder 上執行。Cache 為空時，build 必須仍能從 lockfile 完成；cache 存在時，只是少做重複下載。</p>
+<h2>實驗一：source 改變，不再拖著 dependency layer 重跑</h2>
+<p>實驗使用獨立的 <code>docker-container</code> Buildx builder，並以 <code>--progress=plain</code> 記錄每個 step。這樣不會把先前在預設 builder 的 cache 混進第一次測試。</p>
+<p>Slim 版本的結果如下：</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>Dependency step</th>
+<th>Source <code>COPY</code></th>
+<th style="text-align:right">Wall time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第一次 isolated build</td>
+<td>executed，16.4 秒</td>
+<td>executed</td>
+<td style="text-align:right">54.99 秒</td>
+</tr>
+<tr>
+<td>完全相同的 warm build</td>
+<td><code>CACHED</code></td>
+<td><code>CACHED</code></td>
+<td style="text-align:right">2.46 秒</td>
+</tr>
+<tr>
+<td>只改 application source bytes</td>
+<td><code>CACHED</code></td>
+<td>executed</td>
+<td style="text-align:right">2.06 秒</td>
+</tr>
+</tbody>
+</table>
+<p>第一次 build 包含 base image 與 Dockerfile frontend 下載，因此 54.99 秒不能拿來預測別台機器。真正對應設計目標的是 step 狀態：source bytes 改變後，<code>COPY app /app/app</code> 重新執行，但 <code>uv sync</code> 仍是 <code>CACHED</code>。</p>
+<p>換句話說，Dockerfile 現在清楚表達「application source 依賴 production dependencies，production dependencies 不依賴 application source」。這才是 build 變快背後可解釋的原因。</p>
+<h2>實驗二：lockfile 改變時，cache mount 減少重複下載</h2>
+<p>第二組實驗只在 <code>uv.lock</code> 暫時加入一行合法 TOML comment，不改 dependency graph。這會改變檔案 bytes，迫使 dependency layer 重新執行，又能避免把結果混同於真正的版本更新。</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th style="text-align:right">Dependency step</th>
+<th>下載行為</th>
+<th style="text-align:right">Wall time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>有 cache mount</td>
+<td style="text-align:right">0.8 秒</td>
+<td>15 個套件直接利用 cache，沒有重新下載</td>
+<td style="text-align:right">3.53 秒</td>
+</tr>
+<tr>
+<td>無 cache mount</td>
+<td style="text-align:right">3.4 秒</td>
+<td>重新下載兩個 platform-specific binary wheels</td>
+<td style="text-align:right">7.43 秒</td>
+</tr>
+</tbody>
+</table>
+<p>無 cache mount 的 control Dockerfile 除了移除 <code>--mount</code>，其餘 slim build 邏輯相同。這個結果可以得到一個小結論：在同台主機、相同 lockfile 與已建立的 package cache 下，cache mount 降低了 lockfile layer 失效後的重複下載成本。</p>
+<p>它沒有證明每次都會快 4 秒，也沒有證明 cache 內容可信。Dependency 完整性仍由 lockfile 的版本與 hash 驗證處理；cache mount 只是可丟棄的效能資料。</p>
+<h2>Runtime stage 只接收兩項 artifact</h2>
+<p>Builder 做完之後，runtime stage 只執行兩個 <code>COPY</code>：</p>
+<pre class="language-dockerfile"><code class="language-dockerfile"><span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">builder</span> <span class="token property">--chown</span><span class="token punctuation">=</span><span class="token string">app:app</span></span> /app/.venv /app/.venv</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--chown</span><span class="token punctuation">=</span><span class="token string">app:app</span></span> app /app/app</span></code></pre>
+<p>第一個 <code>COPY</code> 跨 stage 取得已建立的 virtual environment；第二個 <code>COPY</code> 才從 build context 取得 application source。這裡沒有 <code>COPY . .</code>，也沒有把 builder 的 <code>/root/.cache/uv</code> 搬過來。</p>
+<p>實際啟動三種 runtime 後，我用 image 內的 Python 檢查 filesystem。三者都有 <code>/app/app</code>，但都沒有 <code>/app/uv.lock</code>、<code>/app/pyproject.toml</code>、<code>/app/tests</code> 或 <code>uv</code> executable。</p>
+<p>這項檢查驗證了 artifact allowlist。Runtime 不是靠 <code>.dockerignore</code> 猜哪些檔案不需要，而是由兩個明確的 <code>COPY</code> 決定允許進入的內容。</p>
+<h2>Non-root 要驗證實際 UID，不只看 Dockerfile 有沒有 <code>USER</code></h2>
+<p>Slim 與 Alpine 版本建立固定 UID/GID <code>10001</code> 的 <code>app</code> 使用者，distroless 使用官方 <code>nonroot</code> variant 的 UID <code>65532</code>。三個 image 的設定與實際 process UID 都經過檢查：</p>
+<table>
+<thead>
+<tr>
+<th>Runtime</th>
+<th>Image 設定</th>
+<th style="text-align:right">實際 UID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Debian slim</td>
+<td><code>USER app</code></td>
+<td style="text-align:right">10001</td>
+</tr>
+<tr>
+<td>Alpine</td>
+<td><code>USER app</code></td>
+<td style="text-align:right">10001</td>
+</tr>
+<tr>
+<td>Distroless</td>
+<td><code>USER nonroot</code></td>
+<td style="text-align:right">65532</td>
+</tr>
+</tbody>
+</table>
+<p>固定數值 UID 的好處，是 bind mount、Kubernetes <code>runAsUser</code> 或其他 runtime policy 可以對同一個身分做明確檢查。這不代表 UID <code>10001</code> 本身具有特殊安全性；重點是 process 不以容器內 UID 0 執行，而且應用程式需要寫入的路徑與擁有者要一併設計。</p>
+<p>Non-root 也不是 rootless container engine 的同義詞。這一層的 <code>USER</code> 限制 image 內預設 process 身分；Docker daemon 是否 rootful、user namespace 如何映射，以及 host 上誰能操作控制面，是另外的邊界。</p>
+<h2>Debian slim、Alpine、distroless，到底差在哪裡</h2>
+<p>三種 image 都成功跑起同一個 API，不代表它們可以無條件互換。</p>
+<h3>Debian slim：維運摩擦較低的基準</h3>
+<p>Slim 版本保留 Debian userland 與 shell，對常見 manylinux wheel、臨時診斷與既有操作工具通常比較直覺。這次最終 image 最大，約 55.9 MB，但它也提供三者中最接近 builder 的 runtime 環境。</p>
+<p>這裡的「最大」只適用於這組 image 與 dependencies。換一個 framework、加入系統套件或改成 amd64，絕對大小與排序都可能不同。</p>
+<h3>Alpine：體積小，但 musl 是相容性決策</h3>
+<p>Alpine 版本約 27.8 MB，是這次最小的 image。它使用 musl libc，不是 Debian 系列常見的 glibc。Python package 如果提供相符的 musllinux wheel，安裝可以很順利；如果沒有，builder 可能需要 compiler、header 與對應的 development package，runtime 也可能需要額外 shared library。</p>
+<p>本次 <code>psycopg-binary</code> 與 <code>pydantic-core</code> 都取得可用的 Alpine wheel，API 測試也成功。這只能證明這份 lockfile 在此架構與 image 上可用，不能推出所有 Python dependency 都適合 Alpine。</p>
+<p>因此選 Alpine 前要問的不是「它是不是比較小」，而是 dependency inventory 是否支援 musl、團隊是否能處理 native build，以及 production 診斷工具要放在哪裡。</p>
+<h3>Distroless：縮小操作面，也拿掉臨時除錯方式</h3>
+<p>Distroless 版本約 35.2 MB，沒有 shell，也沒有 package manager。Runtime <code>ENTRYPOINT</code> 必須使用 JSON vector form，不能依賴 <code>/bin/sh -c</code> 展開字串。</p>
+<p>這次還有一個容易踩到的細節：Distroless Python 位於 <code>/usr/bin/python</code>，官方建議使用相同 Debian 與 Python minor line 的 builder。Builder 因此先建立 <code>/usr/bin/python</code> symlink，再用這個路徑建立 virtual environment；否則把 venv 複製進 runtime 後，interpreter link 可能指向不存在的 <code>/usr/local/bin/python</code>。</p>
+<p>實測 builder 是 Python 3.13.15，distroless runtime 是 3.13.5。兩者同屬 CPython 3.13 與 Debian 13，這次 native dependencies 也通過完整 API 測試，但「minor line 相同」不是所有 native library 都必然相容的證明。每次更新 builder、runtime 或 lockfile，都要在最終 image 內執行 import 與端到端測試。</p>
+<p>沒有 shell 會減少某些在容器內臨時操作的路徑，也會讓 <code>docker exec ... sh</code> 失效。這是一項明確的維運取捨，不是自動取得的完整安全保證。團隊需要把診斷能力移到 logs、metrics、traces、health endpoints，或使用另外管理且不進入 production 的 debug image。</p>
+<h2>三種 runtime 的實測結果</h2>
+<p>本機 <code>docker image inspect</code> 與 runtime 檔案檢查得到以下結果：</p>
+<table>
+<thead>
+<tr>
+<th>Runtime</th>
+<th style="text-align:right">Image size</th>
+<th>Shell</th>
+<th><code>uv</code></th>
+<th>Build metadata</th>
+<th>API test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Debian slim</td>
+<td style="text-align:right">55,854,805 bytes</td>
+<td><code>/usr/bin/sh</code></td>
+<td>無</td>
+<td>無</td>
+<td>通過</td>
+</tr>
+<tr>
+<td>Alpine</td>
+<td style="text-align:right">27,837,435 bytes</td>
+<td><code>/bin/sh</code></td>
+<td>無</td>
+<td>無</td>
+<td>通過</td>
+</tr>
+<tr>
+<td>Distroless</td>
+<td style="text-align:right">35,173,070 bytes</td>
+<td>無</td>
+<td>無</td>
+<td>無</td>
+<td>通過</td>
+</tr>
+</tbody>
+</table>
+<p>「Build metadata 無」指 <code>/app</code> 裡沒有 <code>uv.lock</code>、<code>pyproject.toml</code> 或 tests，不代表 image 裡完全沒有 OS metadata、Python package metadata 或其他必要檔案。</p>
+<p>三種版本都以同一份 Compose stack 啟動。Nginx 是唯一 published port，PostgreSQL 只在 internal backend network，API healthcheck 直接呼叫 virtual environment 裡的 Python，因此不依賴 runtime 是否有 shell。每一種版本都完成以下驗證：</p>
+<pre class="language-text"><code class="language-text">GET  /livez  -> live
+GET  /readyz -> ready
+POST /items  -> 建立 id 1
+GET  /items  -> 讀回剛建立的 item</code></pre>
+<p>只跑 <code>docker build</code> 不能證明最小 runtime 能工作。至少要在 final stage 檢查 interpreter、native dependency、non-root 權限、healthcheck 與真正的請求路徑。</p>
+<h2>怎麼選 runtime base</h2>
+<p>我會先從維運與相容性需求選擇，再把 size 當成結果之一：</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>優先考慮</th>
+<th>需要接受的代價</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>需要常見 glibc 相容性與較直接的診斷方式</td>
+<td>Debian slim</td>
+<td>Image 可能比另外兩種大</td>
+</tr>
+<tr>
+<td>Dependencies 已驗證支援 musl，團隊也能維護 native build</td>
+<td>Alpine</td>
+<td>musl 相容性與套件建置成本</td>
+</tr>
+<tr>
+<td>Runtime 只需啟動單一程式，觀測與除錯流程已外部化</td>
+<td>Distroless</td>
+<td>沒有 shell/package manager，builder/runtime 配對要更嚴格</td>
+</tr>
+</tbody>
+</table>
+<p>不要只比較壓縮後的 MB。還要比較 CVE 修補流程、base image 更新頻率、architecture support、dependency wheel、事故處理方式，以及團隊能否在沒有互動式 shell 的情況下取得足夠證據。</p>
+<h2>Production Dockerfile 還要防哪些誤解</h2>
+<p>第一，image 小不等於漏洞少。刪除不用的檔案可以縮小攻擊面與掃描雜訊，但留下的 OS package、language runtime 與 application dependency 仍可能有漏洞。</p>
+<p>第二，multi-stage 不會抹掉已經進入 build 系統的 secret。不要用 <code>ARG</code>、<code>ENV</code> 或一般 <code>COPY</code> 傳入 token，再期待沒有把那一層複製到 final stage 就萬事安全。需要 credential 的 build 應使用 BuildKit secret mount，並另外驗證 cache、log 與 provenance 邊界。</p>
+<p>第三，<code>USER nonroot</code> 不會限制所有 Linux capability，也不會自動建立 read-only root filesystem。Capability、seccomp、<code>no-new-privileges</code>、read-only rootfs 與 resource limits 屬於 runtime hardening，後續文章會各自驗證。</p>
+<p>第四，digest pinning 不是更新機制。它讓變更可見，但仍需要自動化提出更新、人工或政策審核，以及完整 rebuild 與測試。</p>
+<p>第五，cache hit 不是 supply-chain 證據。它只能表示 builder 找到可利用的既有結果；dependency 是否來自預期來源、artifact 是否有 SBOM、provenance 與簽章，是另一套問題。</p>
+<h2>一份可以實際驗收的清單</h2>
+<p>完成 production Dockerfile 時，可以逐項留下證據：</p>
+<ol>
+<li>使用 <code>--progress=plain</code>，確認只改 source 時 dependency step 維持 <code>CACHED</code>。</li>
+<li>修改 lockfile，確認 dependency step 會重新執行，而不是誤用舊 layer。</li>
+<li>在 cache mount 為空的 builder 上執行一次，證明 cache 不是必要輸入。</li>
+<li>列出 final stage 的明確 <code>COPY --from</code> 與 context <code>COPY</code> allowlist。</li>
+<li>在 runtime 內確認 build tool、lockfile、tests 與其他不必要檔案不存在。</li>
+<li>讀取實際 process UID，確認不是 0，並測試所有需要讀寫的路徑。</li>
+<li>在 final image 裡 import native dependencies，不只在 builder 跑 unit tests。</li>
+<li>用 final image 跑 healthcheck 與至少一條完整請求路徑。</li>
+<li>記錄 base image digest，並建立後續更新與重驗流程。</li>
+<li>把 image size 當成本與攻擊面的其中一項指標，不把它當成唯一安全分數。</li>
+</ol>
+<p>公開 lab 的 <a href="https://github.com/FWcloud916/docker-containerization-lab/tree/production-multistage-dockerfile"><code>production-multistage-dockerfile</code> checkpoint</a> 保存 slim、Alpine、distroless、無 cache mount control、Compose overrides 與完整實驗證據。所有暫時修改都已復原，checkpoint 可以直接重跑。</p>
+<h2>從「build 得快」走向「知道交付了什麼」</h2>
+<p>先前的實驗找出 <code>COPY . .</code> 是第一個 cache 失效的邊界；這次則把 dependency metadata、application source 與 runtime artifact 拆成不同責任。</p>
+<p>結果不只是 warm build 從此比較快。核心在於，我們能回答 final image 裡有什麼、沒有什麼，source 與 lockfile 各會讓哪一層重跑，以及三種 runtime base 為何不能只看大小決定。</p>
+<p>Production Dockerfile 的價值，是把 build dependency 與交付邊界寫成能被測試的規則。當這些規則可以重現，下一步才有資格深入 OCI image：tag、manifest 與 digest 到底代表什麼，registry 傳輸的又是哪一組 bytes。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://docs.docker.com/build/building/multi-stage/">Docker Docs — Multi-stage builds</a></li>
+<li><a href="https://docs.docker.com/build/cache/optimize/">Docker Docs — Optimize cache usage in builds</a></li>
+<li><a href="https://docs.docker.com/build/building/best-practices/">Docker Docs — Building best practices</a></li>
+<li><a href="https://docs.docker.com/reference/dockerfile/">Docker Docs — Dockerfile reference</a></li>
+<li><a href="https://docs.astral.sh/uv/guides/integration/docker/">uv Docs — Using uv in Docker</a></li>
+<li><a href="https://github.com/GoogleContainerTools/distroless">GoogleContainerTools/distroless — Official repository and Python examples</a></li>
+<li><a href="https://github.com/FWcloud916/docker-containerization-lab/tree/production-multistage-dockerfile">docker-containerization-lab — Production multi-stage checkpoint</a></li>
+</ul>
+<!-- series-nav:start -->
+<hr>
+<p><strong>系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全</strong></p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/" class="text-gray-900 hover:text-blue-600 transition">
+      Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-28T00:00:00.000Z">2026年08月28日</time>
+    <span>11 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+      
+      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #automation
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-21-podman-rootless-production/" class="text-gray-900 hover:text-blue-600 transition">
+      Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time>
+    <span>9 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從 daemon、API socket、user namespace、網路、cgroup、storage 與 systemd，比較 Rootless Podman 和 Rootless Docker 在正式環境的共同限制與關鍵差異。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/podman/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Podman
+      </a>
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-07-21-production-rootless-docker/" class="text-gray-900 hover:text-blue-600 transition">
+      正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-07-21T00:00:00.000Z">2026年07月21日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從 Docker daemon、socket 與 user namespace 的權限邊界，說明正式環境採用 Rootless Docker 的價值、限制，以及如何用 skill-rootless-docker 安全完成盤點、安裝、遷移與驗證。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/agent-skills/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #agent-skills
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=7b81cad"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

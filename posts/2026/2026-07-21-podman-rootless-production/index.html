@@ -63,8 +63,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=00504b8">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=00504b8">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=7b81cad">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=7b81cad">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -393,6 +393,56 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
   
     <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-30-production-multistage-dockerfile/" class="text-gray-900 hover:text-blue-600 transition">
+      Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-30T00:00:00.000Z">2026年08月30日</time>
+    <span>13 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">承接 Dockerfile cache 實驗，用同一套 FastAPI lab 實作 multi-stage、lockfile-first、BuildKit cache mount 與 non-root runtime，並比較 Debian slim、Alpine、distroless 的大小、相容性與操作邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+      
+      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #devops
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #automation
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
     <a href="/posts/2026/2026-07-21-production-rootless-docker/" class="text-gray-900 hover:text-blue-600 transition">
       正式環境為什麼需要 Rootless Docker？從 root 權限風險到可驗證部署
     </a>
@@ -491,50 +541,6 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 </article>
 
   
-    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-08-28-dockerfile-layer-cache-optimization/" class="text-gray-900 hover:text-blue-600 transition">
-      Dockerfile 為什麼越改越慢？從 build context、layer 到 cache invalidation
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-08-28T00:00:00.000Z">2026年08月28日</time>
-    <span>11 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">用一套可重現的 FastAPI lab 拆解 Docker build context、layer 與 cache key，重現只改一行程式卻重新安裝所有 dependencies 的情況，並示範如何找出第一個失效步驟。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
-    
-      
-    
-      
-      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #Docker
-      </a>
-      
-    
-      
-      <a href="/tags/devops/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #devops
-      </a>
-      
-    
-      
-      <a href="/tags/automation/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #automation
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-  
   </div>
 </section>
 
@@ -567,7 +573,7 @@ loginctl show-user <span class="token string">"<span class="token variable"><spa
 </section>
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=00504b8"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=7b81cad"></script>
 
   </main>
 

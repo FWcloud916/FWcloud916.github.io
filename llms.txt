@@ -30,6 +30,16 @@ Author: FW (https://imfw.io/about/)
 - Description: 追蹤污染的 RAG 文件如何經檢索進入模型，讓 Agent 讀取合成案件資料，最後透過工具把資料送進記憶體內 sink；再以四個確定性控制點說明，模型提出的工具呼叫仍須由應用程式重新核准。
 
 
+### Production Dockerfile 最佳化：multi-stage、依賴快取與最小 runtime image
+
+- Published: 2026-08-30T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-30-production-multistage-dockerfile/
+- Tags: Docker, devops, security, automation
+
+- Description: 承接 Dockerfile cache 實驗，用同一套 FastAPI lab 實作 multi-stage、lockfile-first、BuildKit cache mount 與 non-root runtime，並比較 Debian slim、Alpine、distroless 的大小、相容性與操作邊界。
+
+
 ### 供應鏈風險：模型、套件與 MCP Server
 
 - Published: 2026-08-29T00:00:00.000Z
