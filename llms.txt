@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 輸入端防禦：隔離、標記與驗證
+
+- Published: 2026-08-31T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-08-31-input-defense-isolation-validation/
+- Tags: ai-security, ai, security
+
+- Description: 以固定任務契約驗證輸入格式，用 canonical JSON 保留來源與信任標記，再以 100 組配對實驗觀察這套防禦是否降低注入成功次數；同時說清楚，格式合法不等於內容安全。
+
+
 ### 第三週回顧：一次端到端的 Agent 攻擊鏈
 
 - Published: 2026-08-30T00:00:00.000Z

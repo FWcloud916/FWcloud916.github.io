@@ -52,8 +52,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=7b81cad">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=7b81cad">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=f53e6c1">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=f53e6c1">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -131,6 +131,50 @@
 <h2 class="text-2xl font-bold mb-6">最新文章</h2>
 
 <div class="space-y-6">
+
+  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-31-input-defense-isolation-validation/" class="text-gray-900 hover:text-blue-600 transition">
+      輸入端防禦：隔離、標記與驗證
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-31T00:00:00.000Z">2026年08月31日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">以固定任務契約驗證輸入格式，用 canonical JSON 保留來源與信任標記，再以 100 組配對實驗觀察這套防禦是否降低注入成功次數；同時說清楚，格式合法不等於內容安全。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
 
   <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
@@ -516,50 +560,6 @@
 
   
   <p class="text-gray-700 mb-4">沿著資料來源、切塊、檢索、序列化與模型輸出拆解 RAG 攻擊面，並用十五次確定性追蹤分開驗證語料存在、被檢索器選取與模型偏航。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
-    
-      
-    
-      
-      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai-security
-      </a>
-      
-    
-      
-      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai
-      </a>
-      
-    
-      
-      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #security
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-
-  <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-08-23-injection-assessment-review/" class="text-gray-900 hover:text-blue-600 transition">
-      第二週回顧：用十種情境測試範例應用程式的提示注入風險
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-08-23T00:00:00.000Z">2026年08月23日</time>
-    <span>12 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">用同一個本機摘要器重測十種注入情境，分開量測模型偏航與資料跨界，並把單一攻擊示範整理成可重跑的評估基準。</p>
   
 
   
