@@ -295,6 +295,6 @@ proposal，就是這類容易被彙總結果掩蓋的訊號。
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 21／31 篇**
 
-[上一篇：供應鏈風險：模型、套件與 MCP Server](https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/) · 下一篇：輸入端防禦：隔離、標記與驗證
+[上一篇：供應鏈風險：模型、套件與 MCP Server](https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/) · [下一篇：輸入端防禦：隔離、標記與驗證](https://imfw.io/posts/2026/2026-08-31-input-defense-isolation-validation/)
 
 <!-- series-nav:end -->
