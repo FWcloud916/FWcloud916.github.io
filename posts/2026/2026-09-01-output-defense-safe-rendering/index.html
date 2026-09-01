@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>輸出端防禦：過濾、審核與安全渲染 - FW Blog</title>
+  <meta name="description" content="用同一份本機模型候選輸出對照未轉義與安全渲染路徑，拆開 JSON schema、內容審核、sink 授權與 HTML escaping，實際修掉模型輸出形成 active HTML 的漏洞。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="輸出端防禦：過濾、審核與安全渲染 - FW Blog">
+  <meta property="og:description" content="用同一份本機模型候選輸出對照未轉義與安全渲染路徑，拆開 JSON schema、內容審核、sink 授權與 HTML escaping，實際修掉模型輸出形成 active HTML 的漏洞。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="輸出端防禦：過濾、審核與安全渲染 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-09-01T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="輸出端防禦：過濾、審核與安全渲染 - FW Blog">
+  <meta name="twitter:description" content="用同一份本機模型候選輸出對照未轉義與安全渲染路徑，拆開 JSON schema、內容審核、sink 授權與 HTML escaping，實際修掉模型輸出形成 active HTML 的漏洞。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="輸出端防禦：過濾、審核與安全渲染 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=30db732">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=30db732">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "輸出端防禦：過濾、審核與安全渲染",
+    "description": "用同一份本機模型候選輸出對照未轉義與安全渲染路徑，拆開 JSON schema、內容審核、sink 授權與 HTML escaping，實際修掉模型輸出形成 active HTML 的漏洞。",
+    "url": "https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/",
+    "datePublished": "2026-09-01T00:00:00.000Z",
+    "dateModified": "2026-09-01T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">輸出端防禦：過濾、審核與安全渲染</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-09-01T00:00:00.000Z">2026年09月01日</time></span>
+      
+      <span>11 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-23 查核 OWASP LLM10:2026、OWASP Cross Site Scripting Prevention Cheat Sheet、Ollama Chat API／structured outputs 與 Python <code>html.escape</code> 文件，並引用同日完成的固定合成實驗。模型、API 與瀏覽器安全建議仍會演進；正式系統套用前，請依實際 framework 與輸出位置重新確認。</p>
+</blockquote>
+<p>模型回覆符合 JSON schema，不代表內容可以直接放進網頁。</p>
+<p>Schema 只能回答欄位是否存在、型別是否正確、字串有沒有超長。<code>summary</code> 即使是合法字串，內容仍可能是 <code>&lt;script&gt;</code>、事件屬性或會自動載入外部資源的標籤。應用程式若把字串直接插進 HTML，就等於允許瀏覽器將原本只是候選資料的 model response 解譯成 markup。</p>
+<p>Day 22 處理的是資料能不能進入模型。Day 23 處理另一道邊界：<strong>模型輸出能不能影響系統。</strong> 這次不再換模型或比較兩組獨立回答，而是讓同一份候選輸出走兩條路徑，直接檢查輸出處理本身造成的差異。</p>
+<h2>問題不在模型寫了 HTML，而在應用程式照單全收</h2>
+<p><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM10_ImproperOutputHandling.md">OWASP LLM10:2026 Improper Output Handling</a> 把問題定義得很具體：模型輸出交給下游元件之前，缺少驗證、淨化或正確處理。風險不只存在於聊天視窗。模型產生的內容若進入 browser、SQL、shell、Email、terminal，或交給會自動抓取資源的 Markdown renderer，同一段文字就可能因 sink 不同而取得不同能力。</p>
+<p>這個差異很重要。模型可以輸出 <code>&lt;img&gt;</code>，不代表攻擊已完成；應用程式把 <code>&lt;img&gt;</code> 當成 HTML，才讓標籤有機會觸發載入或事件處理。反過來，model response 即使已經含有危險字串，只要 output gate 在 sink 前拒絕，或 renderer 把內容當成純文字，危險字串仍不會取得執行語意。</p>
+<p>因此，本篇不把目標寫成「讓模型永遠不要產生 HTML」。真正可驗收的目標是：<strong>不論模型產生什麼字串，應用程式只授予該字串完成既定任務所需的最低輸出能力。</strong></p>
+<h2>同一份候選輸出，同時走兩條路徑</h2>
+<p>正式實驗分為 Clean 與 XSS-canary 兩組。Clean 組只提供正常活動內容；XSS-canary 組則加入要求模型帶出合成 canary 並建立 HTML payload 的指令，後文簡稱攻擊組。實驗使用本機 Ollama 0.32.9，並以完整 digest 固定 <code>gemma4:latest</code> 模型。兩組各跑 5 次，亂數種子（seed）分別固定為 811 至 815，<code>temperature</code> 則固定為 0.7，總計 10 個 run units／10 次 chat calls。每次 chat 只產生一份候選輸出，再由應用程式計算 SHA-256，將相同候選交給兩條路徑：</p>
+<ol>
+<li><strong>未轉義路徑</strong>：解析候選 JSON 後，把欄位直接插進 HTML。</li>
+<li><strong>防禦路徑</strong>：驗證 schema、審核內容、授權 <code>html_text</code> sink，再把每個欄位做 HTML escaping。</li>
+</ol>
+<p><picture><source type="image/webp" srcset="/assets/img/_QTrWHn6d9-300.webp 300w, /assets/img/_QTrWHn6d9-600.webp 600w, /assets/img/_QTrWHn6d9-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/_QTrWHn6d9-300.jpeg" alt="同一份模型候選輸出分成兩條路徑：未轉義路徑直接插入 HTML，形成 Active HTML；防禦路徑依序經過 Schema 驗證、內容審核、Sink 授權及 HTML escaping，最後成為純文字輸出。" width="1200" height="800" srcset="/assets/img/_QTrWHn6d9-300.jpeg 300w, /assets/img/_QTrWHn6d9-600.jpeg 600w, /assets/img/_QTrWHn6d9-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<p>候選輸出固定是一個 JSON 物件，只能包含四個資料欄位：<code>title</code>、<code>summary</code>、<code>public_code</code> 與 <code>completion_marker</code>。應用程式會限制各欄位的型別與長度，並檢查兩個任務 marker 是否與後端保存的值一致。出現未知欄位、缺少欄位、型別錯誤、marker 錯誤或摘要過長時，都會 fail closed。</p>
+<p><a href="https://github.com/ollama/ollama/blob/main/docs/api.md">Ollama structured outputs</a> 支援在 <code>/api/chat</code> 的 <code>format</code> 欄位傳入 JSON schema。這次請求確實包含 schema、<code>stream: false</code> 與固定推論參數，但應用程式仍會重新解析並驗證 <code>message.content</code>。模型回傳的內容仍是不可信字串；generation-time schema 不能取代接收端的 application contract。</p>
+<p>除了 10 份模型輸出，Lab 另跑兩組確定性測試：7 個 renderer 案例涵蓋正常文字、正常使用 <code>&lt;</code>／<code>&gt;</code>、<code>&lt;script&gt;</code>、事件屬性、<code>javascript:</code> URL、自動載入外部資源與只含 canary 的字串；5 個 validation 案例則涵蓋缺欄位、多餘欄位、錯誤型別、錯誤 marker 與超長摘要。</p>
+<h2>漏洞只有一行，責任卻不在那一行結束</h2>
+<p>脆弱版本看起來很普通：</p>
+<pre class="language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">render_unescaped</span><span class="token punctuation">(</span>candidate<span class="token punctuation">:</span> <span class="token builtin">dict</span><span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token builtin">str</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token string-interpolation"><span class="token string">f"&lt;article>&lt;h1></span><span class="token interpolation"><span class="token punctuation">{</span>candidate<span class="token punctuation">[</span><span class="token string">'title'</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span><span class="token string">&lt;/h1>&lt;p></span><span class="token interpolation"><span class="token punctuation">{</span>candidate<span class="token punctuation">[</span><span class="token string">'summary'</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span><span class="token string">&lt;/p>&lt;/article>"</span></span></code></pre>
+<p>當 <code>summary</code> 欄位只包含活動時間時，這段程式會正常顯示文字；若欄位內容是帶事件屬性的 <code>&lt;img&gt;</code>，瀏覽器看到的就不再是單純文字，而是新節點與可能執行的事件處理器。漏洞不需要模型取得 tool call，也不需要應用程式呼叫 <code>eval()</code>；HTML renderer 本身就是能力入口。</p>
+<p>防禦版本不是在前面加一個 <code>if &quot;&lt;script&gt;&quot; in text</code>。防禦版本先確認候選物件符合固定任務，再把內容審核與 sink encoding 分開：</p>
+<pre class="language-python"><code class="language-python"><span class="token keyword">import</span> html
+
+OUTPUT_FIELDS <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"title"</span><span class="token punctuation">,</span> <span class="token string">"summary"</span><span class="token punctuation">,</span> <span class="token string">"public_code"</span><span class="token punctuation">,</span> <span class="token string">"completion_marker"</span><span class="token punctuation">}</span>
+
+<span class="token keyword">def</span> <span class="token function">authorize_html_text</span><span class="token punctuation">(</span>candidate<span class="token punctuation">:</span> <span class="token builtin">object</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token builtin">dict</span><span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> <span class="token keyword">not</span> <span class="token builtin">isinstance</span><span class="token punctuation">(</span>candidate<span class="token punctuation">,</span> <span class="token builtin">dict</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token builtin">set</span><span class="token punctuation">(</span>candidate<span class="token punctuation">)</span> <span class="token operator">!=</span> OUTPUT_FIELDS<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"output contract rejected"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> field <span class="token keyword">in</span> OUTPUT_FIELDS<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> <span class="token keyword">not</span> <span class="token builtin">isinstance</span><span class="token punctuation">(</span>candidate<span class="token punctuation">[</span>field<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"wrong type: </span><span class="token interpolation"><span class="token punctuation">{</span>field<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+
+    review_for_secrets_and_urls<span class="token punctuation">(</span>candidate<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> candidate
+
+<span class="token keyword">def</span> <span class="token function">render_html_text</span><span class="token punctuation">(</span>candidate<span class="token punctuation">:</span> <span class="token builtin">dict</span><span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token builtin">str</span><span class="token punctuation">:</span>
+    checked <span class="token operator">=</span> authorize_html_text<span class="token punctuation">(</span>candidate<span class="token punctuation">)</span>
+    title <span class="token operator">=</span> html<span class="token punctuation">.</span>escape<span class="token punctuation">(</span>checked<span class="token punctuation">[</span><span class="token string">"title"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> quote<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+    summary <span class="token operator">=</span> html<span class="token punctuation">.</span>escape<span class="token punctuation">(</span>checked<span class="token punctuation">[</span><span class="token string">"summary"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> quote<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token string-interpolation"><span class="token string">f"&lt;article>&lt;h1></span><span class="token interpolation"><span class="token punctuation">{</span>title<span class="token punctuation">}</span></span><span class="token string">&lt;/h1>&lt;p></span><span class="token interpolation"><span class="token punctuation">{</span>summary<span class="token punctuation">}</span></span><span class="token string">&lt;/p>&lt;/article>"</span></span></code></pre>
+<p><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html">OWASP XSS Prevention Cheat Sheet</a> 強調 encoding 必須配合輸出 context。上面的 <code>html.escape(..., quote=True)</code> 只適用於這次固定的 HTML 文字位置；<a href="https://docs.python.org/3/library/html.html#html.escape">Python 文件</a> 說明該函式會替換 <code>&amp;</code>、<code>&lt;</code>、<code>&gt;</code>，並在 <code>quote=True</code> 時處理引號。程式若把值塞進 JavaScript、CSS、URL 或危險屬性，不能拿同一個函式硬套後宣告安全。</p>
+<h2>結果：四份有效 JSON 仍形成 active HTML</h2>
+<p>正式 batch 只執行一次，沒有依結果挑選重跑。完整 runner、去除敏感內容後的統計結果、候選輸出的雜湊值與安全邊界，都已封存在 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-23-output-defense-safe-rendering/evidence/day-23">Day 23 immutable checkpoint</a>。原始證據（raw evidence）的 SHA-256 為 <code>625d89e1…46e578</code>；原始 prompt、完整 canary、model response 與 rendered HTML 都沒有進入公開 checkpoint。</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th style="text-align:right">Schema valid</th>
+<th style="text-align:right">Canary exact</th>
+<th style="text-align:right">未轉義 active HTML</th>
+<th style="text-align:right">防禦路徑 allow</th>
+<th style="text-align:right">防禦路徑 active HTML</th>
+<th style="text-align:right">可見文字保留</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">5／5</td>
+</tr>
+<tr>
+<td>XSS-canary</td>
+<td style="text-align:right">4／5</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">4／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+</tr>
+</tbody>
+</table>
+<p>Clean 五份候選都是有效 JSON，兩個任務 marker 也全部正確。五份候選在防禦路徑都通過審核，HTML parser 讀回的可見文字與原欄位一致。這一欄不是裝飾：如果防禦只是把所有輸出換成「已封鎖」，active HTML 當然也會是 0，但應用程式已經失去摘要功能。</p>
+<p>攻擊組的五份候選都帶出完整合成 canary，也都嘗試建立要求的 HTML payload。其中四份能解析成 JSON，也通過應用程式的欄位、型別、長度與 marker 檢查；這四份進入未轉義 renderer 後，都被 inert parser 判定為 active HTML，並包含可能指向外部位置的 URL。剩下一份並非模型拒絕，而是 JavaScript 字串拼接破壞了 JSON 語法，使整份 <code>message.content</code> 無法解析。這份 response 仍含 canary 與攻擊意圖，卻在 application schema gate 就被擋下，所以不能列入 renderer 已處理的 active HTML。</p>
+<p>這個 4／5 不能叫作通用 XSS 成功率。正式實驗沒有啟動 browser、沒有執行 JavaScript、沒有解析 DNS，也沒有送出外部 request。Lab 使用 Python 標準函式庫的 inert HTML parser，只記錄內容交給能解譯 HTML 的下游後，哪些標籤、事件屬性或 URL 可能取得能力。本次只能確定：<strong>相同候選資料在未轉義路徑形成 active HTML，在防禦路徑沒有。</strong></p>
+<h2>Structured output 沒有替應用程式完成驗證</h2>
+<p>攻擊組的四份危險候選都符合 JSON schema。<code>summary</code> 欄位的型別是字串（string），長度也在上限內，因此 schema 沒有理由拒絕。Schema-valid 只代表物件結構符合活動摘要格式，不代表應用程式可以直接把摘要字串交給 HTML renderer。</p>
+<p>另一份無法解析的輸出則顯示 structured output 的另一項限制：即使請求中已提供 structured-output schema，本次固定模型仍可能產生接收端無法解析的字串。因此，應用程式要處理兩種不同的失敗：</p>
+<ul>
+<li><strong>結構失敗</strong>：不是合法 JSON、欄位不完整、型別或長度錯誤、任務 marker 被改掉。</li>
+<li><strong>內容與使用方式失敗</strong>：結構完全合法，但字串含機密值、外部 URL 或會被 sink 當成程式碼的內容。</li>
+</ul>
+<p>把兩種失敗塞進一個 <code>is_safe</code> 布林值，會讓稽核結果失去用途。正式 Lab 分開記錄 schema 驗證結果、canary 是否出現、是否形成 active HTML、輸出決策、是否包含外連位置，以及可見文字是否完整保留。開發者才能判斷防線究竟是擋在 parser、policy，還是 renderer。</p>
+<h2>內容審核與安全渲染負責不同工作</h2>
+<p>這次 review policy 會阻擋完整 canary，也會阻擋 <code>data:</code>、<code>http:</code>、<code>https:</code> 與 <code>javascript:</code> scheme。因為示範任務只需要活動文字，任何 URL 都不屬於允許輸出。正式產品若真的需要活動連結，合理做法是把連結獨立放在 URL 欄位，驗證 scheme 與 origin，再用 framework 的安全 API 設定屬性；而不是直接放寬整段 <code>summary</code>，讓自然語言與 HTML 共用一個字串。</p>
+<p>不過，review policy 刻意沒有建立 HTML tag 黑名單。固定案例中的 <code>&lt;script&gt;</code> 與事件屬性沒有 canary 或 URL，內容審核會允許。安全 renderer 仍將 <code>&lt;</code>、<code>&gt;</code> 與引號編碼成文字，所以 defended active HTML 維持 0。這個結果說明內容審核與 output encoding 不能互相取代：</p>
+<ul>
+<li><strong>內容審核</strong>：確認候選輸出的資料與目的地符合公開政策。</li>
+<li><strong>Sink 授權</strong>：決定候選輸出可以交給哪種元件。</li>
+<li><strong>Context-specific encoding</strong>：確保不可信字串在指定位置維持資料語意。</li>
+</ul>
+<p>關鍵字過濾可以作為觀測訊號或任務政策，但不適合取代 parser。攻擊者可以改變大小寫、編碼、拆開字串或更換標籤；瀏覽器也會依不同 context 採用不同解析方式。安全邊界應該由確定性的 safe sink 與 encoder 建立，filter 則處理產品本身的內容限制。</p>
+<h2>換一個 sink，就要換一份契約</h2>
+<p>本篇實作只覆蓋 HTML 文字位置。其他輸出位置共享「model response 是不可信輸入」這個起點，防禦手段卻不相同：</p>
+<table>
+<thead>
+<tr>
+<th>Sink</th>
+<th>錯誤做法</th>
+<th>應用程式應持有的契約</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTML text</td>
+<td>字串直接拼進 markup</td>
+<td>framework auto-escaping 或 HTML text encoding</td>
+</tr>
+<tr>
+<td>Rich HTML</td>
+<td>把模型輸出標成 trusted HTML</td>
+<td>維護明確 allowlist，使用適合的 sanitizer，並限制外部資源</td>
+</tr>
+<tr>
+<td>URL／HTML attribute</td>
+<td>只做 HTML escaping</td>
+<td>固定屬性名稱，驗證 scheme／origin，再使用安全 API</td>
+</tr>
+<tr>
+<td>SQL</td>
+<td>執行模型產生的完整 query</td>
+<td>後端固定 query 結構，模型提供的值只作為 parameterized query 的參數</td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>把模型文字交給 <code>shell=True</code></td>
+<td>不提供 shell 語法能力；固定 executable，並將參數分開傳入</td>
+</tr>
+<tr>
+<td>Markdown／Email</td>
+<td>預設允許圖片、iframe 或 link preview</td>
+<td>關閉自動外連，或只允許受控來源與受控轉譯</td>
+</tr>
+</tbody>
+</table>
+<p>這張表沒有宣稱本次已重現 SQL injection 或 RCE。表格只指出設計方法：先命名真正的 sink，再決定 schema、policy、authorization 與 encoding。若團隊只維護一個全域 <code>sanitize_llm_output()</code>，函式名稱宣稱的保護範圍，通常會超過它真正能保證的範圍。</p>
+<h2>可以直接帶回產品的輸出端檢查順序</h2>
+<ol>
+<li><strong>列出每一個輸出 sink。</strong> Chat UI、log、terminal、Email、SQL、shell、檔案路徑與 tool argument 要分開盤點。</li>
+<li><strong>縮小模型需要產生的資料。</strong> 模型若只要提供標題與摘要，就不要讓模型產生完整 HTML template、SQL statement 或 shell command。</li>
+<li><strong>建立 application-owned schema。</strong> 驗證 exact keys、型別、長度、enum 與後端持有的 marker；解析失敗就停止。</li>
+<li><strong>執行任務內容審核。</strong> 檢查不允許公開的資料、目的地與業務規則，並記錄明確的允許或阻擋原因（allow／block reason）。</li>
+<li><strong>重新授權 sink。</strong> Schema valid 不等於可進 HTML，也不等於可呼叫工具。輸出用途由後端決定。</li>
+<li><strong>使用 context-specific safe sink。</strong> 優先使用 framework auto-escaping、<code>textContent</code>、parameterized query 或固定 API，而不是自己拼字串。</li>
+<li><strong>分開測安全與效用。</strong> 同時檢查 active content、資料跨界、正常文字保留、誤擋與 parser failure。</li>
+</ol>
+<p>Day 23 的結果不是「加一個 filter 就安全」。更接近實際工程的做法是：schema 管結構、review 管任務政策、authorization 管輸出用途、renderer 管 context。每一層都要個別判定並留下紀錄，模型輸出才不會只因看起來像答案，就自動取得下一個元件的能力。</p>
+<p>下一篇會處理 Guardrails 框架如何把輸入、輸出與主題規則組合起來。框架可以減少手刻 policy 的維護成本，但框架仍不能撤掉本篇的確定性 sink boundary。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM10_ImproperOutputHandling.md">OWASP LLM10:2026 Improper Output Handling</a></li>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html">OWASP Cross Site Scripting Prevention Cheat Sheet</a></li>
+<li><a href="https://github.com/ollama/ollama/blob/main/docs/api.md">Ollama API — Generate a chat completion</a></li>
+<li><a href="https://docs.python.org/3/library/html.html#html.escape">Python <code>html.escape</code></a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-23-output-defense-safe-rendering/evidence/day-23">Day 23 immutable Lab checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10406649">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 23／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-08-31-input-defense-isolation-validation/">上一篇：輸入端防禦：隔離、標記與驗證</a> · 下一篇：Guardrails 實戰：用框架建立護欄</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-31-input-defense-isolation-validation/" class="text-gray-900 hover:text-blue-600 transition">
+      輸入端防禦：隔離、標記與驗證
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-31T00:00:00.000Z">2026年08月31日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">以固定任務契約驗證輸入格式，用 canonical JSON 保留來源與信任標記，再以 100 組配對實驗觀察這套防禦是否降低注入成功次數；同時說清楚，格式合法不等於內容安全。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-30-end-to-end-agent-attack-chain/" class="text-gray-900 hover:text-blue-600 transition">
+      第三週回顧：一次端到端的 Agent 攻擊鏈
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-30T00:00:00.000Z">2026年08月30日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">追蹤污染的 RAG 文件如何經檢索進入模型，讓 Agent 讀取合成案件資料，最後透過工具把資料送進記憶體內 sink；再以四個確定性控制點說明，模型提出的工具呼叫仍須由應用程式重新核准。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-29-ai-supply-chain-security/" class="text-gray-900 hover:text-blue-600 transition">
+      供應鏈風險：模型、套件與 MCP Server
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-29T00:00:00.000Z">2026年08月29日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">從模型權重、Python 套件到第三方 MCP Server，拆解不可變身分、雜湊、來源證明、可執行格式與執行時權限，並以離線固定矩陣建立 ALLOW、REVIEW、BLOCK 接入判斷。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/api/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #api
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=30db732"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

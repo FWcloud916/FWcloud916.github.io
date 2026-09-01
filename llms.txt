@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 輸出端防禦：過濾、審核與安全渲染
+
+- Published: 2026-09-01T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/
+- Tags: ai-security, ai, security
+
+- Description: 用同一份本機模型候選輸出對照未轉義與安全渲染路徑，拆開 JSON schema、內容審核、sink 授權與 HTML escaping，實際修掉模型輸出形成 active HTML 的漏洞。
+
+
 ### 輸入端防禦：隔離、標記與驗證
 
 - Published: 2026-08-31T00:00:00.000Z
