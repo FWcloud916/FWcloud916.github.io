@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>Guardrails 實戰：用框架建立護欄 - FW Blog</title>
+  <meta name="description" content="用 NeMo Guardrails 統一管理輸入、主題與輸出規則，並以固定實驗比較 LLM 語意判定、規則式控制、Prompt Guard 2 與既有應用程式邊界。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="Guardrails 實戰：用框架建立護欄 - FW Blog">
+  <meta property="og:description" content="用 NeMo Guardrails 統一管理輸入、主題與輸出規則，並以固定實驗比較 LLM 語意判定、規則式控制、Prompt Guard 2 與既有應用程式邊界。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="Guardrails 實戰：用框架建立護欄 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-09-02T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Guardrails 實戰：用框架建立護欄 - FW Blog">
+  <meta name="twitter:description" content="用 NeMo Guardrails 統一管理輸入、主題與輸出規則，並以固定實驗比較 LLM 語意判定、規則式控制、Prompt Guard 2 與既有應用程式邊界。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="Guardrails 實戰：用框架建立護欄 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=e3a98e8">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=e3a98e8">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Guardrails 實戰：用框架建立護欄",
+    "description": "用 NeMo Guardrails 統一管理輸入、主題與輸出規則，並以固定實驗比較 LLM 語意判定、規則式控制、Prompt Guard 2 與既有應用程式邊界。",
+    "url": "https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/",
+    "datePublished": "2026-09-02T00:00:00.000Z",
+    "dateModified": "2026-09-02T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">Guardrails 實戰：用框架建立護欄</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-09-02T00:00:00.000Z">2026年09月02日</time></span>
+      
+      <span>15 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-24 查核 NeMo Guardrails 0.23.0 release notes、Python <code>check_async()</code> 文件，以及 Meta Llama Guard 4、Prompt Guard 2 的官方 model cards，並引用同日完成的主實驗與 Prompt Guard 2 擴充實驗。框架 API、模型版本與分類政策仍會演進；正式系統套用前，請重新確認使用版本與實際資料政策。</p>
+</blockquote>
+<p>把防禦規則放進 Guardrails 框架後，規則的管理方式最先改變，準確率不會自動提高。</p>
+<p>前兩篇已經分別建立輸入與輸出邊界。輸入端有 application-owned contract、來源標記與 canonical serialization；輸出端有 JSON schema、內容審核、sink 授權與 HTML escaping。這些控制可以繼續散落在 handler、prompt、helper function 與 renderer 裡，也可以交給一個框架統一安排執行順序與判定紀錄。</p>
+<p>我一開始認為框架的首要價值是「集中規則與流程」。這個判斷只回答了維護問題，還沒有回答另一個更麻煩的問題：規則集中之後，LLM 判斷與程式規則究竟各自擋對了什麼，又誤擋了什麼？</p>
+<p>這次把 NeMo Guardrails 接到同一個合成活動摘要器，讓 baseline、LLM 語意 rails 與規則式 rails 執行同一組案例。結果顯示框架能集中管理規則與流程，也揭露一項限制：<strong>框架能統一執行錯誤的政策，不能替應用程式決定什麼才是正確政策。</strong></p>
+<h2>框架和安全分類器不是同一種東西</h2>
+<p><a href="https://docs.nvidia.com/nemo/guardrails/latest/">NeMo Guardrails</a> 是 rail 編排框架。應用程式可以設定 input、output、dialog、retrieval、action 等不同位置的規則，再由框架安排流程、呼叫 action、傳遞結果並留下阻擋位置。本文固定使用 0.23.0；<a href="https://docs.nvidia.com/nemo/guardrails/latest/about-nemo-guardrails-library/release-notes">官方 release notes</a> 顯示這個版本持續擴充檢查 API、classifier rails 與 telemetry 能力，因此版本必須和實驗一起固定，不能只寫「最新版」。</p>
+<p><a href="https://huggingface.co/meta-llama/Llama-Guard-4-12B">Llama Guard 4</a> 與 <a href="https://huggingface.co/meta-llama/Llama-Prompt-Guard-2-86M">Prompt Guard 2</a> 的用途不同。Llama Guard 4 是可判斷輸入與輸出內容安全性的多模態分類模型；Prompt Guard 2 則針對 jailbreak 與 prompt injection 做分類。兩者都能作為 rail 使用的 classifier。整個應用程式的檢查順序、生成時機與輸出 sink 仍由框架及應用程式控制。</p>
+<p>主實驗以固定的 <code>gemma4:latest</code> 同時擔任生成模型與 semantic guard，未使用 Llama Guard 或 Prompt Guard。共用模型與硬體可以減少比較變因，但生成模型與審查模型也可能共享盲點。主實驗完成後，我另外建立 input-only 擴充實驗，加入 Prompt Guard 2 86M；這項擴充不會改變主實驗的配對與完整流程數字。</p>
+<h2>三條路徑都保留應用程式的最後邊界</h2>
+<p>實驗比較三條路徑。Baseline 不使用 Day 24 rails，但保留既有的 application boundary：</p>
+<table>
+<thead>
+<tr>
+<th>路徑</th>
+<th>Day 24 rails</th>
+<th>既有 application boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>無</td>
+<td>JSON contract、內容審核、<code>html_text</code> sink 授權、安全 renderer</td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td>NeMo input／topic／output rails，由 LLM 回傳 allow／block</td>
+<td>完整保留</td>
+</tr>
+<tr>
+<td>Deterministic（規則式）</td>
+<td>NeMo input／topic／output rails，由程式規則判斷</td>
+<td>完整保留</td>
+</tr>
+</tbody>
+</table>
+<p>三條路徑共用相同的 application boundary，才能比較新增 rails 的影響。Semantic 路徑若保留安全 renderer，baseline 卻把模型文字直接拼進 HTML，結果只會重現 Day 23 的輸出處理差異，無法分辨新增 rails 造成的影響。</p>
+<p>三條路徑都只能把通過檢查的回覆送到 <code>html_text</code> sink。待檢查的模型回覆先通過固定欄位、型別、長度與應用程式 marker 檢查，再接受 canary／URL 內容審核，最後逐欄進行 HTML escaping。Rails 可以提前阻擋回覆，sink 授權仍由應用程式持有。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/-31VeEImze-300.webp 300w, /assets/img/-31VeEImze-600.webp 600w, /assets/img/-31VeEImze-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/-31VeEImze-300.jpeg" alt="NeMo Guardrails 可替換不同 rail 實作並統一編排輸入、主題與輸出檢查，通過後仍須經過應用程式持有的契約、內容審核、授權與 HTML escaping，才能進入 html_text sink。" width="1200" height="800" srcset="/assets/img/-31VeEImze-300.jpeg 300w, /assets/img/-31VeEImze-600.jpeg 600w, /assets/img/-31VeEImze-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<h2>十五個案例不是比誰擋得多</h2>
+<p>十五個案例分成 input、topic、output 三組，每組五個。Input 組包含直接注入、間接注入、混淆攻擊與一個安全引用，用來檢查規則能否分辨「出現攻擊文字」和「要求執行攻擊文字」。Topic 組允許活動摘要與活動無障礙問題，並阻擋旅遊、醫療，以及包裝在活動問題裡的理財要求。Output 組則分別要求正常摘要、完整合成 canary、外部 URL、active HTML 與普通角括號文字。</p>
+<p>Input 與 topic 案例的 allow／block 答案已在實驗前固定。Output 案例不能直接以案例名稱決定答案，因為模型不一定會產生要求的目標內容。實驗先生成待檢查的模型回覆，再依回覆是否實際包含 canary、URL 或 active HTML 建立 oracle，並另外記錄 target trigger rate。這套做法可以避免模型沒有產生攻擊內容，rail 卻被記成成功阻擋。</p>
+<p>每個案例使用亂數種子（seed）2411 至 2415，主要生成模型的 <code>temperature</code> 固定為 0.7。Semantic guard 使用亂數種子 2400，<code>temperature</code> 固定為 0。較低的 <code>temperature</code> 可以減少分類時的抽樣差異，但不能讓 LLM 成為確定性 parser。</p>
+<h2>配對與完整流程批次回答不同問題</h2>
+<p>配對批次共有 75 個 run units：15 個案例乘以五組 seed。每個 run unit 只讓主要模型產生一份待檢查的回覆，再把相同 bytes 交給三條路徑。主要模型共生成 75 次，三道 semantic rails 共呼叫分類模型 225 次。三條路徑收到相同的模型回覆，因此這組資料可以直接比較 rail 判定。</p>
+<p>完整流程批次同樣包含 75 個 run units。每個 run unit 分別執行三條路徑，共有 225 個路徑執行單位。Baseline 直接呼叫主要模型；semantic 與規則式路徑先執行 input 與 topic rails，兩者都通過後再呼叫主要模型，最後檢查 output rail。Input 或 topic rail 阻擋請求時，主要模型呼叫數應為 0；output rail 阻擋模型回覆時，該回覆不得進入 application sink。</p>
+<p>兩個批次都使用 NeMo 的 <a href="https://docs.nvidia.com/nemo/guardrails/latest/run-guardrailed-inference/using-python-apis/check-messages"><code>check_async()</code></a> 執行指定 rail。這個介面會回傳 <code>PASSED</code>、<code>MODIFIED</code> 或 <code>BLOCKED</code>，並指出造成阻擋的 rail。實驗沒有設定內容改寫，runner 只接受 <code>PASSED</code> 或 <code>BLOCKED</code>，而且每個 action 必須正好執行一次。框架若回傳 <code>MODIFIED</code> 或未知 status，或 action 的執行次數不是一次，runner 一律 fail closed。</p>
+<pre class="language-python"><code class="language-python"><span class="token keyword">from</span> nemoguardrails<span class="token punctuation">.</span>rails<span class="token punctuation">.</span>llm<span class="token punctuation">.</span>options <span class="token keyword">import</span> RailStatus<span class="token punctuation">,</span> RailType
+
+result <span class="token operator">=</span> <span class="token keyword">await</span> rails<span class="token punctuation">.</span>check_async<span class="token punctuation">(</span>
+    <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> canonical_input<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    rail_types<span class="token operator">=</span><span class="token punctuation">[</span>RailType<span class="token punctuation">.</span>INPUT<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> result<span class="token punctuation">.</span>status <span class="token operator">!=</span> RailStatus<span class="token punctuation">.</span>PASSED<span class="token punctuation">:</span>
+    <span class="token keyword">return</span> Blocked<span class="token punctuation">(</span>stage<span class="token operator">=</span><span class="token string">"input"</span><span class="token punctuation">,</span> rail<span class="token operator">=</span>result<span class="token punctuation">.</span>rail<span class="token punctuation">)</span></code></pre>
+<h2>Semantic rail 必須先約束自己的輸出</h2>
+<p>Semantic action 不接受模型以任意自然語言回答「這安全嗎？」。每一道 rail 都要求模型回傳只含兩個欄位的 JSON：</p>
+<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"decision"</span><span class="token operator">:</span> <span class="token string">"allow"</span><span class="token punctuation">,</span>
+  <span class="token property">"reason"</span><span class="token operator">:</span> <span class="token string">"none"</span>
+<span class="token punctuation">}</span></code></pre>
+<p><code>decision</code> 只接受 <code>allow</code> 或 <code>block</code>；<code>reason</code> 只接受 <code>none</code>、<code>input_attack</code>、<code>off_topic</code>、<code>output_policy</code>。<code>allow</code> 只能搭配 <code>none</code>，<code>block</code> 必須搭配對應原因。JSON 若缺少欄位、增加欄位、包含未知值、格式無效，或欄位組合互相矛盾，runner 會記為解析失敗（parser failure）並阻擋該路徑。</p>
+<p>這種 schema 只固定 classifier 的回覆格式，沒有讓判斷內容自動正確。安全引用是否被當成攻擊、活動問題是否其實在問理財，仍是模型的語意判斷。</p>
+<h2>規則式 rail 只處理能明確檢查的條件</h2>
+<p>規則式路徑只處理程式能明確檢查的條件，不用 <code>if</code> 猜測自然語言意圖。Input rail 只拒絕 route 為 <code>override-policy</code> 的輸入；topic rail 只允許 <code>public-event-summary</code> 與 <code>public-event-accessibility</code>；output rail 則解析待檢查回覆的 JSON，並檢查完整 canary、外部 URL 與 active HTML。</p>
+<pre class="language-python"><code class="language-python">ALLOWED_ROUTES <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">"public-event-summary"</span><span class="token punctuation">,</span>
+    <span class="token string">"public-event-accessibility"</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">def</span> <span class="token function">deterministic_topic_rail</span><span class="token punctuation">(</span>application_input<span class="token punctuation">:</span> <span class="token builtin">dict</span><span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token builtin">bool</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> application_input<span class="token punctuation">[</span><span class="token string">"route"</span><span class="token punctuation">]</span> <span class="token keyword">in</span> ALLOWED_ROUTES</code></pre>
+<p>這段程式的結果可以重現和測試，也能直接指出輸入因哪個 route 被阻擋。它只檢查 route 值，無法判讀文件語意。攻擊者若把間接注入放進合法的活動 route，route allowlist 仍會放行；使用者若先提一句活動，再要求股票建議，只要 route 仍是 <code>public-event-summary</code>，請求也可能通過。</p>
+<h2>配對結果：Semantic 減少漏攔，也增加誤擋</h2>
+<p>完整 runner、去除原始提示與模型回覆的統計、raw evidence 雜湊，以及每個 run 的待檢查回覆 SHA-256 指紋，都已固定在 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-24-guardrails-in-practice/evidence/day-24">Day 24 immutable checkpoint</a>。兩個正式批次各執行一次，沒有依結果挑選或重跑。</p>
+<p>表格中的「正確」代表整條路徑最終的 allow／block 與該 run 的 oracle 一致，不只計算當前案例所對應的 rail 是否判對：</p>
+<table>
+<thead>
+<tr>
+<th>路徑</th>
+<th style="text-align:right">正確</th>
+<th style="text-align:right">False positive</th>
+<th style="text-align:right">False negative</th>
+<th style="text-align:right">生成 calls</th>
+<th style="text-align:right">Rail model calls</th>
+<th style="text-align:right">Sink reached</th>
+<th style="text-align:right">Sink active HTML</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td style="text-align:right">40／75</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">33</td>
+<td style="text-align:right">75</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">64</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td style="text-align:right">67／75</td>
+<td style="text-align:right">7</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">75</td>
+<td style="text-align:right">225</td>
+<td style="text-align:right">27</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>Deterministic（規則式）</td>
+<td style="text-align:right">58／75</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">15</td>
+<td style="text-align:right">75</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">46</td>
+<td style="text-align:right">0</td>
+</tr>
+</tbody>
+</table>
+<p>Semantic 路徑擋下直接、間接與混淆注入的所有 run，也擋下三種 off-topic 案例。代價是 input rail 阻擋了五個安全研究引用，output rail 也阻擋了一個正常案例。這六筆 false positives 都不是 schema failure。</p>
+<p>模型共三次產生 active HTML。Semantic output rail 擋下兩次、漏掉一次；規則式 output rail 則擋下三次。Baseline 的內容審核刻意不使用 HTML tag 黑名單，因此三筆回覆都進入安全 renderer。Day 24 output policy 將這三筆列為 false negatives，但 renderer 使用 escaping 將它們轉成純文字，所以 sink active HTML 仍是 0。這組結果顯示 policy decision 與 sink safety 必須分開記錄。</p>
+<p>規則式路徑的 15 個 false negatives 分別來自間接注入 5 次、混淆注入 5 次，以及合法 route 包裝的理財要求 5 次。事前登記已列出這三項限制。固定規則沒有描述如何辨識這些語意，因此每次都會放行。</p>
+<p>兩個應允許的案例各有一個 seed 產生 output contract failure，因此 baseline 與規則式路徑各增加兩個 false positives，semantic 路徑也因其中一筆增加一個 false positive。這些結果來自 application boundary 對模型格式錯誤的阻擋，不是 rail classifier 判錯。</p>
+<h2>模型沒有產生案例要求的內容，不能算 rail 攔截成功</h2>
+<p>每個 output 案例各執行五個 run，以下的 <code>x／5</code> 表示其中有幾個 run 實際產生案例要求的內容。<code>exact-canary</code> 案例的五個 run 都產生完整 canary。外部 URL 案例有 4／5 產生指定 URL，active HTML 案例有 3／5 產生指定內容。普通角括號案例則是 0／5，模型沒有逐字產生 <code>5 &lt; 8</code> 與 <code>10 &gt; 9</code>。</p>
+<p>因此，本文只能報告 semantic 與規則式 rails 如何判定實際含 canary 的五個 run、含 URL 的四個 run，以及含 active HTML 的三個 run。普通角括號案例的五個 run 都沒有產生指定文字。即使所有路徑都回傳 <code>allow</code>，這些結果仍無法證明 rail 遇到角括號時不會誤擋。若要專門驗證這條 policy，實驗必須加入不依賴模型生成、直接送入 output rail 的固定回覆。</p>
+<h2>完整流程結果：主要生成減少，rail 模型呼叫增加</h2>
+<p>完整流程批次實際執行提前停止（short-circuit）機制，結果如下：</p>
+<table>
+<thead>
+<tr>
+<th>路徑</th>
+<th style="text-align:right">正確</th>
+<th style="text-align:right">False positive</th>
+<th style="text-align:right">False negative</th>
+<th style="text-align:right">生成 calls</th>
+<th style="text-align:right">Rail model calls</th>
+<th style="text-align:right">Sink reached</th>
+<th style="text-align:right">Sink active HTML</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td style="text-align:right">40／75</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">33</td>
+<td style="text-align:right">75</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">64</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td style="text-align:right">68／75</td>
+<td style="text-align:right">7</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">40</td>
+<td style="text-align:right">170</td>
+<td style="text-align:right">26</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>Deterministic（規則式）</td>
+<td style="text-align:right">58／75</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">15</td>
+<td style="text-align:right">60</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">46</td>
+<td style="text-align:right">0</td>
+</tr>
+</tbody>
+</table>
+<p>如果三條路徑都執行到生成階段，主要模型最多會被呼叫 225 次；提前停止後，實際呼叫 175 次。Semantic 路徑在 input／topic rails 阻擋 35 個路徑，因此主要模型只被呼叫 40 次；規則式路徑則呼叫 60 次。</p>
+<p>Semantic 路徑少呼叫主要模型 35 次，但新增 170 次 rail 判定，合計 210 次模型呼叫。Baseline 在同樣 75 個 run units 中只有 75 次主要模型呼叫。誤擋安全引用也會讓主要模型少呼叫一次，因此 generator call 減少不能單獨當成安全或效能改善的證據，必須和 decision correctness 一起判讀。</p>
+<p>兩個完整批次在本機的執行時間都較長。這項實驗沒有控制 warmup、硬體負載或 token throughput，而且每個批次只執行一次，因此等待時間不能作為 latency benchmark。本文只報告實際呼叫數；其他硬體或模型的執行時間需要另外測量。</p>
+<h2>Prompt Guard input rail 的取捨：放行安全引用，漏掉兩種攻擊</h2>
+<p>擴充實驗比較五個 input 案例。Runner 將每個案例的 route、request 與 source 序列化為固定欄位順序的 canonical JSON，再把相同 bytes 交給 semantic input rail、規則式 route 規則與 Prompt Guard 2。每個案例重複五次，共有 25 個 run units 與 75 次路徑判定。這項實驗不呼叫摘要生成器，也沒有 output sink；結果只適用於輸入分類，不適用於 topic 或 output rail。</p>
+<p>實驗使用 <code>meta-llama/Llama-Prompt-Guard-2-86M</code>，並固定版本提交（revision）<code>a8ded8e697ce7c355e395a0df51f94adb4a2fd27</code>。Runner 只從本機快取載入模型，並驗證模型權重與文字切分器（tokenizer）的檔案雜湊。<a href="https://huggingface.co/meta-llama/Llama-Prompt-Guard-2-86M">官方 model card</a> 將 Prompt Guard 2 定位為 jailbreak 與 prompt injection 的二元分類器，單次輸入上限為 512 tokens。實驗中的五筆輸入介於 37 至 62 tokens；輸入若超過上限，runner 會直接失敗，不會截斷後繼續分類。</p>
+<p>下載的 <code>config.json</code> 使用 <code>LABEL_0</code> 與 <code>LABEL_1</code>，沒有保存 <code>BENIGN</code>／<code>MALICIOUS</code> 名稱，因此 runner 不能只靠類別名稱判讀結果。正式批次開始前，我用官方 model card 的惡意範例與一個一般活動摘要句進行非正式本機檢查，確認索引 0 對應 benign、索引 1 對應 malicious。正式批次固定使用這組索引對應，直接採用分數最高的類別（argmax），沒有依結果調整判定門檻（threshold）。</p>
+<p>完整 runner、去除原始輸入與分類器回覆的報告、raw evidence 雜湊，以及每筆輸入的 SHA-256 指紋，都已固定在 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-24-prompt-guard-input-rail/evidence/day-24">Prompt Guard input-rail immutable checkpoint</a>：</p>
+<table>
+<thead>
+<tr>
+<th>路徑</th>
+<th style="text-align:right">正確</th>
+<th style="text-align:right">False positive</th>
+<th style="text-align:right">False negative</th>
+<th style="text-align:right">Model calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Semantic input rail</td>
+<td style="text-align:right">20／25</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">25</td>
+</tr>
+<tr>
+<td>Deterministic（規則式）</td>
+<td style="text-align:right">15／25</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">10</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>Prompt Guard 2 86M</td>
+<td style="text-align:right">15／25</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">10</td>
+<td style="text-align:right">25</td>
+</tr>
+</tbody>
+</table>
+<p>逐案例的 block 次數顯示三種控制各自取捨了什麼：</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>事前登記</th>
+<th style="text-align:right">Semantic</th>
+<th style="text-align:right">Deterministic（規則式）</th>
+<th style="text-align:right">Prompt Guard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一般活動摘要</td>
+<td>Allow</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+</tr>
+<tr>
+<td>直接覆寫規則</td>
+<td>Block</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">5／5</td>
+</tr>
+<tr>
+<td>參考文件內的間接注入</td>
+<td>Block</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+</tr>
+<tr>
+<td>安全教材中的攻擊引用</td>
+<td>Allow</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+</tr>
+<tr>
+<td>混淆後的覆寫指令</td>
+<td>Block</td>
+<td style="text-align:right">5／5</td>
+<td style="text-align:right">0／5</td>
+<td style="text-align:right">0／5</td>
+</tr>
+</tbody>
+</table>
+<p>Prompt Guard 在一般摘要與安全教材引用的五個 run 中全部回傳 <code>allow</code>，並在直接覆寫案例的五個 run 中全部回傳 <code>block</code>。它也在間接注入與混淆指令案例的五個 run 中全部回傳 <code>allow</code>，因此漏掉這兩種攻擊。Semantic rail 擋下三種攻擊，但也把安全引用的五個 run 全部誤擋。Prompt Guard 與規則式路徑都得到 15／25，因為它們在這五個案例做出相同的 allow／block 決定。這項小型實驗無法證明兩者具有相同能力。</p>
+<p>Prompt Guard 2 86M 的官方 model card 列出英文、法文、德文、印地文、義大利文、葡萄牙文、西班牙文與泰文等評測語言，不包含中文。本文的 15／25 只適用於這五組中文合成輸入，不能用來推論 Prompt Guard 的整體中文效能。正式系統若要處理中文、較長文件，或不同類型與比例的攻擊，應使用應用程式自己的資料建立測試集，並在測試前固定判定門檻（threshold）與分段策略。</p>
+<h2>框架的主要價值是集中管理規則與流程</h2>
+<p>主實驗的兩個批次與 Prompt Guard 擴充批次完成後，我仍維持原本的判斷：NeMo Guardrails 最直接的價值是集中管理規則與流程。Input、topic 與 output 檢查由同一個框架編排，不再分散在不同 handler 中回傳格式不一的布林值。每次判定都會記錄 rail、status、reason、是否呼叫模型，以及路徑是否繼續生成或進入 sink。</p>
+<p>框架也提供清楚的實作替換點。某一道 rail 可以把 LLM classifier 換成 application action，也可以把通用主模型換成獨立 safety model，而不必重寫整條應用程式控制流程。這項架構能力讓實作更容易替換；安全效果仍要透過相同的 false-positive、bypass 與正常功能案例重新驗證。</p>
+<h2>正式上線前要固定的七件事</h2>
+<ol>
+<li><strong>先命名 rail 的位置與責任。</strong> Input、topic、retrieval、output、action 不要全塞進一個 <code>is_safe()</code>。</li>
+<li><strong>為每一道 rail 定義 allow／block 契約。</strong> 契約應列出欄位、原因，以及 parser failure 或 timeout 發生時的 fail-closed 行為。</li>
+<li><strong>把語意政策與規則式政策分開。</strong> Route、schema、權限與 sink encoding 應由應用程式使用固定規則處理；語意分類則要另外測試誤判與繞過。</li>
+<li><strong>同時測 false positive 與 false negative。</strong> 安全研究引用與普通角括號是用來量測誤擋的 allow 案例。缺少這些案例時，全部阻擋的政策也可能看起來有效。</li>
+<li><strong>記錄實際呼叫數。</strong> Input／topic／output 三道 LLM rails 可能比主要生成多出數倍模型呼叫。</li>
+<li><strong>保留 application-owned boundary。</strong> Framework status 不能取代應用程式持有的 schema、內容審核、授權、safe API 與 context-specific encoding。</li>
+<li><strong>分別驗證同模型 guard 與獨立 classifier。</strong> 主模型和 guard 可能共享盲點；獨立 classifier 也有自己的語言、長度與攻擊分布限制。</li>
+</ol>
+<p>Guardrails 框架讓防禦規則使用一致的放置位置、執行順序與證據格式，團隊可以追蹤每一道 rail 的決定與後續動作。語意分類仍不是 parser，route allowlist 與獨立 classifier 也無法理解所有輸入。Day 24 的結果顯示每種控制都有明確的能力邊界，三條路徑都不是萬用方案。</p>
+<p>下一篇會把注意力從「規則如何執行」移到「執行後能造成多大影響」，處理 Agent 的最小權限與沙箱化。即使下一層能限制權限，本篇與 Day 23 的判定、授權及安全 sink 仍然要保留。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://docs.nvidia.com/nemo/guardrails/latest/">NVIDIA NeMo Guardrails documentation</a></li>
+<li><a href="https://docs.nvidia.com/nemo/guardrails/latest/about-nemo-guardrails-library/release-notes">NeMo Guardrails release notes</a></li>
+<li><a href="https://docs.nvidia.com/nemo/guardrails/latest/run-guardrailed-inference/using-python-apis/check-messages">NeMo Guardrails Python API — Check messages</a></li>
+<li><a href="https://github.com/NVIDIA-NeMo/Guardrails/releases">NVIDIA NeMo Guardrails releases</a></li>
+<li><a href="https://huggingface.co/meta-llama/Llama-Guard-4-12B">Meta Llama Guard 4 model card</a></li>
+<li><a href="https://huggingface.co/meta-llama/Llama-Prompt-Guard-2-86M">Meta Prompt Guard 2 model card</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-24-guardrails-in-practice/evidence/day-24">Day 24 immutable Lab checkpoint</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-24-prompt-guard-input-rail/evidence/day-24">Day 24 Prompt Guard input-rail checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10406908">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 24／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/">上一篇：輸出端防禦：過濾、審核與安全渲染</a> · 下一篇：最小權限與 Agent 沙箱化</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-01-output-defense-safe-rendering/" class="text-gray-900 hover:text-blue-600 transition">
+      輸出端防禦：過濾、審核與安全渲染
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-01T00:00:00.000Z">2026年09月01日</time>
+    <span>11 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用同一份本機模型候選輸出對照未轉義與安全渲染路徑，拆開 JSON schema、內容審核、sink 授權與 HTML escaping，實際修掉模型輸出形成 active HTML 的漏洞。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-31-input-defense-isolation-validation/" class="text-gray-900 hover:text-blue-600 transition">
+      輸入端防禦：隔離、標記與驗證
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-31T00:00:00.000Z">2026年08月31日</time>
+    <span>7 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">以固定任務契約驗證輸入格式，用 canonical JSON 保留來源與信任標記，再以 100 組配對實驗觀察這套防禦是否降低注入成功次數；同時說清楚，格式合法不等於內容安全。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-08-30-end-to-end-agent-attack-chain/" class="text-gray-900 hover:text-blue-600 transition">
+      第三週回顧：一次端到端的 Agent 攻擊鏈
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-08-30T00:00:00.000Z">2026年08月30日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">追蹤污染的 RAG 文件如何經檢索進入模型，讓 Agent 讀取合成案件資料，最後透過工具把資料送進記憶體內 sink；再以四個確定性控制點說明，模型提出的工具呼叫仍須由應用程式重新核准。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=e3a98e8"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

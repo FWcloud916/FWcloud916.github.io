@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### Guardrails 實戰：用框架建立護欄
+
+- Published: 2026-09-02T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/
+- Tags: ai-security, ai, security
+
+- Description: 用 NeMo Guardrails 統一管理輸入、主題與輸出規則，並以固定實驗比較 LLM 語意判定、規則式控制、Prompt Guard 2 與既有應用程式邊界。
+
+
 ### 輸出端防禦：過濾、審核與安全渲染
 
 - Published: 2026-09-01T00:00:00.000Z
