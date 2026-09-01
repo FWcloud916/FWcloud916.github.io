@@ -161,6 +161,6 @@ Day 22 只完成其中的輸入端：
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 22／31 篇**
 
-[上一篇：第三週回顧：一次端到端的 Agent 攻擊鏈](https://imfw.io/posts/2026/2026-08-30-end-to-end-agent-attack-chain/) · 下一篇：輸出端防禦：過濾、審核與安全渲染
+[上一篇：第三週回顧：一次端到端的 Agent 攻擊鏈](https://imfw.io/posts/2026/2026-08-30-end-to-end-agent-attack-chain/) · [下一篇：輸出端防禦：過濾、審核與安全渲染](https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/)
 
 <!-- series-nav:end -->
