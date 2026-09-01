@@ -162,6 +162,6 @@ Day 23 的結果不是「加一個 filter 就安全」。更接近實際工程�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 23／31 篇**
 
-[上一篇：輸入端防禦：隔離、標記與驗證](https://imfw.io/posts/2026/2026-08-31-input-defense-isolation-validation/) · 下一篇：Guardrails 實戰：用框架建立護欄
+[上一篇：輸入端防禦：隔離、標記與驗證](https://imfw.io/posts/2026/2026-08-31-input-defense-isolation-validation/) · [下一篇：Guardrails 實戰：用框架建立護欄](https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/)
 
 <!-- series-nav:end -->
