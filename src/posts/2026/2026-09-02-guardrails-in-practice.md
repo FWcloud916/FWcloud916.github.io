@@ -214,6 +214,6 @@ Guardrails 框架讓防禦規則使用一致的放置位置、執行順序與證
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 24／31 篇**
 
-[上一篇：輸出端防禦：過濾、審核與安全渲染](https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/) · 下一篇：最小權限與 Agent 沙箱化
+[上一篇：輸出端防禦：過濾、審核與安全渲染](https://imfw.io/posts/2026/2026-09-01-output-defense-safe-rendering/) · [下一篇：最小權限與 Agent 沙箱化](https://imfw.io/posts/2026/2026-09-03-least-privilege-agent-sandboxing/)
 
 <!-- series-nav:end -->
