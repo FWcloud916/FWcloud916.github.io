@@ -304,6 +304,13 @@
 
   
   <url>
+    <loc>https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/</loc>
+    <lastmod>2026-09-02T00:00:00.000Z</lastmod>
+  </url>
+  
+
+  
+  <url>
     <loc>https://imfw.io/about/</loc>
     
   </url>
@@ -404,8 +411,8 @@
 
   
   <url>
-    <loc>https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/</loc>
-    <lastmod>2026-09-02T00:00:00.000Z</lastmod>
+    <loc>https://imfw.io/posts/2026/2026-09-03-least-privilege-agent-sandboxing/</loc>
+    <lastmod>2026-09-03T00:00:00.000Z</lastmod>
   </url>
   
 
