@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 敏感資料防護：PII 偵測與遮罩
+
+- Published: 2026-09-04T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/
+- Tags: ai-security, ai, security
+
+- Description: 用 24 個測試案例比較原文、應用程式規則、Presidio 內建辨識器與分層組合，釐清 PII 偵測、遮罩、授權與紀錄各自負責的邊界。
+
+
 ### 最小權限與 Agent 沙箱化
 
 - Published: 2026-09-03T00:00:00.000Z
