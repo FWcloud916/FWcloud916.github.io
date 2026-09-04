@@ -231,6 +231,6 @@ Runner 不只把這些旗標加入 Docker 命令，也會檢查限制是否真�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 25／31 篇**
 
-[上一篇：Guardrails 實戰：用框架建立護欄](https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/) · 下一篇：敏感資料防護：PII 偵測與遮罩
+[上一篇：Guardrails 實戰：用框架建立護欄](https://imfw.io/posts/2026/2026-09-02-guardrails-in-practice/) · [下一篇：敏感資料防護：PII 偵測與遮罩](https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/)
 
 <!-- series-nav:end -->
