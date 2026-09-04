@@ -4,12 +4,252 @@
   <subtitle>FW 的繁體中文技術部落格，分享 Web 開發、API 整合、自動化、Docker 與靜態網站的實作經驗、踩坑紀錄和可重現的技術研究。</subtitle>
   <link href="https://imfw.io/feed.xml" rel="self"/>
   <link href="https://imfw.io/"/>
-  <updated>2026-09-04T00:00:00Z</updated>
+  <updated>2026-09-05T00:00:00Z</updated>
   <id>https://imfw.io/</id>
   <author>
     <name>FW</name>
   </author>
   
+  
+  <entry>
+    <title>觀測性與稽核：看得見才守得住</title>
+    <link href="https://imfw.io/posts/2026/2026-09-05-observability-audit/"/>
+    <updated>2026-09-05T00:00:00Z</updated>
+    <id>https://imfw.io/posts/2026/2026-09-05-observability-audit/</id>
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-08-25 查核 OpenTelemetry 官方規格與敏感資料指引、OWASP Logging Cheat Sheet、RFC 2104，並引用同日完成的離線 OpenTelemetry 與 HMAC 稽核鏈實驗。OpenTelemetry SDK、語意慣例、Collector 處理器與 log 管理要求仍可能改變；正式系統套用前，請重新確認實際版本、資料政策與法規義務。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;安全事件沒有紀錄，團隊就無法回答哪一條政策放行了模型 request、哪個元件遮掉 PII，或模型回覆為什麼沒有進入後續動作。不過，把完整 prompt、模型回覆與使用者資料全部寫進 log，只是把原本的一份敏感資料複製到另一套權限、保存期限與匯出路徑都不同的系統。&lt;/p&gt;
+&lt;p&gt;觀測性需要足夠的關聯資訊，稽核需要可追查的安全決策。兩者都不需要預設保存原文。&lt;/p&gt;
+&lt;p&gt;Day 27 使用 OpenTelemetry SDK 在記憶體中建立兩條 trace。第一條刻意把測試輸入與輸出寫入 span 的屬性欄位（span attributes）；第二條只記錄允許清單列出的資料，包括 request ID、政策版本、事件名稱、內容雜湊、決策、原因代碼、PII 數量與結果狀態。安全 trace 再產生六筆 HMAC 串接事件，用來測試修改、刪除、交換、插入與尾端截斷。&lt;/p&gt;
+&lt;h2&gt;Trace 與稽核事件回答不同問題&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://opentelemetry.io/docs/specs/otel/trace/api/&quot;&gt;OpenTelemetry Tracing API&lt;/a&gt;使用 trace 記錄一筆 request 經過系統的完整路徑，並把路徑中的每個處理步驟記為一個 span。每個 span 可以記錄名稱、父子關係、起訖時間、屬性、事件與狀態；多個 span 會依父子關係組成一條完整的 trace。&lt;/p&gt;
+&lt;p&gt;Trace 適合回答一次 request 經過哪些元件、哪一段失敗，以及各階段花了多少時間。稽核事件則用來追查安全決策：哪個經過身分驗證的使用者或服務提出或核准動作、當時使用哪個政策版本、系統做出什麼判定，以及最後是否真的執行外部動作。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;資料&lt;/th&gt;
+&lt;th&gt;主要問題&lt;/th&gt;
+&lt;th&gt;本文建議保存的內容&lt;/th&gt;
+&lt;th&gt;不應預設保存的內容&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Trace span&lt;/td&gt;
+&lt;td&gt;Request 經過哪些階段？&lt;/td&gt;
+&lt;td&gt;trace ID、span ID、操作名稱、狀態、原因代碼、必要計數&lt;/td&gt;
+&lt;td&gt;完整 prompt、模型回覆、token、憑證與 PII&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;稽核事件&lt;/td&gt;
+&lt;td&gt;哪個安全決策在何時成立？&lt;/td&gt;
+&lt;td&gt;request ID、可信主體、動作、資源、政策版本、決策與結果&lt;/td&gt;
+&lt;td&gt;模型自稱的身分、未遮罩原文與不必要的推理內容&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;安全告警&lt;/td&gt;
+&lt;td&gt;哪個條件需要處理？&lt;/td&gt;
+&lt;td&gt;規則 ID、嚴重度、聚合計數、關聯 ID&lt;/td&gt;
+&lt;td&gt;為了方便調查而無限制複製原始內容&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;同一筆 request 可以同時產生 trace 與稽核事件，但兩種資料不應共用同一份「什麼都記」的資料格式（schema）。Trace 可以依容量與延遲需求只保留部分紀錄；付款、發布、刪除、權限變更與政策拒絕等必要稽核事件，則應依組織要求完整保留。系統不能因為只保留部分 trace，就隨機遺失重要的安全決策。&lt;/p&gt;
+&lt;h2&gt;OpenTelemetry 不會替應用程式判斷敏感資料&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://opentelemetry.io/docs/security/handling-sensitive-data/&quot;&gt;OpenTelemetry 的敏感資料指引&lt;/a&gt;明確指出，OpenTelemetry 可以收集系統執行狀態的遙測資料（telemetry），但無法自行判斷特定系統中的敏感資料。實作者必須負責資料最小化、法規要求、使用者同意與保護措施，也要檢查用來加入追蹤紀錄的函式庫（instrumentation library）實際產生哪些屬性欄位。&lt;/p&gt;
+&lt;p&gt;官方指引建議只收集具有觀測用途的資料，並優先避免收集個資。OpenTelemetry Collector 是集中接收與處理遙測資料的元件，可以用 attribute processor 刪除或修改特定屬性、用 filter processor 移除整筆資料、用 redaction processor 只保留允許的屬性，或用 transform processor 改寫內容。這些處理器適合作為第二道防線，不能取代應用程式在資料產生位置執行的允許清單。&lt;/p&gt;
+&lt;p&gt;應用程式只要把原文寫入 span 的屬性欄位，原文就可能先經過應用程式記憶體、待傳送的暫存區、匯出元件、Collector 與傳輸路徑，最後才由 Collector 刪除。因此，應用程式應在建立 span 時就不要寫入不必要的原文。&lt;/p&gt;
+&lt;h2&gt;實驗固定一筆 request 與兩條 trace&lt;/h2&gt;
+&lt;p&gt;這次實驗只使用一筆虛構 request。測試輸入與測試輸出都包含同一個客戶編號與 &lt;code&gt;.test&lt;/code&gt; 信箱；實驗事先把這兩個值登記為敏感資料標記（marker）。這些標記只用來計算原文是否進入 span 的屬性欄位，不代表正式系統的 PII 分類方式。&lt;/p&gt;
+&lt;p&gt;兩種設定都使用 OpenTelemetry SDK 1.44.0 建立 7 個 span：一個代表整筆 request 的根 span，加上六個安全處理階段。實驗使用 &lt;code&gt;InMemorySpanExporter&lt;/code&gt;，只把結果留在記憶體中；沒有啟動 Collector，也沒有向網路傳送遙測資料。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;設定&lt;/th&gt;
+&lt;th&gt;屬性欄位政策&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;原文設定（Unsafe attributes）&lt;/td&gt;
+&lt;td&gt;根 span 保存完整測試輸入；output review span 保存完整測試輸出&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;允許清單設定（Safe attributes）&lt;/td&gt;
+&lt;td&gt;只允許 request ID、政策版本、事件名稱、內容 SHA-256、決策、原因代碼、PII 數量與結果狀態&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;允許清單設定另外檢查三項條件：所有屬性名稱都在允許清單中、每個 span 都有 request ID／政策版本／事件名稱，以及 7 個 span 都使用同一個 trace ID。這三項只驗證欄位與關聯，不驗證事件內容是否真實。&lt;/p&gt;
+&lt;h2&gt;Trace 結果：原文設定命中四次，允許清單設定為零&lt;/h2&gt;
+&lt;p&gt;完整實驗程式、測試資料雜湊、原始結果雜湊，以及排除敏感內容後的統計，都已固定在 &lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-27-observability-audit/evidence/day-27&quot;&gt;Day 27 不可變更的證據版本&lt;/a&gt;。正式結果如下：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;設定&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;Span 數&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;標記命中&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;含標記的 span 數&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;允許清單違規&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;缺少必要屬性&lt;/th&gt;
+&lt;th style=&quot;text-align:right&quot;&gt;使用同一個 trace ID&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;原文設定（Unsafe attributes）&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;7&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;4&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;2&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;不適用&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;不適用&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;不列入判定&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;允許清單設定（Safe attributes）&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;7&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;0&lt;/td&gt;
+&lt;td style=&quot;text-align:right&quot;&gt;是&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;原文設定把測試輸入寫入根 span，也把測試輸出寫入輸出檢查 span（output review span）。每段文字各含兩個標記，因此共有 4 次標記命中，分布在 2 個 span。&lt;/p&gt;
+&lt;p&gt;允許清單設定沒有出現兩個測試標記，允許清單違規與必要屬性缺漏都是 0，7 個 span 也共用同一個 trace ID。這表示固定的允許清單在這筆 request 中保留了實驗要求的關聯資料，並未保存事先登記的兩個原文值。&lt;/p&gt;
+&lt;p&gt;標記命中 0 次，不代表 trace 完全沒有敏感資訊。Request ID、資源識別資訊、內容雜湊、時間與事件順序仍可能與其他資料互相比對，進而連結到特定使用者或業務行為。正式系統仍要對遙測資料的儲存、查詢、匯出與保存期限套用資料分類與存取政策。&lt;/p&gt;
+&lt;h2&gt;六筆稽核事件只保存安全決策資料&lt;/h2&gt;
+&lt;p&gt;允許清單設定的 trace 在六個處理階段各產生一筆稽核事件，共六筆：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;request_received&lt;/code&gt;：request 已進入應用程式。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;authorization_decided&lt;/code&gt;：資源政策回傳 allow 與原因代碼。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;pii_detected&lt;/code&gt;：偵測到兩個項目，處理方式為 replace。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;model_request_prepared&lt;/code&gt;：送入模型的資料已完成準備。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;output_reviewed&lt;/code&gt;：輸出檢查決定替換 PII。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;request_completed&lt;/code&gt;：流程以 masked 狀態結束。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;每筆事件保存順序編號（sequence）、時間、trace ID、request ID、政策版本、事件名稱、允許清單中的屬性，以及上一筆事件的 HMAC。內容雜湊可用來核對不同事件所指的內容是否一致；它不會保存測試原文，也不能取代原文的安全儲存與授權。&lt;/p&gt;
+&lt;h2&gt;HMAC 串接可以偵測修改，但不會讓儲存自動變成不可刪除&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://www.rfc-editor.org/info/rfc2104/&quot;&gt;RFC 2104&lt;/a&gt;定義 HMAC。HMAC 使用秘密金鑰與雜湊函式，為每筆事件計算訊息驗證碼。驗證端會用相同金鑰重新計算；如果事件遭到修改，卻沒有重新產生有效的 HMAC，比對就會失敗。只有持有金鑰的一方才能產生新的有效 HMAC。&lt;/p&gt;
+&lt;p&gt;Day 27 先把每筆稽核事件轉成欄位順序固定的標準化 JSON（canonical JSON），讓內容相同的事件每次都產生相同的位元組序列，再用以下方式計算 HMAC：&lt;/p&gt;
+&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;record_hmac[n] = HMAC-SHA-256(
+  key,
+  sequence + event + attributes + previous_hmac
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;第一筆事件的 &lt;code&gt;previous_hmac&lt;/code&gt; 使用固定零值；從第二筆開始，每筆事件都在 &lt;code&gt;previous_hmac&lt;/code&gt; 中保存上一筆的 &lt;code&gt;record_hmac&lt;/code&gt;，形成前後串接。修改中間事件會讓該筆 HMAC 比對失敗；刪除或交換事件會破壞事件序號或前後連結；未持有金鑰的人也無法替插入的事件產生有效 HMAC。&lt;/p&gt;
+&lt;p&gt;實驗程式最後另建立一筆終點檢查點（terminal checkpoint），保存事件總數與最後一筆 HMAC，再用同一把金鑰計算檢查點的 HMAC。驗證端必須從稽核紀錄以外的獨立位置取得預期檢查點，才能判斷目前看到的是完整事件鏈，而不是一條較短但內部仍一致的事件鏈。&lt;/p&gt;
+&lt;h2&gt;五種已登記的竄改全部被偵測，尾端截斷顯示檢查點的邊界&lt;/h2&gt;
+&lt;p&gt;正式實驗對同一條六事件鏈執行下列比較：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;測試&lt;/th&gt;
+&lt;th&gt;驗證結果&lt;/th&gt;
+&lt;th&gt;原因&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;原始六事件鏈&lt;/td&gt;
+&lt;td&gt;通過&lt;/td&gt;
+&lt;td&gt;每筆 HMAC、事件序號、前後連結與檢查點都一致&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;修改第二筆事件&lt;/td&gt;
+&lt;td&gt;偵測&lt;/td&gt;
+&lt;td&gt;該筆 HMAC 不一致&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;刪除中間事件&lt;/td&gt;
+&lt;td&gt;偵測&lt;/td&gt;
+&lt;td&gt;事件序號或前一筆 HMAC 不一致&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;交換兩筆事件&lt;/td&gt;
+&lt;td&gt;偵測&lt;/td&gt;
+&lt;td&gt;事件序號不一致&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;插入偽造事件&lt;/td&gt;
+&lt;td&gt;偵測&lt;/td&gt;
+&lt;td&gt;事件序號或該筆 HMAC 不一致&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;刪除尾端並提供檢查點&lt;/td&gt;
+&lt;td&gt;偵測&lt;/td&gt;
+&lt;td&gt;事件總數與最後一筆 HMAC 不符合檢查點&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;刪除尾端但不提供檢查點&lt;/td&gt;
+&lt;td&gt;通過&lt;/td&gt;
+&lt;td&gt;剩餘事件仍形成一條內部一致的事件鏈&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;實驗事前登記五種竄改，並在驗證時提供檢查點；五種竄改全數被偵測，結果是 5／5。另一項尾端截斷測試刻意不提供檢查點，驗證器因此接受剩餘的五筆事件。HMAC 鏈可以證明目前看到的事件彼此一致，但驗證端仍需要檢查點才能判斷事件集合是否完整。&lt;/p&gt;
+&lt;p&gt;檢查點若與稽核紀錄存放在同一個可修改的資料庫，攻擊者可能同時刪除兩者。正式系統應定期把終點檢查點送到權限不同的儲存空間，或只能新增、不能覆寫既有資料的位置。產生檢查點的頻率，會決定尾端最多可能累積多少筆尚未由外部紀錄確認的事件。&lt;/p&gt;
+&lt;h2&gt;HMAC 也不能證明事件原本就是真的&lt;/h2&gt;
+&lt;p&gt;HMAC 可以驗證事件內容在產生驗證碼後是否遭到修改，但無法判斷 &lt;code&gt;decision=allow&lt;/code&gt; 是否符合當時的實際政策，也無法發現追蹤程式漏記了一次工具呼叫。應用程式若一開始就寫入錯誤事件，正確計算的 HMAC 只會保護這份錯誤內容。&lt;/p&gt;
+&lt;p&gt;金鑰管理也需要獨立處理。Day 27 在執行期間隨機產生一把 32 位元組的測試金鑰；正式結果與公開檢查點都不保存這把金鑰。正式環境要處理金鑰的產生、存放、存取、輪替、版本、復原與撤銷；驗證端也要知道每段事件鏈應使用哪個金鑰版本。&lt;/p&gt;
+&lt;p&gt;若所有服務共用同一把 HMAC 金鑰，任何一個服務遭入侵後，都可能替其他服務偽造事件。每個服務使用不同金鑰可以縮小影響範圍，但會增加跨服務驗證與金鑰輪替的管理成本。HMAC 也不適合讓第三方公開驗證，因為驗證者取得金鑰後也會取得偽造能力；這類需求應評估數位簽章與外部透明紀錄。&lt;/p&gt;
+&lt;h2&gt;Log 內容、完整性與存取權限要分開設計&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html&quot;&gt;OWASP Logging Cheat Sheet&lt;/a&gt;建議系統紀錄不要直接包含 session ID、access token、密碼、資料庫連線字串、加密金鑰、付款資料與其他高敏感資料，也要求紀錄在傳輸與儲存期間受到保護，避免未經授權的存取、修改與刪除。OWASP 也建議建立竄改偵測機制，並監控所有紀錄存取行為。&lt;/p&gt;
+&lt;p&gt;這些要求至少形成三道獨立控制：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;內容控制：&lt;/strong&gt; 應用程式預設只建立允許清單中的屬性；確實需要保存原文時，必須改走權限更嚴格的例外流程。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;完整性控制：&lt;/strong&gt; 事件序號、HMAC 與外部檢查點，可以協助發現內容修改、事件刪除與順序變更。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;存取與保存控制：&lt;/strong&gt; 只有指定角色可以查詢或匯出紀錄；系統必須記錄所有存取行為，並在保存期限到期後確實刪除資料。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;靜態資料加密（encryption at rest）只能降低儲存媒體或備份遭到未授權讀取的風險。具有查詢權限的帳號仍可在系統解密後看見完整內容；加密也無法自動偵測應用程式使用合法憑證刪除事件。內容最小化、完整性、授權與保存期限各自處理不同風險，不能互相取代。&lt;/p&gt;
+&lt;h2&gt;正式系統可以從固定事件契約開始&lt;/h2&gt;
+&lt;p&gt;Day 27 的六事件流程可以縮成一份通用事件契約。正式系統至少要固定以下資料：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;event_name&lt;/code&gt;：使用已納入版本控制且數量有限的固定事件名稱，不把使用者內容放進名稱。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;trace_id&lt;/code&gt;、&lt;code&gt;request_id&lt;/code&gt;：關聯同一條流程，並設定不可由模型自行指定的格式。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;actor&lt;/code&gt;：由應用程式的身分驗證與授權系統提供使用者、服務或 Agent 身分，不能採用模型文字中自行宣稱的身分。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;action&lt;/code&gt;、&lt;code&gt;resource&lt;/code&gt;：記錄標準化後的操作與資源識別資訊，避免保存完整資源內容。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;policy_version&lt;/code&gt;、&lt;code&gt;decision&lt;/code&gt;、&lt;code&gt;reason_code&lt;/code&gt;：讓團隊重建當時使用的規則與判定原因。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;approval_id&lt;/code&gt;：高影響動作必須關聯到使用者的核准紀錄；該紀錄要包含使用者實際檢閱的動作、目標資源與參數。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;content_digest&lt;/code&gt;：只在需要核對內容是否一致時保存。若原文容易猜測，攻擊者可能事先計算候選內容的雜湊並進行比對，因此仍要評估字典攻擊（dictionary attack）與跨資料集連結風險。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;result_status&lt;/code&gt;：分清楚提案、阻擋、已執行、執行失敗與已補償，不能把模型提案記成外部副作用。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;事件契約也要限制每個欄位的長度，並明確處理換行與分隔符號，避免攻擊者用超長內容耗盡遙測資料容量，或插入看似另一筆紀錄的內容。屬性值的種類過多也會增加儲存與查詢成本；計數、分類代碼與固定識別資訊通常比完整文字更適合作為預設值。&lt;/p&gt;
+&lt;h2&gt;觀測資料必須真的接到偵測與處理流程&lt;/h2&gt;
+&lt;p&gt;只產生 trace 與稽核紀錄不會自動改善安全性。團隊要先定義哪些事件需要告警，例如同一個使用者持續觸發 PII 遮罩、模型反覆要求存取未授權資源、特定動作的使用者確認頻繁失效、工具輸出多次遭輸出安全檢查阻擋，或稽核檢查點驗證失敗。&lt;/p&gt;
+&lt;p&gt;告警還要連到明確的處理流程。團隊必須指定由誰負責處理、多久內回應、處理人員可以暫停哪些功能、需要保存哪些額外證據，以及何時通知資料與系統負責人。若系統只把事件送進儀表板，卻沒有指定人員判讀與處理，觀測性只會增加成本與敏感資料副本。&lt;/p&gt;
+&lt;p&gt;Day 27 沒有測試 Collector、安全資訊與事件管理系統（SIEM）、告警規則與事故處理，因此沒有驗證完整的營運流程。正式系統也要測試遙測資料儲存系統中斷、暫存區滿載、跨服務事件順序改變、時鐘偏移、金鑰輪替，以及檢查點寫入失敗時的處理方式。&lt;/p&gt;
+&lt;h2&gt;實驗限制&lt;/h2&gt;
+&lt;p&gt;這次實驗只有一筆英文虛構 request、兩個敏感資料標記、兩條保存在記憶體中的 trace、每條 7 個 span、六筆稽核事件，以及一把只在執行期間使用的測試金鑰。實驗沒有啟動 Collector、網路匯出、遙測資料儲存系統、SIEM、資料庫或外部檢查點服務。&lt;/p&gt;
+&lt;p&gt;5／5 只表示本次驗證器偵測到事先登記的修改、刪除、交換、插入，以及提供檢查點的尾端截斷。實驗沒有測試並行事件、跨主機排序、事件重送、重複事件序號、時鐘回撥、金鑰洩漏、演算法遭到替換、授權管理員刪除紀錄，或儲存系統遭到入侵。&lt;/p&gt;
+&lt;p&gt;允許清單設定的 trace 沒有命中敏感資料標記，但這項結果只涵蓋事先登記的客戶編號與 &lt;code&gt;.test&lt;/code&gt; 信箱。實驗沒有檢查姓名、地址、自由文字推論、trace ID 能否連結到特定對象，或第三方追蹤函式庫自動加入的其他屬性。&lt;/p&gt;
+&lt;p&gt;實驗只使用版本控制中的虛構資料，HMAC 金鑰只存在記憶體中。模型呼叫、網路呼叫與外部副作用都是 0。原始結果保留在 Lab 中不納入 Git 的目錄；公開的證據版本只包含程式版本、測試資料雜湊、統計與實驗限制。&lt;/p&gt;
+&lt;h2&gt;觀測紀錄只保存必要資料&lt;/h2&gt;
+&lt;p&gt;Day 27 的原文設定在 2 個 span 中記下 4 次敏感資料標記；允許清單設定保留 7 個 span 的關聯與安全決策資料，標記命中、允許清單違規與必要欄位缺漏都是 0。結果顯示 trace 可以保存流程的關聯與決策資訊，不必預設複製完整輸入與輸出。&lt;/p&gt;
+&lt;p&gt;六筆 HMAC 串接事件在提供終點檢查點時，偵測到 5／5 事先登記的竄改；沒有檢查點時，刪除尾端後的五筆事件仍形成一條內部一致的事件鏈。完整性控制不能只替每筆事件加入 HMAC，還要管理金鑰、事件序號、檢查點的獨立保存方式，以及驗證失敗後的處理流程。&lt;/p&gt;
+&lt;p&gt;下一篇會處理濫用與成本攻擊，實作 request、token、並行數與預算控制。Day 27 的事件契約會提供計數與原因代碼，但速率限制與預算仍必須在模型呼叫前由應用程式執行。&lt;/p&gt;
+&lt;h2&gt;參考資料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://opentelemetry.io/docs/specs/otel/trace/api/&quot;&gt;OpenTelemetry Tracing API&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://opentelemetry.io/docs/security/handling-sensitive-data/&quot;&gt;OpenTelemetry — Handling sensitive data&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://opentelemetry.io/docs/specs/semconv/how-to-write-conventions/&quot;&gt;OpenTelemetry — How to write semantic conventions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html&quot;&gt;OWASP Logging Cheat Sheet&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://www.rfc-editor.org/info/rfc2104/&quot;&gt;RFC 2104 — HMAC: Keyed-Hashing for Message Authentication&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-27-observability-audit/evidence/day-27&quot;&gt;LLM Application Security Lab — Day 27 evidence checkpoint&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;!-- ironman-cross-publication:start --&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本文同步刊載於 &lt;a href=&quot;https://ithelp.ithome.com.tw/articles/10407722&quot;&gt;iThome 鐵人賽&lt;/a&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!-- ironman-cross-publication:end --&gt;
+&lt;!-- series-nav:start --&gt;
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 27／31 篇&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/&quot;&gt;上一篇：敏感資料防護：PII 偵測與遮罩&lt;/a&gt; · 下一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制&lt;/p&gt;
+&lt;!-- series-nav:end --&gt;
+</content>
+  </entry>
   
   <entry>
     <title>敏感資料防護：PII 偵測與遮罩</title>
@@ -273,7 +513,7 @@ recall    = TP / (TP + FN)&lt;/code&gt;&lt;/pre&gt;
 &lt;!-- series-nav:start --&gt;
 &lt;hr /&gt;
 &lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 26／31 篇&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-09-03-least-privilege-agent-sandboxing/&quot;&gt;上一篇：最小權限與 Agent 沙箱化&lt;/a&gt; · 下一篇：觀測性與稽核：看得見才守得住&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-09-03-least-privilege-agent-sandboxing/&quot;&gt;上一篇：最小權限與 Agent 沙箱化&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-09-05-observability-audit/&quot;&gt;下一篇：觀測性與稽核：看得見才守得住&lt;/a&gt;&lt;/p&gt;
 &lt;!-- series-nav:end --&gt;
 </content>
   </entry>
@@ -2449,233 +2689,6 @@ tests&lt;/code&gt;&lt;/pre&gt;
 &lt;hr /&gt;
 &lt;p&gt;&lt;strong&gt;系列：Docker 與容器化工程：從原理、Dockerfile 到 Production 安全&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;推薦文章：&lt;a href=&quot;https://imfw.io/posts/2026/2026-07-21-podman-rootless-production/&quot;&gt;Podman 也有 Rootless 問題嗎？Daemonless 少掉什麼風險，又留下哪些限制&lt;/a&gt;&lt;/p&gt;
-&lt;!-- series-nav:end --&gt;
-</content>
-  </entry>
-  
-  <entry>
-    <title>工具呼叫 / Function Calling 的風險</title>
-    <link href="https://imfw.io/posts/2026/2026-08-28-tool-calling-security/"/>
-    <updated>2026-08-28T00:00:00Z</updated>
-    <id>https://imfw.io/posts/2026/2026-08-28-tool-calling-security/</id>
-    <content type="html">&lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;查核資訊：&lt;/strong&gt; 本文於 2026-08-15 查核 OpenAI Function calling、OWASP LLM Top 10 2026、
-CWE-918 與 CWE-78 官方資料，並引用同日完成的固定合成實驗。API 行為與安全分類仍可能更新，
-實作前請重新確認官方文件。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;pre class=&quot;language-json&quot;&gt;&lt;code class=&quot;language-json&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;token property&quot;&gt;&quot;url&quot;&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;http://127.0.0.1:8080/admin&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;這是一段合法的 JSON。只要工具將 &lt;code&gt;url&lt;/code&gt; 欄位定義為字串，這段參數也能通過最基本的 JSON Schema
-驗證。然而，通過格式驗證不代表應用程式可以代替使用者連上這個目的地。&lt;/p&gt;
-&lt;p&gt;Function Calling 很容易製造一種錯覺：模型沒有直接碰資料庫、HTTP client 或檔案系統，只輸出結構化
-參數，所以系統已經比自由文字安全。結構化介面確實縮小了解析歧義，卻沒有回答最重要的問題：
-&lt;strong&gt;這次動作是否應該執行？參數是否適合送進這個 sink？執行結果又能不能被下一個模型當成指令？&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;我一開始的判斷只有六個字：後端逐次重判。&lt;/p&gt;
-&lt;p&gt;做完反例與固定實驗後，我把它展開成更具體的邊界：&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;模型只能提出工具名稱與參數。應用程式先驗證資料形狀，再以可信身分、後端正本與固定政策逐次
-重判；通過後交給不接受指令字串的安全 adapter。工具回傳內容仍是不可信資料，不能取得下一次
-工具呼叫的授權能力。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;這篇要處理的不是「如何讓模型正確呼叫函式」，而是呼叫已經成形之後，應用程式如何避免把模型
-輸出直接升格成 HTTP request、shell command 或下一輪的可信指令。&lt;/p&gt;
-&lt;h2&gt;Function Calling 只完成協定，不完成授權&lt;/h2&gt;
-&lt;p&gt;依照 &lt;a href=&quot;https://developers.openai.com/api/docs/guides/function-calling&quot;&gt;OpenAI Function calling 指南&lt;/a&gt;，
-典型流程是：應用程式向模型提供工具定義，模型回傳包含工具名稱與參數的 tool call；應用程式解析
-參數並執行自己的程式碼，再把 &lt;code&gt;function_call_output&lt;/code&gt; 送回模型。真正呼叫 HTTP client、查詢資料庫
-或寫入檔案的，始終是應用程式。&lt;/p&gt;
-&lt;p&gt;Strict mode 能要求模型輸出符合指定的 JSON Schema。官方文件要求所有 properties 都列為 required，
-並將 &lt;code&gt;additionalProperties&lt;/code&gt; 設為 &lt;code&gt;false&lt;/code&gt;。這很有價值：拼錯欄位、少傳必要資料或偷偷塞入未宣告的
-&lt;code&gt;approved: true&lt;/code&gt;，都能在介面邊界被拒絕。&lt;/p&gt;
-&lt;p&gt;但 Schema 能表達的「有效」，不等於業務與安全上的「允許」。例如：&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;參數&lt;/th&gt;
-&lt;th&gt;Schema 能回答&lt;/th&gt;
-&lt;th&gt;Schema 單獨無法回答&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;url: string&lt;/code&gt;&lt;/td&gt;
-&lt;td&gt;是否存在、是否為字串、是否符合格式&lt;/td&gt;
-&lt;td&gt;是否允許連到該目的地、解析後 IP 是否安全、重新導向後是否仍允許&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;output_name: string&lt;/code&gt;&lt;/td&gt;
-&lt;td&gt;長度與字元格式是否符合宣告&lt;/td&gt;
-&lt;td&gt;是否會被拼進 shell、是否發生路徑穿越、是否覆寫既有檔案&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;document_id: string&lt;/code&gt;&lt;/td&gt;
-&lt;td&gt;ID 的形狀是否正確&lt;/td&gt;
-&lt;td&gt;登入者是否能讀這份文件、文件是否屬於同一租戶&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;approved: boolean&lt;/code&gt;&lt;/td&gt;
-&lt;td&gt;值是否為布林&lt;/td&gt;
-&lt;td&gt;誰核准、核准哪一組參數、核准是否仍有效&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;因此，&lt;code&gt;strict: true&lt;/code&gt; 是資料形狀閘門，不是授權閘門。若 schema 本身接受任意字串，模型只是更穩定地
-產生危險字串；若 schema 接受 &lt;code&gt;approved&lt;/code&gt;，模型也只是更穩定地替自己填上「已核准」。&lt;/p&gt;
-&lt;h2&gt;一次工具呼叫至少跨過四個邊界&lt;/h2&gt;
-&lt;p&gt;把工具呼叫畫成單一箭頭，會掩蓋中間不同性質的判斷。我會把它拆成四道閘門：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;模型提案
-  → 1. Schema：資料形狀是否符合契約？
-  → 2. Policy：可信身分、資源正本與這次動作是否允許？
-  → 3. Adapter：參數能否以安全資料結構交給底層能力？
-  → 4. Result boundary：回傳內容如何標記、縮限並送回模型？&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;第一道處理語法與結構；第二道才做授權與目的地政策；第三道防止資料在 sink 前重新變成指令；
-第四道則避免外部內容藉由工具回傳值取得下一輪控制權。四道閘門不能彼此代替。&lt;/p&gt;
-&lt;p&gt;這也解釋了「後端逐次重判」裡的「逐次」：不是驗證一次工具定義就永久信任，也不是同一個 session
-核准過一次就一路放行。每一次呼叫都要用後端掌握的登入者身分、租戶、資源狀態與政策重新決定；
-高影響動作還要核對使用者實際看過的完整參數。&lt;/p&gt;
-&lt;h2&gt;風險一：合法 URL 仍可能把後端變成代理人&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&quot;https://cwe.mitre.org/data/definitions/918.html&quot;&gt;CWE-918&lt;/a&gt; 所描述的 Server-Side Request Forgery
-（SSRF），重點不在 URL 字串「長得不像網址」，而在伺服器根據外部輸入發出請求，因而連上原本
-不應存取的目的地。對工具介面來說，模型產生的 URL 就是這類外部輸入。&lt;/p&gt;
-&lt;p&gt;一個只檢查 &lt;code&gt;http&lt;/code&gt; 或 &lt;code&gt;https&lt;/code&gt; scheme 的 fetch 工具，可能仍接受 loopback、link-local、private
-network、雲端 metadata endpoint 或內部管理介面。呼叫前只比對原始 hostname 也不夠，因為 DNS
-解析、IPv4／IPv6 表示法、重新導向與 URL parser 差異，都可能造成應用程式檢查的目的地與實際
-連線的目的地不同。&lt;/p&gt;
-&lt;p&gt;正式系統應先問一個更根本的問題：工具真的需要接受任意 URL 嗎？若需求只是讀取兩個已知服務，
-精確 allowlist 通常比 blocklist 容易推理。若確實要接收廣泛 URL，則至少要使用一致的 parser、在連線
-前驗證解析後目的地、封鎖不應存取的網段、限制 port 與 protocol，並對每一次 redirect 重新驗證；
-網路層 egress policy 仍應作為獨立防線。&lt;/p&gt;
-&lt;h2&gt;風險二：安全的 JSON，進入 shell 後仍會變成指令&lt;/h2&gt;
-&lt;p&gt;假設匯出工具接受：&lt;/p&gt;
-&lt;pre class=&quot;language-json&quot;&gt;&lt;code class=&quot;language-json&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;token property&quot;&gt;&quot;output_name&quot;&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;summary.pdf; touch /tmp/day19-owned&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;這組參數是合法的 JSON，&lt;code&gt;output_name&lt;/code&gt; 也確實是字串。當 adapter 把 &lt;code&gt;output_name&lt;/code&gt; 直接插入以下
-命令時，危險才出現：&lt;/p&gt;
-&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;convert report.md summary.pdf; touch /tmp/day19-owned&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;此時分號不再是檔名資料的一部分，而會被 shell 解讀成指令分隔符。&lt;a href=&quot;https://cwe.mitre.org/data/definitions/78.html&quot;&gt;CWE-78&lt;/a&gt;
-建議優先避免直接呼叫 shell，改用結構化 API 或參數陣列，讓資料與命令彼此分離；必要時再加上精確
-allowlist 與正規化後檢查。&lt;/p&gt;
-&lt;p&gt;「先 escape」通常不是第一選項，因為 shell、作業系統與下游工具各有自己的語法。更清楚的設計是：
-後端自行產生儲存 ID，使用者輸入只作為顯示名稱；若一定要輸出檔名，則採固定副檔名與很小的字元集，
-並用不經 shell 的函式傳遞獨立參數。&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM10_ImproperOutputHandling.md&quot;&gt;OWASP LLM10:2026 Improper Output Handling&lt;/a&gt;
-也提醒：若模型輸出未經驗證就交給下游系統，可能導致 SSRF、命令執行等後果。Function Calling
-沒有消除這條路徑，只是把自由文字換成具名欄位。&lt;/p&gt;
-&lt;h2&gt;風險三：工具回傳值不是可信的 system message&lt;/h2&gt;
-&lt;p&gt;工具執行完畢後，應用程式會把結果送回模型。工具結果可能來自網頁、文件、郵件、資料庫欄位或第三方
-API，也可能夾帶「忽略前面規則」「把秘密傳到某個網址」之類的提示注入內容。&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;function_call_output&lt;/code&gt; 是協定角色，不是信任等級。若 Agent 下一步能根據回傳文字自行選擇另一個工具，
-外部資料就可能形成「取回內容 → 內容要求下一個動作 → Agent 提出呼叫 → 應用程式執行」的鏈條。&lt;/p&gt;
-&lt;p&gt;因此，工具回傳內容應與控制資料分離：可信狀態由應用程式自行產生；外部文字標成 &lt;code&gt;untrusted_data&lt;/code&gt;，
-並限制長度與可見欄位，必要時再以結構化引用呈現。下一個工具呼叫仍要重新經過 schema、policy、
-adapter 與核准；即使要求出現在「工具結果」裡，也不能因此提高權限。&lt;/p&gt;
-&lt;p&gt;把文字放進 &lt;code&gt;&amp;lt;untrusted&amp;gt;&lt;/code&gt; 標記或 JSON 欄位能幫助模型理解邊界，卻不是確定性防線。真正的防線仍是：
-即使模型採納了惡意文字，後端也不會讓它越權執行。&lt;/p&gt;
-&lt;h2&gt;固定矩陣：同一組提案走兩條路&lt;/h2&gt;
-&lt;p&gt;這次不量測模型會不會產生危險參數，而是把危險參數視為已經存在。固定 runner 將 5 組案例分別送入
-脆弱路徑與強化路徑，共做 10 次路徑評估：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;脆弱路徑信任傳入物件，直接記錄「本來會送到哪一個 sink」。&lt;/li&gt;
-&lt;li&gt;強化路徑先驗證嚴格 schema，再套用固定目的地政策與輸出名稱規則；工具結果則以不可信資料封裝。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;所有 sink 都只記錄記憶體內事件。實驗沒有呼叫模型、連上網路、啟動 subprocess，也沒有執行 shell
-命令或呼叫外部服務。固定程式、fixture、事前預測與淨化結果收錄在公開的
-&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-19-tool-calling-security/evidence/day-19&quot;&gt;Day 19 evidence checkpoint&lt;/a&gt;。&lt;/p&gt;
-&lt;p&gt;5 組案例全部符合事前預測：&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;案例&lt;/th&gt;
-&lt;th&gt;為什麼值得測&lt;/th&gt;
-&lt;th&gt;脆弱路徑&lt;/th&gt;
-&lt;th&gt;強化路徑&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;公開 allowlist URL&lt;/td&gt;
-&lt;td&gt;確認防線沒有封鎖正常用途&lt;/td&gt;
-&lt;td&gt;模擬 fetch&lt;/td&gt;
-&lt;td&gt;允許並模擬 fetch&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;加入 &lt;code&gt;approved: true&lt;/code&gt;&lt;/td&gt;
-&lt;td&gt;呼叫者能否自帶授權資訊&lt;/td&gt;
-&lt;td&gt;接受並模擬 fetch&lt;/td&gt;
-&lt;td&gt;&lt;code&gt;additionalProperties: false&lt;/code&gt; 拒絕&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;code&gt;127.0.0.1&lt;/code&gt; 管理介面&lt;/td&gt;
-&lt;td&gt;字串通過 schema 後是否仍檢查目的地&lt;/td&gt;
-&lt;td&gt;模擬 fetch&lt;/td&gt;
-&lt;td&gt;目的地政策拒絕&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;含 shell 分號的輸出名稱&lt;/td&gt;
-&lt;td&gt;字串是否被直接拼成命令&lt;/td&gt;
-&lt;td&gt;記錄 would-be shell&lt;/td&gt;
-&lt;td&gt;安全檔名規則拒絕&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;工具結果內含下一步指令&lt;/td&gt;
-&lt;td&gt;外部文字是否取得控制權&lt;/td&gt;
-&lt;td&gt;標成可信指令並暴露&lt;/td&gt;
-&lt;td&gt;標成不可信資料並封裝&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;實驗結果顯示，脆弱路徑有 4 次到達模擬 sink，另有 1 次把工具結果暴露為可信指令；強化路徑只有
-乾淨 URL 到達模擬 sink，3 次由確定性規則阻擋，1 次將工具結果封裝為不可信資料。整個實驗共記錄
-5 個記憶體內事件；模型呼叫、網路呼叫、&lt;code&gt;subprocess&lt;/code&gt; 與外部副作用均為 0。&lt;/p&gt;
-&lt;p&gt;這組結果特別顯示兩個不同層次。偽造的 &lt;code&gt;approved&lt;/code&gt; 是資料形狀問題，嚴格 schema 可以直接排除；
-loopback URL 與 shell metacharacters 卻都能是合法字串，必須分別由目的地政策與安全 adapter 處理。
-若只說「我們已驗證 JSON」，後兩個案例仍會穿過。&lt;/p&gt;
-&lt;h2&gt;實驗沒有證明什麼&lt;/h2&gt;
-&lt;p&gt;這不是模型或 Function Calling 框架的比較，也不是 Prompt Injection 成功率。工具回傳案例只驗證程式
-有沒有保存信任分類與序列化邊界，沒有模型參與，因此不能宣稱模型一定會忽略惡意內容。&lt;/p&gt;
-&lt;p&gt;URL 規則刻意維持小範圍，只示範精確 origin allowlist 與 loopback 拒絕。這組規則沒有涵蓋 DNS
-rebinding、重新導向重判、所有特殊網段、proxy 行為或 parser confusion。命令案例只記錄
-would-be shell 字串，從未真的啟動 shell。&lt;/p&gt;
-&lt;p&gt;因此，結果只支持以下結論：&lt;strong&gt;結構驗證能排除未宣告欄位，但語意授權、目的地限制、sink adapter 與
-工具結果的信任分類仍要分開實作；模型提案不能跳過任何一道。&lt;/strong&gt;&lt;/p&gt;
-&lt;h2&gt;實作時，我會先檢查這八件事&lt;/h2&gt;
-&lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;模型只提案。&lt;/strong&gt; Tool name 與 arguments 都是不可信輸入，不直接代表允許執行。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Schema 採封閉契約。&lt;/strong&gt; 開啟 strict mode、列出 required 欄位，並拒絕額外欄位；授權資訊不放在
-模型可填的物件裡。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;每次重新授權。&lt;/strong&gt; 從 session 或後端身分系統取得可信使用者與租戶，以資源正本和固定政策重判。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;目的地採正向限制。&lt;/strong&gt; 能用固定 resource ID 或 exact allowlist，就不接受任意 URL；必要時驗證
-解析後 IP 與每次 redirect，並設定網路層的 egress 控制。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;sink 不接指令字串。&lt;/strong&gt; 優先使用參數化查詢、結構化 SDK、argument array 與後端產生的檔案 ID。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;核准綁定完整動作。&lt;/strong&gt; 高影響操作要讓使用者看到實際參數；參數一旦改變，原核准立即失效。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;工具結果維持不可信。&lt;/strong&gt; 只回傳必要欄位、限制大小、保留來源，且不能藉內容取得新的工具權限。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;保留縱深防禦。&lt;/strong&gt; 最小權限、sandbox、逾時、rate limit、audit log 與 circuit breaker 處理單一閘門
-失守後的影響範圍。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;在 &lt;a href=&quot;https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/&quot;&gt;OWASP Top 10 for Agentic Applications 2026&lt;/a&gt;
-的語境裡，這些問題可落在 Tool Misuse and Exploitation 等 Agentic 風險。不過，分類名稱本身不是
-控制措施。應用程式仍要記錄每次呼叫的決策：誰要求什麼動作、後端套用哪一條授權或目的地限制規則、
-哪一道閘門允許或拒絕，以及最後是否真的產生副作用。&lt;/p&gt;
-&lt;p&gt;Function Calling 的安全價值，不在於把模型輸出變成「可信 JSON」，而在於它提供了一個明確、可測試
-的仲介點。只要應用程式守住這個點，模型可以犯錯，外部內容可以帶著惡意指令，底層能力仍不必照做。&lt;/p&gt;
-&lt;p&gt;下一篇會把範圍擴到供應鏈：模型、套件與 MCP Server 都可能把新的程式碼、提示內容、工具介面與
-更新管道帶進系統。到時要問的不只是哪一次工具呼叫安全，而是提供這項能力的來源是否值得信任。&lt;/p&gt;
-&lt;h2&gt;參考資料&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://developers.openai.com/api/docs/guides/function-calling&quot;&gt;OpenAI Function calling&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM10_ImproperOutputHandling.md&quot;&gt;OWASP LLM10:2026 Improper Output Handling&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://cwe.mitre.org/data/definitions/918.html&quot;&gt;CWE-918: Server-Side Request Forgery&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://cwe.mitre.org/data/definitions/78.html&quot;&gt;CWE-78: OS Command Injection&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/&quot;&gt;OWASP Top 10 for Agentic Applications 2026&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://github.com/FWcloud916/llm-app-security-lab/tree/day-19-tool-calling-security/evidence/day-19&quot;&gt;LLM Application Security Lab — Day 19 evidence checkpoint&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;!-- ironman-cross-publication:start --&gt;
-&lt;blockquote&gt;
-&lt;p&gt;本文同步刊載於 &lt;a href=&quot;https://ithelp.ithome.com.tw/articles/10405695&quot;&gt;iThome 鐵人賽&lt;/a&gt;。&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;!-- ironman-cross-publication:end --&gt;
-&lt;!-- series-nav:start --&gt;
-&lt;hr /&gt;
-&lt;p&gt;&lt;strong&gt;《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 19／31 篇&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://imfw.io/posts/2026/2026-08-27-excessive-agency-risk/&quot;&gt;上一篇：Excessive Agency：Agent 的過度代理風險&lt;/a&gt; · &lt;a href=&quot;https://imfw.io/posts/2026/2026-08-29-ai-supply-chain-security/&quot;&gt;下一篇：供應鏈風險：模型、套件與 MCP Server&lt;/a&gt;&lt;/p&gt;
 &lt;!-- series-nav:end --&gt;
 </content>
   </entry>

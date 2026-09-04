@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>觀測性與稽核：看得見才守得住 - FW Blog</title>
+  <meta name="description" content="用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-09-05-observability-audit/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="觀測性與稽核：看得見才守得住 - FW Blog">
+  <meta property="og:description" content="用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-09-05-observability-audit/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="觀測性與稽核：看得見才守得住 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-09-05T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="觀測性與稽核：看得見才守得住 - FW Blog">
+  <meta name="twitter:description" content="用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="觀測性與稽核：看得見才守得住 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=b29e3d4">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=b29e3d4">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "觀測性與稽核：看得見才守得住",
+    "description": "用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。",
+    "url": "https://imfw.io/posts/2026/2026-09-05-observability-audit/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-09-05-observability-audit/",
+    "datePublished": "2026-09-05T00:00:00.000Z",
+    "dateModified": "2026-09-05T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">觀測性與稽核：看得見才守得住</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-09-05T00:00:00.000Z">2026年09月05日</time></span>
+      
+      <span>15 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-25 查核 OpenTelemetry 官方規格與敏感資料指引、OWASP Logging Cheat Sheet、RFC 2104，並引用同日完成的離線 OpenTelemetry 與 HMAC 稽核鏈實驗。OpenTelemetry SDK、語意慣例、Collector 處理器與 log 管理要求仍可能改變；正式系統套用前，請重新確認實際版本、資料政策與法規義務。</p>
+</blockquote>
+<p>安全事件沒有紀錄，團隊就無法回答哪一條政策放行了模型 request、哪個元件遮掉 PII，或模型回覆為什麼沒有進入後續動作。不過，把完整 prompt、模型回覆與使用者資料全部寫進 log，只是把原本的一份敏感資料複製到另一套權限、保存期限與匯出路徑都不同的系統。</p>
+<p>觀測性需要足夠的關聯資訊，稽核需要可追查的安全決策。兩者都不需要預設保存原文。</p>
+<p>Day 27 使用 OpenTelemetry SDK 在記憶體中建立兩條 trace。第一條刻意把測試輸入與輸出寫入 span 的屬性欄位（span attributes）；第二條只記錄允許清單列出的資料，包括 request ID、政策版本、事件名稱、內容雜湊、決策、原因代碼、PII 數量與結果狀態。安全 trace 再產生六筆 HMAC 串接事件，用來測試修改、刪除、交換、插入與尾端截斷。</p>
+<h2>Trace 與稽核事件回答不同問題</h2>
+<p><a href="https://opentelemetry.io/docs/specs/otel/trace/api/">OpenTelemetry Tracing API</a>使用 trace 記錄一筆 request 經過系統的完整路徑，並把路徑中的每個處理步驟記為一個 span。每個 span 可以記錄名稱、父子關係、起訖時間、屬性、事件與狀態；多個 span 會依父子關係組成一條完整的 trace。</p>
+<p>Trace 適合回答一次 request 經過哪些元件、哪一段失敗，以及各階段花了多少時間。稽核事件則用來追查安全決策：哪個經過身分驗證的使用者或服務提出或核准動作、當時使用哪個政策版本、系統做出什麼判定，以及最後是否真的執行外部動作。</p>
+<table>
+<thead>
+<tr>
+<th>資料</th>
+<th>主要問題</th>
+<th>本文建議保存的內容</th>
+<th>不應預設保存的內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trace span</td>
+<td>Request 經過哪些階段？</td>
+<td>trace ID、span ID、操作名稱、狀態、原因代碼、必要計數</td>
+<td>完整 prompt、模型回覆、token、憑證與 PII</td>
+</tr>
+<tr>
+<td>稽核事件</td>
+<td>哪個安全決策在何時成立？</td>
+<td>request ID、可信主體、動作、資源、政策版本、決策與結果</td>
+<td>模型自稱的身分、未遮罩原文與不必要的推理內容</td>
+</tr>
+<tr>
+<td>安全告警</td>
+<td>哪個條件需要處理？</td>
+<td>規則 ID、嚴重度、聚合計數、關聯 ID</td>
+<td>為了方便調查而無限制複製原始內容</td>
+</tr>
+</tbody>
+</table>
+<p>同一筆 request 可以同時產生 trace 與稽核事件，但兩種資料不應共用同一份「什麼都記」的資料格式（schema）。Trace 可以依容量與延遲需求只保留部分紀錄；付款、發布、刪除、權限變更與政策拒絕等必要稽核事件，則應依組織要求完整保留。系統不能因為只保留部分 trace，就隨機遺失重要的安全決策。</p>
+<h2>OpenTelemetry 不會替應用程式判斷敏感資料</h2>
+<p><a href="https://opentelemetry.io/docs/security/handling-sensitive-data/">OpenTelemetry 的敏感資料指引</a>明確指出，OpenTelemetry 可以收集系統執行狀態的遙測資料（telemetry），但無法自行判斷特定系統中的敏感資料。實作者必須負責資料最小化、法規要求、使用者同意與保護措施，也要檢查用來加入追蹤紀錄的函式庫（instrumentation library）實際產生哪些屬性欄位。</p>
+<p>官方指引建議只收集具有觀測用途的資料，並優先避免收集個資。OpenTelemetry Collector 是集中接收與處理遙測資料的元件，可以用 attribute processor 刪除或修改特定屬性、用 filter processor 移除整筆資料、用 redaction processor 只保留允許的屬性，或用 transform processor 改寫內容。這些處理器適合作為第二道防線，不能取代應用程式在資料產生位置執行的允許清單。</p>
+<p>應用程式只要把原文寫入 span 的屬性欄位，原文就可能先經過應用程式記憶體、待傳送的暫存區、匯出元件、Collector 與傳輸路徑，最後才由 Collector 刪除。因此，應用程式應在建立 span 時就不要寫入不必要的原文。</p>
+<h2>實驗固定一筆 request 與兩條 trace</h2>
+<p>這次實驗只使用一筆虛構 request。測試輸入與測試輸出都包含同一個客戶編號與 <code>.test</code> 信箱；實驗事先把這兩個值登記為敏感資料標記（marker）。這些標記只用來計算原文是否進入 span 的屬性欄位，不代表正式系統的 PII 分類方式。</p>
+<p>兩種設定都使用 OpenTelemetry SDK 1.44.0 建立 7 個 span：一個代表整筆 request 的根 span，加上六個安全處理階段。實驗使用 <code>InMemorySpanExporter</code>，只把結果留在記憶體中；沒有啟動 Collector，也沒有向網路傳送遙測資料。</p>
+<table>
+<thead>
+<tr>
+<th>設定</th>
+<th>屬性欄位政策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原文設定（Unsafe attributes）</td>
+<td>根 span 保存完整測試輸入；output review span 保存完整測試輸出</td>
+</tr>
+<tr>
+<td>允許清單設定（Safe attributes）</td>
+<td>只允許 request ID、政策版本、事件名稱、內容 SHA-256、決策、原因代碼、PII 數量與結果狀態</td>
+</tr>
+</tbody>
+</table>
+<p>允許清單設定另外檢查三項條件：所有屬性名稱都在允許清單中、每個 span 都有 request ID／政策版本／事件名稱，以及 7 個 span 都使用同一個 trace ID。這三項只驗證欄位與關聯，不驗證事件內容是否真實。</p>
+<h2>Trace 結果：原文設定命中四次，允許清單設定為零</h2>
+<p>完整實驗程式、測試資料雜湊、原始結果雜湊，以及排除敏感內容後的統計，都已固定在 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-27-observability-audit/evidence/day-27">Day 27 不可變更的證據版本</a>。正式結果如下：</p>
+<table>
+<thead>
+<tr>
+<th>設定</th>
+<th style="text-align:right">Span 數</th>
+<th style="text-align:right">標記命中</th>
+<th style="text-align:right">含標記的 span 數</th>
+<th style="text-align:right">允許清單違規</th>
+<th style="text-align:right">缺少必要屬性</th>
+<th style="text-align:right">使用同一個 trace ID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原文設定（Unsafe attributes）</td>
+<td style="text-align:right">7</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">不適用</td>
+<td style="text-align:right">不適用</td>
+<td style="text-align:right">不列入判定</td>
+</tr>
+<tr>
+<td>允許清單設定（Safe attributes）</td>
+<td style="text-align:right">7</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">是</td>
+</tr>
+</tbody>
+</table>
+<p>原文設定把測試輸入寫入根 span，也把測試輸出寫入輸出檢查 span（output review span）。每段文字各含兩個標記，因此共有 4 次標記命中，分布在 2 個 span。</p>
+<p>允許清單設定沒有出現兩個測試標記，允許清單違規與必要屬性缺漏都是 0，7 個 span 也共用同一個 trace ID。這表示固定的允許清單在這筆 request 中保留了實驗要求的關聯資料，並未保存事先登記的兩個原文值。</p>
+<p>標記命中 0 次，不代表 trace 完全沒有敏感資訊。Request ID、資源識別資訊、內容雜湊、時間與事件順序仍可能與其他資料互相比對，進而連結到特定使用者或業務行為。正式系統仍要對遙測資料的儲存、查詢、匯出與保存期限套用資料分類與存取政策。</p>
+<h2>六筆稽核事件只保存安全決策資料</h2>
+<p>允許清單設定的 trace 在六個處理階段各產生一筆稽核事件，共六筆：</p>
+<ol>
+<li><code>request_received</code>：request 已進入應用程式。</li>
+<li><code>authorization_decided</code>：資源政策回傳 allow 與原因代碼。</li>
+<li><code>pii_detected</code>：偵測到兩個項目，處理方式為 replace。</li>
+<li><code>model_request_prepared</code>：送入模型的資料已完成準備。</li>
+<li><code>output_reviewed</code>：輸出檢查決定替換 PII。</li>
+<li><code>request_completed</code>：流程以 masked 狀態結束。</li>
+</ol>
+<p>每筆事件保存順序編號（sequence）、時間、trace ID、request ID、政策版本、事件名稱、允許清單中的屬性，以及上一筆事件的 HMAC。內容雜湊可用來核對不同事件所指的內容是否一致；它不會保存測試原文，也不能取代原文的安全儲存與授權。</p>
+<h2>HMAC 串接可以偵測修改，但不會讓儲存自動變成不可刪除</h2>
+<p><a href="https://www.rfc-editor.org/info/rfc2104/">RFC 2104</a>定義 HMAC。HMAC 使用秘密金鑰與雜湊函式，為每筆事件計算訊息驗證碼。驗證端會用相同金鑰重新計算；如果事件遭到修改，卻沒有重新產生有效的 HMAC，比對就會失敗。只有持有金鑰的一方才能產生新的有效 HMAC。</p>
+<p>Day 27 先把每筆稽核事件轉成欄位順序固定的標準化 JSON（canonical JSON），讓內容相同的事件每次都產生相同的位元組序列，再用以下方式計算 HMAC：</p>
+<pre class="language-text"><code class="language-text">record_hmac[n] = HMAC-SHA-256(
+  key,
+  sequence + event + attributes + previous_hmac
+)</code></pre>
+<p>第一筆事件的 <code>previous_hmac</code> 使用固定零值；從第二筆開始，每筆事件都在 <code>previous_hmac</code> 中保存上一筆的 <code>record_hmac</code>，形成前後串接。修改中間事件會讓該筆 HMAC 比對失敗；刪除或交換事件會破壞事件序號或前後連結；未持有金鑰的人也無法替插入的事件產生有效 HMAC。</p>
+<p>實驗程式最後另建立一筆終點檢查點（terminal checkpoint），保存事件總數與最後一筆 HMAC，再用同一把金鑰計算檢查點的 HMAC。驗證端必須從稽核紀錄以外的獨立位置取得預期檢查點，才能判斷目前看到的是完整事件鏈，而不是一條較短但內部仍一致的事件鏈。</p>
+<h2>五種已登記的竄改全部被偵測，尾端截斷顯示檢查點的邊界</h2>
+<p>正式實驗對同一條六事件鏈執行下列比較：</p>
+<table>
+<thead>
+<tr>
+<th>測試</th>
+<th>驗證結果</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原始六事件鏈</td>
+<td>通過</td>
+<td>每筆 HMAC、事件序號、前後連結與檢查點都一致</td>
+</tr>
+<tr>
+<td>修改第二筆事件</td>
+<td>偵測</td>
+<td>該筆 HMAC 不一致</td>
+</tr>
+<tr>
+<td>刪除中間事件</td>
+<td>偵測</td>
+<td>事件序號或前一筆 HMAC 不一致</td>
+</tr>
+<tr>
+<td>交換兩筆事件</td>
+<td>偵測</td>
+<td>事件序號不一致</td>
+</tr>
+<tr>
+<td>插入偽造事件</td>
+<td>偵測</td>
+<td>事件序號或該筆 HMAC 不一致</td>
+</tr>
+<tr>
+<td>刪除尾端並提供檢查點</td>
+<td>偵測</td>
+<td>事件總數與最後一筆 HMAC 不符合檢查點</td>
+</tr>
+<tr>
+<td>刪除尾端但不提供檢查點</td>
+<td>通過</td>
+<td>剩餘事件仍形成一條內部一致的事件鏈</td>
+</tr>
+</tbody>
+</table>
+<p>實驗事前登記五種竄改，並在驗證時提供檢查點；五種竄改全數被偵測，結果是 5／5。另一項尾端截斷測試刻意不提供檢查點，驗證器因此接受剩餘的五筆事件。HMAC 鏈可以證明目前看到的事件彼此一致，但驗證端仍需要檢查點才能判斷事件集合是否完整。</p>
+<p>檢查點若與稽核紀錄存放在同一個可修改的資料庫，攻擊者可能同時刪除兩者。正式系統應定期把終點檢查點送到權限不同的儲存空間，或只能新增、不能覆寫既有資料的位置。產生檢查點的頻率，會決定尾端最多可能累積多少筆尚未由外部紀錄確認的事件。</p>
+<h2>HMAC 也不能證明事件原本就是真的</h2>
+<p>HMAC 可以驗證事件內容在產生驗證碼後是否遭到修改，但無法判斷 <code>decision=allow</code> 是否符合當時的實際政策，也無法發現追蹤程式漏記了一次工具呼叫。應用程式若一開始就寫入錯誤事件，正確計算的 HMAC 只會保護這份錯誤內容。</p>
+<p>金鑰管理也需要獨立處理。Day 27 在執行期間隨機產生一把 32 位元組的測試金鑰；正式結果與公開檢查點都不保存這把金鑰。正式環境要處理金鑰的產生、存放、存取、輪替、版本、復原與撤銷；驗證端也要知道每段事件鏈應使用哪個金鑰版本。</p>
+<p>若所有服務共用同一把 HMAC 金鑰，任何一個服務遭入侵後，都可能替其他服務偽造事件。每個服務使用不同金鑰可以縮小影響範圍，但會增加跨服務驗證與金鑰輪替的管理成本。HMAC 也不適合讓第三方公開驗證，因為驗證者取得金鑰後也會取得偽造能力；這類需求應評估數位簽章與外部透明紀錄。</p>
+<h2>Log 內容、完整性與存取權限要分開設計</h2>
+<p><a href="https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html">OWASP Logging Cheat Sheet</a>建議系統紀錄不要直接包含 session ID、access token、密碼、資料庫連線字串、加密金鑰、付款資料與其他高敏感資料，也要求紀錄在傳輸與儲存期間受到保護，避免未經授權的存取、修改與刪除。OWASP 也建議建立竄改偵測機制，並監控所有紀錄存取行為。</p>
+<p>這些要求至少形成三道獨立控制：</p>
+<ol>
+<li><strong>內容控制：</strong> 應用程式預設只建立允許清單中的屬性；確實需要保存原文時，必須改走權限更嚴格的例外流程。</li>
+<li><strong>完整性控制：</strong> 事件序號、HMAC 與外部檢查點，可以協助發現內容修改、事件刪除與順序變更。</li>
+<li><strong>存取與保存控制：</strong> 只有指定角色可以查詢或匯出紀錄；系統必須記錄所有存取行為，並在保存期限到期後確實刪除資料。</li>
+</ol>
+<p>靜態資料加密（encryption at rest）只能降低儲存媒體或備份遭到未授權讀取的風險。具有查詢權限的帳號仍可在系統解密後看見完整內容；加密也無法自動偵測應用程式使用合法憑證刪除事件。內容最小化、完整性、授權與保存期限各自處理不同風險，不能互相取代。</p>
+<h2>正式系統可以從固定事件契約開始</h2>
+<p>Day 27 的六事件流程可以縮成一份通用事件契約。正式系統至少要固定以下資料：</p>
+<ul>
+<li><code>event_name</code>：使用已納入版本控制且數量有限的固定事件名稱，不把使用者內容放進名稱。</li>
+<li><code>trace_id</code>、<code>request_id</code>：關聯同一條流程，並設定不可由模型自行指定的格式。</li>
+<li><code>actor</code>：由應用程式的身分驗證與授權系統提供使用者、服務或 Agent 身分，不能採用模型文字中自行宣稱的身分。</li>
+<li><code>action</code>、<code>resource</code>：記錄標準化後的操作與資源識別資訊，避免保存完整資源內容。</li>
+<li><code>policy_version</code>、<code>decision</code>、<code>reason_code</code>：讓團隊重建當時使用的規則與判定原因。</li>
+<li><code>approval_id</code>：高影響動作必須關聯到使用者的核准紀錄；該紀錄要包含使用者實際檢閱的動作、目標資源與參數。</li>
+<li><code>content_digest</code>：只在需要核對內容是否一致時保存。若原文容易猜測，攻擊者可能事先計算候選內容的雜湊並進行比對，因此仍要評估字典攻擊（dictionary attack）與跨資料集連結風險。</li>
+<li><code>result_status</code>：分清楚提案、阻擋、已執行、執行失敗與已補償，不能把模型提案記成外部副作用。</li>
+</ul>
+<p>事件契約也要限制每個欄位的長度，並明確處理換行與分隔符號，避免攻擊者用超長內容耗盡遙測資料容量，或插入看似另一筆紀錄的內容。屬性值的種類過多也會增加儲存與查詢成本；計數、分類代碼與固定識別資訊通常比完整文字更適合作為預設值。</p>
+<h2>觀測資料必須真的接到偵測與處理流程</h2>
+<p>只產生 trace 與稽核紀錄不會自動改善安全性。團隊要先定義哪些事件需要告警，例如同一個使用者持續觸發 PII 遮罩、模型反覆要求存取未授權資源、特定動作的使用者確認頻繁失效、工具輸出多次遭輸出安全檢查阻擋，或稽核檢查點驗證失敗。</p>
+<p>告警還要連到明確的處理流程。團隊必須指定由誰負責處理、多久內回應、處理人員可以暫停哪些功能、需要保存哪些額外證據，以及何時通知資料與系統負責人。若系統只把事件送進儀表板，卻沒有指定人員判讀與處理，觀測性只會增加成本與敏感資料副本。</p>
+<p>Day 27 沒有測試 Collector、安全資訊與事件管理系統（SIEM）、告警規則與事故處理，因此沒有驗證完整的營運流程。正式系統也要測試遙測資料儲存系統中斷、暫存區滿載、跨服務事件順序改變、時鐘偏移、金鑰輪替，以及檢查點寫入失敗時的處理方式。</p>
+<h2>實驗限制</h2>
+<p>這次實驗只有一筆英文虛構 request、兩個敏感資料標記、兩條保存在記憶體中的 trace、每條 7 個 span、六筆稽核事件，以及一把只在執行期間使用的測試金鑰。實驗沒有啟動 Collector、網路匯出、遙測資料儲存系統、SIEM、資料庫或外部檢查點服務。</p>
+<p>5／5 只表示本次驗證器偵測到事先登記的修改、刪除、交換、插入，以及提供檢查點的尾端截斷。實驗沒有測試並行事件、跨主機排序、事件重送、重複事件序號、時鐘回撥、金鑰洩漏、演算法遭到替換、授權管理員刪除紀錄，或儲存系統遭到入侵。</p>
+<p>允許清單設定的 trace 沒有命中敏感資料標記，但這項結果只涵蓋事先登記的客戶編號與 <code>.test</code> 信箱。實驗沒有檢查姓名、地址、自由文字推論、trace ID 能否連結到特定對象，或第三方追蹤函式庫自動加入的其他屬性。</p>
+<p>實驗只使用版本控制中的虛構資料，HMAC 金鑰只存在記憶體中。模型呼叫、網路呼叫與外部副作用都是 0。原始結果保留在 Lab 中不納入 Git 的目錄；公開的證據版本只包含程式版本、測試資料雜湊、統計與實驗限制。</p>
+<h2>觀測紀錄只保存必要資料</h2>
+<p>Day 27 的原文設定在 2 個 span 中記下 4 次敏感資料標記；允許清單設定保留 7 個 span 的關聯與安全決策資料，標記命中、允許清單違規與必要欄位缺漏都是 0。結果顯示 trace 可以保存流程的關聯與決策資訊，不必預設複製完整輸入與輸出。</p>
+<p>六筆 HMAC 串接事件在提供終點檢查點時，偵測到 5／5 事先登記的竄改；沒有檢查點時，刪除尾端後的五筆事件仍形成一條內部一致的事件鏈。完整性控制不能只替每筆事件加入 HMAC，還要管理金鑰、事件序號、檢查點的獨立保存方式，以及驗證失敗後的處理流程。</p>
+<p>下一篇會處理濫用與成本攻擊，實作 request、token、並行數與預算控制。Day 27 的事件契約會提供計數與原因代碼，但速率限制與預算仍必須在模型呼叫前由應用程式執行。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://opentelemetry.io/docs/specs/otel/trace/api/">OpenTelemetry Tracing API</a></li>
+<li><a href="https://opentelemetry.io/docs/security/handling-sensitive-data/">OpenTelemetry — Handling sensitive data</a></li>
+<li><a href="https://opentelemetry.io/docs/specs/semconv/how-to-write-conventions/">OpenTelemetry — How to write semantic conventions</a></li>
+<li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html">OWASP Logging Cheat Sheet</a></li>
+<li><a href="https://www.rfc-editor.org/info/rfc2104/">RFC 2104 — HMAC: Keyed-Hashing for Message Authentication</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-27-observability-audit/evidence/day-27">LLM Application Security Lab — Day 27 evidence checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10407722">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 27／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/">上一篇：敏感資料防護：PII 偵測與遮罩</a> · 下一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-04-pii-detection-masking/" class="text-gray-900 hover:text-blue-600 transition">
+      敏感資料防護：PII 偵測與遮罩
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-04T00:00:00.000Z">2026年09月04日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用 24 個測試案例比較原文、應用程式規則、Presidio 內建辨識器與分層組合，釐清 PII 偵測、遮罩、授權與紀錄各自負責的邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-03-least-privilege-agent-sandboxing/" class="text-gray-900 hover:text-blue-600 transition">
+      最小權限與 Agent 沙箱化
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-03T00:00:00.000Z">2026年09月03日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用固定案例逐項移除控制，並加入本機模型提案，驗證動作白名單、資源權限、特定動作確認與 Docker 執行期隔離各自守住哪一道 Agent 邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-02-guardrails-in-practice/" class="text-gray-900 hover:text-blue-600 transition">
+      Guardrails 實戰：用框架建立護欄
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-02T00:00:00.000Z">2026年09月02日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用 NeMo Guardrails 統一管理輸入、主題與輸出規則，並以固定實驗比較 LLM 語意判定、規則式控制、Prompt Guard 2 與既有應用程式邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=b29e3d4"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

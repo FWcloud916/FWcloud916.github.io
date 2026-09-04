@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 觀測性與稽核：看得見才守得住
+
+- Published: 2026-09-05T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-09-05-observability-audit/
+- Tags: ai-security, ai, security
+
+- Description: 用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。
+
+
 ### 敏感資料防護：PII 偵測與遮罩
 
 - Published: 2026-09-04T00:00:00.000Z
