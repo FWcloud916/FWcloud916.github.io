@@ -196,6 +196,6 @@ Day 26 結果最直接的工程用途，不是判定 Application rules 或 Presi
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 26／31 篇**
 
-[上一篇：最小權限與 Agent 沙箱化](https://imfw.io/posts/2026/2026-09-03-least-privilege-agent-sandboxing/) · 下一篇：觀測性與稽核：看得見才守得住
+[上一篇：最小權限與 Agent 沙箱化](https://imfw.io/posts/2026/2026-09-03-least-privilege-agent-sandboxing/) · [下一篇：觀測性與稽核：看得見才守得住](https://imfw.io/posts/2026/2026-09-05-observability-audit/)
 
 <!-- series-nav:end -->
