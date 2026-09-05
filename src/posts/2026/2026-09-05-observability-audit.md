@@ -194,6 +194,6 @@ Day 27 的原文設定在 2 個 span 中記下 4 次敏感資料標記；允許�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 27／31 篇**
 
-[上一篇：敏感資料防護：PII 偵測與遮罩](https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/) · 下一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制
+[上一篇：敏感資料防護：PII 偵測與遮罩](https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/) · [下一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制](https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/)
 
 <!-- series-nav:end -->
