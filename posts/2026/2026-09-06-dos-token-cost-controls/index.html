@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>濫用與成本攻擊：DoS、Token 榨取與速率限制 - FW Blog</title>
+  <meta name="description" content="用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="濫用與成本攻擊：DoS、Token 榨取與速率限制 - FW Blog">
+  <meta property="og:description" content="用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="濫用與成本攻擊：DoS、Token 榨取與速率限制 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-09-06T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="濫用與成本攻擊：DoS、Token 榨取與速率限制 - FW Blog">
+  <meta name="twitter:description" content="用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="濫用與成本攻擊：DoS、Token 榨取與速率限制 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=eb139de">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=eb139de">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "濫用與成本攻擊：DoS、Token 榨取與速率限制",
+    "description": "用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。",
+    "url": "https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/",
+    "datePublished": "2026-09-06T00:00:00.000Z",
+    "dateModified": "2026-09-06T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">濫用與成本攻擊：DoS、Token 榨取與速率限制</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-09-06T00:00:00.000Z">2026年09月06日</time></span>
+      
+      <span>16 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-25 查核 OWASP LLM10:2025 Unbounded Consumption、MITRE CWE-770 與 RFC 6585，並引用同日完成的離線資源控制實驗。攻擊手法、模型計費方式、tokenizer、服務商限制與 HTTP 實作仍可能改變；正式系統套用前，請重新確認實際模型、流量、成本與基礎設施政策。</p>
+</blockquote>
+<p>LLM 應用程式如果只限制每分鐘的請求數，仍可能讓一筆超長輸入占用大量運算資源，也可能讓多筆尚未完成的推論同時占滿可用的模型執行資源。系統若等到模型回覆後才記帳，多筆已進入推論的請求仍可能共同超過預算。</p>
+<p>阻斷服務攻擊（Denial of Service，DoS）不一定會讓服務完全無法使用。攻擊者也可能延長正常使用者的等待時間、持續消耗付費 token，或迫使系統在尖峰期間拒絕正常流量，進而影響可用性與成本。</p>
+<p>Day 28 把請求速率、輸入 token、輸出 token、總 token、並行數與預算拆成六道控制。實驗使用七組互相獨立的虛構事件，每組事件都分別進入完全不設限的路徑，以及依固定順序執行六道控制的路徑。固定 token 數量只用來驗證控制流程，不代表任何真實模型的 tokenizer 或帳單。</p>
+<h2>不受限制的推論同時影響可用性與成本</h2>
+<p><a href="https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/">OWASP LLM10:2025 Unbounded Consumption</a>把過量且不受控制的推論列為 LLM 應用風險。攻擊者可以大量送出請求、增加輸入長度、要求更長輸出，或反覆執行耗用資源的操作，造成阻斷服務、成本增加與服務品質下降，也可能利用大量查詢複製模型行為。</p>
+<p><a href="https://cwe.mitre.org/data/definitions/770.html">MITRE CWE-770</a>描述的是更一般的資源限制問題：系統替使用者或服務配置資源時，沒有設定數量或大小上限。攻擊者便可能持續占用 CPU、記憶體、連線、執行緒或其他共享資源，讓其他使用者無法取得所需資源。CWE-770 建議設定每位使用者的資源限制、明確定義最大值，並在架構中加入節流機制。</p>
+<p>LLM 推論讓系統需要同時限制更多資源。一筆 request 可能占用 API gateway、應用程式執行緒、佇列、模型執行資源與連線；輸入和輸出 token 會影響推論時間與費用；工具呼叫或重試還可能把一次使用者操作放大成多次下游工作。</p>
+<p>因此，系統不能只問「一分鐘幾次」，還要回答「每次最多多大」、「同時最多幾筆」、「一段期間最多花多少」以及「超過限制後在哪個位置停止」。</p>
+<h2>六道控制處理不同資源</h2>
+<p>Token 是模型把文字切分後處理的單位，不等於固定數量的字元。不同模型與斷詞器（tokenizer）可能把同一段文字切成不同的 token 數量。正式系統必須使用實際模型對應的 tokenizer，或採用服務商提供的 token 計數結果，不能直接用字數代替 token 數。</p>
+<p>Day 28 的六道控制如下：</p>
+<table>
+<thead>
+<tr>
+<th>控制</th>
+<th>檢查內容</th>
+<th>檢查時機</th>
+<th>主要保護目標</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>請求速率</td>
+<td>同一主體在固定期間內送出的 request 數</td>
+<td>收到 request 時</td>
+<td>API 入口、應用程式與整體吞吐量</td>
+</tr>
+<tr>
+<td>輸入 token</td>
+<td>輸入 token 是否超過單筆上限</td>
+<td>建立模型 request 前</td>
+<td>前處理、記憶體與推論時間</td>
+</tr>
+<tr>
+<td>輸出 token</td>
+<td>要求保留的最大輸出 token 是否超過上限</td>
+<td>建立模型 request 前</td>
+<td>推論時間與單筆最高成本</td>
+</tr>
+<tr>
+<td>總 token</td>
+<td>輸入加最大輸出是否超過單筆上限</td>
+<td>建立模型 request 前</td>
+<td>單筆工作的總資源占用</td>
+</tr>
+<tr>
+<td>並行數</td>
+<td>同一主體尚未完成的 request 數</td>
+<td>進入佇列或模型執行資源前</td>
+<td>模型執行資源、連線與等待時間</td>
+</tr>
+<tr>
+<td>預算</td>
+<td>已用額度加保留額度是否超過期間上限</td>
+<td>模型推論前</td>
+<td>租戶、專案與整體成本</td>
+</tr>
+</tbody>
+</table>
+<p>這六道控制不能互相取代。每分鐘五次的速率限制仍可能放行五筆超長 request；單筆 token 上限也無法阻止攻擊者同時送入數百筆符合大小限制的工作。並行數可以限制正在執行的工作，但如果完成後立即接受下一筆，仍需要速率與預算限制處理長時間累積。</p>
+<h2>先限制最便宜的條件，再保留昂貴資源</h2>
+<p>Day 28 的完整控制路徑固定使用以下順序：</p>
+<pre class="language-text"><code class="language-text">request 到達
+  → 計入速率
+  → 檢查輸入 token
+  → 檢查輸出 token 上限
+  → 檢查輸入加最大輸出的總 token
+  → 檢查尚未完成的並行 request
+  → 保留預算
+  → 接受 request</code></pre>
+<p>這個順序先執行不需要模型的整數比較，再決定是否保留並行名額與預算。應用程式若先呼叫模型，再檢查 token 或預算，拒絕動作發生時成本已經產生。</p>
+<p>速率計數會包含遭 token、並行數或預算限制拒絕的嘗試。否則，攻擊者可以持續送出超大 request，讓系統反覆執行解析、驗證與 token 計數，卻完全不消耗速率額度。正式系統是否計入所有失敗請求，仍要依登入、健康檢查與可信內部流量設計例外，不能直接套用單一規則。</p>
+<h2>預算要在接受 request 時先保留</h2>
+<p>預算控制如果只累加已完成 request 的實際 token，並行請求就可能一起穿過檢查。假設剩餘額度是 100，兩筆各自最多需要 80 token 的 request 同時到達；兩筆都看到尚未扣款的 100，便可能同時被接受，最後消耗 160。</p>
+<p>Day 28 在接受 request 時先保留「輸入 token 加最大輸出 token」，完成後再用「輸入 token 加實際輸出 token」結算，並釋放沒有使用的保留額度。這種做法可以避免並行 request 共用同一份尚未扣除的預算。正式系統還必須把讀取餘額、檢查上限與保留額度做成一次不可分割的更新，或放在同一筆交易中完成；否則多個執行個體仍可能同時讀到相同餘額。</p>
+<p>預算也不一定等於 token。不同模型、批次、快取、工具與供應商可能使用不同費率；組織可以先把每個 request 換算成內部成本單位，再依使用者、租戶、專案、功能與全系統設定不同上限。Day 28 只使用固定 token 額度，沒有換算真實貨幣。</p>
+<h2>七組案例讓每一道控制都能單獨被觀察</h2>
+<p>如果把所有攻擊放進同一條連續事件流，速率限制可能先拒絕後面的 request，導致 token、並行數與預算控制沒有機會執行。Day 28 因此使用七組獨立案例；每組都從空白狀態開始，並在同一個固定預算期間內完成。</p>
+<p>固定政策如下：</p>
+<table>
+<thead>
+<tr>
+<th>政策</th>
+<th style="text-align:right">上限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>請求計算期間</td>
+<td style="text-align:right">60,000 毫秒</td>
+</tr>
+<tr>
+<td>每個主體最多 request 數</td>
+<td style="text-align:right">5</td>
+</tr>
+<tr>
+<td>單筆輸入 token</td>
+<td style="text-align:right">100</td>
+</tr>
+<tr>
+<td>單筆最大輸出 token</td>
+<td style="text-align:right">100</td>
+</tr>
+<tr>
+<td>單筆總 token</td>
+<td style="text-align:right">150</td>
+</tr>
+<tr>
+<td>每個主體同時執行的 request</td>
+<td style="text-align:right">2</td>
+</tr>
+<tr>
+<td>預算期間</td>
+<td style="text-align:right">86,400,000 毫秒</td>
+</tr>
+<tr>
+<td>每個主體的 token 預算</td>
+<td style="text-align:right">300</td>
+</tr>
+</tbody>
+</table>
+<p>兩條路徑都讀取相同事件。無限制路徑（<code>unbounded</code>）記錄每筆 request 的資源需求，但不拒絕任何 request；完整控制路徑（<code>layered_controls</code>）依固定順序執行六道控制。實驗不呼叫模型，也不使用真實 tokenizer；案例中的 token 數量是實驗資料（fixture）事先設定的整數。</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>事件設計</th>
+<th>事前預測</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>正常連續請求</td>
+<td>兩筆 request 各自完成</td>
+<td>兩條路徑都接受 2 筆</td>
+</tr>
+<tr>
+<td>請求速率突增</td>
+<td>60 秒內送出 7 筆，每筆立即完成</td>
+<td>無限制接受 7 筆；完整控制接受 5 筆</td>
+</tr>
+<tr>
+<td>輸入 token 耗盡</td>
+<td>輸入 101、最大輸出 10</td>
+<td>完整控制以輸入上限拒絕</td>
+</tr>
+<tr>
+<td>輸出 token 保留</td>
+<td>輸入 10、最大輸出 101</td>
+<td>完整控制以輸出上限拒絕</td>
+</tr>
+<tr>
+<td>總 token 耗盡</td>
+<td>輸入 80、最大輸出 80</td>
+<td>完整控制以總量上限拒絕</td>
+</tr>
+<tr>
+<td>並行數突增</td>
+<td>三筆 request 依序進入但都未完成</td>
+<td>無限制同時保留 3 筆；完整控制只保留 2 筆</td>
+</tr>
+<tr>
+<td>預算耗盡</td>
+<td>四筆各保留並使用 100 token</td>
+<td>無限制使用 400；完整控制使用 300</td>
+</tr>
+</tbody>
+</table>
+<p>完整實驗程式、政策與案例雜湊、原始結果雜湊，以及排除 request ID 與 subject ID 後的統計，都已固定在 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-28-dos-token-cost-controls/evidence/day-28">Day 28 不可變更的證據版本</a>。</p>
+<h2>正式結果：19 筆 request 中有 7 筆在昂貴工作前被拒絕</h2>
+<p>正式實驗在兩條路徑各處理 19 筆 request。結果如下：</p>
+<table>
+<thead>
+<tr>
+<th>路徑</th>
+<th style="text-align:right">收到</th>
+<th style="text-align:right">接受</th>
+<th style="text-align:right">拒絕</th>
+<th style="text-align:right">接受的估算 token</th>
+<th style="text-align:right">已結算 token</th>
+<th style="text-align:right">尚未釋放的保留 token</th>
+<th style="text-align:right">最高並行數</th>
+<th style="text-align:right">預算超額</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>無限制</td>
+<td style="text-align:right">19</td>
+<td style="text-align:right">19</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">1,132</td>
+<td style="text-align:right">625</td>
+<td style="text-align:right">442</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">100</td>
+</tr>
+<tr>
+<td>完整控制</td>
+<td style="text-align:right">19</td>
+<td style="text-align:right">12</td>
+<td style="text-align:right">7</td>
+<td style="text-align:right">590</td>
+<td style="text-align:right">495</td>
+<td style="text-align:right">40</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">0</td>
+</tr>
+</tbody>
+</table>
+<p>完整控制把接受的估算 token 從 1,132 降為 590，差異是 542。這個數字是固定案例中被拒絕 request 的輸入加最大輸出 token 總和，不是模型實際節省的 token，也不是帳單金額。</p>
+<p>無限制路徑尚有 442 token 處於保留狀態，因為三個超過 token 上限的案例與並行案例都沒有完成事件。完整控制只留下並行案例中兩筆已接受 request 的 40 token 保留額度。這項差異顯示單看已結算 token 會漏掉尚在執行或排隊的資源承諾。</p>
+<h2>六類拒絕原因都由對應案例觸發</h2>
+<p>完整控制的七筆拒絕分布如下：</p>
+<table>
+<thead>
+<tr>
+<th>拒絕原因</th>
+<th style="text-align:right">次數</th>
+<th>對應案例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>請求速率上限</td>
+<td style="text-align:right">2</td>
+<td>7 筆突增請求中的第 6、7 筆</td>
+</tr>
+<tr>
+<td>輸入 token 上限</td>
+<td style="text-align:right">1</td>
+<td>輸入為 101 的 request</td>
+</tr>
+<tr>
+<td>輸出 token 上限</td>
+<td style="text-align:right">1</td>
+<td>最大輸出為 101 的 request</td>
+</tr>
+<tr>
+<td>總 token 上限</td>
+<td style="text-align:right">1</td>
+<td>輸入 80 加最大輸出 80</td>
+</tr>
+<tr>
+<td>並行數上限</td>
+<td style="text-align:right">1</td>
+<td>第 3 筆尚未完成的 request</td>
+</tr>
+<tr>
+<td>預算上限</td>
+<td style="text-align:right">1</td>
+<td>第 4 筆需要 100 token 的 request</td>
+</tr>
+</tbody>
+</table>
+<p>正常案例的兩筆 request 都被接受。七個案例的結果全部符合事前預測。這代表固定驗證器正確執行這份政策與事件順序，不代表上限數值適合真實產品。</p>
+<h2>Token 上限要同時限制輸入、輸出與總量</h2>
+<p>只限制輸入 token 會留下輸出端風險。攻擊者可以送入很短的提示，卻要求模型產生很長的內容；如果應用程式允許使用者直接指定 <code>max_tokens</code> 或類似參數，就必須在應用程式內重新套用上限，不能把使用者值原樣傳給模型服務。</p>
+<p>只限制輸出 token 也不夠。超長輸入仍會占用解析、token 計數、記憶體與模型 context。應用程式應在組合完整的模型 request 後計算輸入 token，因為 system prompt、檢索內容、對話歷史與工具 schema 都會增加輸入量。超過上限時，系統應拒絕 request，或依任務定義的規則縮減內容，不能直接從任意位置截斷。</p>
+<p>總 token 上限處理兩者的組合。Day 28 的總量限制規定，輸入 token 加最大輸出 token 不得超過 150。因此輸入 80、最大輸出 80 的 request 即使分別低於 100，仍會因總量 160 被拒絕。</p>
+<h2>並行數限制不能用速率限制代替</h2>
+<p>速率限制只計算一段時間內進入多少 request，不知道每筆工作多久完成。五筆各需一秒的 request 與五筆各需一分鐘的 request，在同一個速率計數中可能完全相同，實際占用的模型執行資源與連線卻差很多。</p>
+<p>Day 28 的並行案例連續送入三筆 request，而且不提供完成事件。無限制路徑的最高並行數是 3；完整控制接受前兩筆，第三筆因每個主體最多同時執行 2 筆而被拒絕。這項結果只驗證計數器，沒有測試真實的模型執行資源、佇列等待或取消操作。</p>
+<p>正式系統除了設定並行數上限，也要決定 request 遭拒絕、排隊、逾時或由使用者中斷時如何釋放名額。系統如果只在正常回覆時釋放名額，例外、斷線與執行程序停止都可能讓名額持續被占用。分散式系統還要處理重複完成事件、設定名額的到期時間，並在執行個體失聯後回收名額。</p>
+<h2>429 說明速率限制，但不會替系統決定計數範圍</h2>
+<p><a href="https://www.rfc-editor.org/rfc/rfc6585.html#section-4">RFC 6585 第 4 節</a>定義 <code>429 Too Many Requests</code>，表示使用者在一段期間內送出太多請求。回應可以包含 <code>Retry-After</code>，告訴用戶端多久後再試。</p>
+<p>RFC 6585 沒有規定伺服器如何識別使用者，也沒有規定要依單一資源、整台伺服器或多台伺服器共同計數。LLM 應用程式通常需要同時考慮帳號、API key、租戶、IP、裝置、功能與全系統容量。只依單一 subject ID 計數，攻擊者可能輪替帳號或憑證繞過限制。</p>
+<p>RFC 6585 也提醒，大量攻擊發生時，替每一筆 request 產生 429 回應本身也會消耗資源。API 入口或負載平衡器可能需要提早丟棄連線、限制回應內容，或在流量進入應用程式前執行封鎖。系統不能因為回傳了正確的狀態碼，就認定已經完成 DoS 防護。</p>
+<h2>限制要涵蓋多個身分與資源範圍</h2>
+<p>Day 28 的計數器以虛構 subject ID 為單位，方便單獨驗證控制。正式系統至少要決定以下範圍是否各自需要上限：</p>
+<ul>
+<li>未登入來源：可以依 IP、網段、裝置或其他可用訊號限制，但多人可能透過網路位址轉換（NAT）共用同一個對外 IP，系統不能把 IP 直接視為單一使用者身分。</li>
+<li>已登入使用者：避免單一帳號占滿租戶資源。</li>
+<li>API key 或服務帳號：限制自動化流量與外洩憑證的影響。</li>
+<li>租戶或專案：防止大量帳號共同超過組織預算。</li>
+<li>功能或模型：較昂貴的模型、長 context、影像或工具流程需要更低上限。</li>
+<li>全系統：依模型執行服務、GPU、佇列與供應商配額保留正常流量所需容量。</li>
+</ul>
+<p>身分驗證可以讓計數器有較穩定的主體，但不能單獨阻止濫用。合法帳號可能遭接管，付費使用者也可能消耗超過系統可承受的資源。資源上限必須獨立於功能授權存在。</p>
+<h2>重試、排隊與下游操作也會放大成本</h2>
+<p>用戶端收到 429 或逾時後如果立即重試，可能讓尖峰流量持續更久。服務應提供有上限的重試次數與退避策略，並加入隨機延遲，避免大量用戶端在同一時間再次送出 request。伺服器也要確保重試不會重複扣款、重複執行工具或建立相同外部動作。</p>
+<p>佇列可以暫時吸收短時間的流量尖峰，但沒有長度上限的佇列，只會把阻斷服務問題改成記憶體耗盡與長時間等待。系統要限制佇列長度、每個主體的排隊數與最長等待時間，並在工作已經失去處理價值時取消。模型已開始串流後，使用者中斷連線也不代表供應商一定停止推論；應用程式需要確認取消訊號實際傳到下游。</p>
+<p>Agent 流程還要限制每次 request 可以觸發的模型回合、工具呼叫、檢索次數與重試次數。單一外部 request 即使通過速率限制，也可能在內部展開成數十次昂貴操作。Day 28 沒有工具與 Agent 迴圈，因此不宣稱已測試這種放大。</p>
+<h2>觀測資料要能解釋拒絕與額度釋放</h2>
+<p>Day 27 已建立 request ID、政策版本、決策與原因代碼。Day 28 的控制可以沿用這份事件契約，記錄 <code>request_rate_limit</code>、<code>input_token_limit</code>、<code>output_token_limit</code>、<code>total_token_limit</code>、<code>concurrency_limit</code> 與 <code>budget_limit</code> 等固定原因。</p>
+<p>紀錄不應包含完整 prompt。系統通常只需要能關聯同一主體的內部識別碼、計數範圍、政策版本、估算 token、保留額度、結算額度、拒絕原因與 request ID；這些識別碼仍要依敏感資料管理，不能因為沒有保存姓名就視為匿名資料。團隊還要監控拒絕率、最高並行數、佇列長度、預算使用速度、保留額度長時間未釋放，以及全系統與租戶層級的剩餘容量。</p>
+<p>拒絕數突然增加不一定代表攻擊。新功能、錯誤的重試設定、tokenizer 變更或政策上限過低也會造成相同現象。告警必須連到可以調查 request 類型、政策版本與部署變更的處理流程。</p>
+<h2>實驗限制</h2>
+<p>這次實驗只有七組固定事件、兩條記憶體內路徑與一份政策。每條路徑處理 19 筆 request；每組案例都會清空計數器，並在同一個固定預算期間內執行。實驗沒有測試期間切換、額度結轉、夏令時間或時鐘回撥。</p>
+<p>案例中的 token 是 fixture 宣告的整數。實驗沒有使用 tokenizer，沒有建立 system prompt、對話歷史、檢索內容或工具 schema，也沒有測試串流輸出與實際停止生成。1,132、590、625、495 與 442 都是固定事件的資源單位，不是服務商帳單或真實模型測量值。</p>
+<p>實驗只用單一執行程序更新記憶體計數器，沒有測試多個執行個體同時更新、不可分割的資料更新、分散式鎖、計數器同步延遲、跨區域網路中斷或狀態遺失。完整控制路徑的預算超額為 0，但這項結果不能用來判定相同程式碼在分散式環境中是否會超額保留預算。</p>
+<p>實驗沒有測試共用憑證、帳號輪替、IP 變更、殭屍網路、快取、佇列、模型執行服務、GPU、供應商配額、重試風暴、模型回合、工具呼叫或下游依賴。它也沒有測試限制值對正常流量的誤傷、不同租戶的公平性或緊急容量保留。</p>
+<p>所有 subject ID、request ID 與 token 數量都是版控內的虛構資料。模型呼叫、網路呼叫、外部副作用與真實帳務事件都是 0。原始結果保留在 Lab 中不納入 Git 的目錄；公開證據只包含案例 ID、統計、拒絕原因、雜湊與限制。</p>
+<h2>資源限制必須在昂貴工作開始前執行</h2>
+<p>Day 28 的無限制路徑接受 19／19 筆 request；完整控制路徑接受 12／19，並在模型呼叫前拒絕 7 筆。接受的估算 token 從 1,132 降為 590，最高並行數從 3 限制為 2，固定預算超額從 100 降為 0。七組案例全部符合事前預測。</p>
+<p>這些結果說明六道控制各自處理不同資源。請求速率限制進入頻率，輸入與輸出上限限制單筆大小，總 token 限制兩者組合，並行數限制同時占用，預算則限制一段期間內的累積承諾。系統還要加入多範圍計數、有限佇列、取消、退避、不可分割的額度更新與持續監控，才能把固定實驗轉成正式控制。</p>
+<p>下一篇會進入 AI Red Teaming 實戰，讓 garak 與 PyRIT 對同一個本機應用程式端點執行自動化攻擊測試。Day 28 的速率、並行數與預算限制會保留在端點前方，避免測試工具本身製造不受控制的流量。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/">OWASP LLM10:2025 Unbounded Consumption</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/770.html">MITRE CWE-770：Allocation of Resources Without Limits or Throttling</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc6585.html">RFC 6585：Additional HTTP Status Codes</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-28-dos-token-cost-controls/evidence/day-28">LLM Application Security Lab：Day 28 evidence checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10407954">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 28／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-09-05-observability-audit/">上一篇：觀測性與稽核：看得見才守得住</a> · 下一篇：AI Red Teaming 實戰：自動化攻擊測試</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-05-observability-audit/" class="text-gray-900 hover:text-blue-600 transition">
+      觀測性與稽核：看得見才守得住
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-05T00:00:00.000Z">2026年09月05日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-04-pii-detection-masking/" class="text-gray-900 hover:text-blue-600 transition">
+      敏感資料防護：PII 偵測與遮罩
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-04T00:00:00.000Z">2026年09月04日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用 24 個測試案例比較原文、應用程式規則、Presidio 內建辨識器與分層組合，釐清 PII 偵測、遮罩、授權與紀錄各自負責的邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-03-least-privilege-agent-sandboxing/" class="text-gray-900 hover:text-blue-600 transition">
+      最小權限與 Agent 沙箱化
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-03T00:00:00.000Z">2026年09月03日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用固定案例逐項移除控制，並加入本機模型提案，驗證動作白名單、資源權限、特定動作確認與 Docker 執行期隔離各自守住哪一道 Agent 邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+      
+      <a href="/tags/docker/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #Docker
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=eb139de"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

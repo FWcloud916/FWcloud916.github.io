@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### 濫用與成本攻擊：DoS、Token 榨取與速率限制
+
+- Published: 2026-09-06T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/
+- Tags: ai-security, ai, security
+
+- Description: 用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。
+
+
 ### 觀測性與稽核：看得見才守得住
 
 - Published: 2026-09-05T00:00:00.000Z

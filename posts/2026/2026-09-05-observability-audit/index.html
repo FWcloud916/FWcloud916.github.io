@@ -61,8 +61,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 
   <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
-  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=b29e3d4">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=b29e3d4">
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=eb139de">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=eb139de">
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
@@ -417,7 +417,7 @@
 <!-- series-nav:start -->
 <hr>
 <p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 27／31 篇</strong></p>
-<p><a href="https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/">上一篇：敏感資料防護：PII 偵測與遮罩</a> · 下一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制</p>
+<p><a href="https://imfw.io/posts/2026/2026-09-04-pii-detection-masking/">上一篇：敏感資料防護：PII 偵測與遮罩</a> · <a href="https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/">下一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制</a></p>
 <!-- series-nav:end -->
 
   </div>
@@ -428,6 +428,50 @@
 <section class="mt-12" aria-labelledby="related-posts-title">
   <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
   <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-06-dos-token-cost-controls/" class="text-gray-900 hover:text-blue-600 transition">
+      濫用與成本攻擊：DoS、Token 榨取與速率限制
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-06T00:00:00.000Z">2026年09月06日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
   
     <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
   <h2 class="text-2xl font-bold mb-2">
@@ -523,50 +567,6 @@
 </article>
 
   
-    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-  <h2 class="text-2xl font-bold mb-2">
-    <a href="/posts/2026/2026-09-02-guardrails-in-practice/" class="text-gray-900 hover:text-blue-600 transition">
-      Guardrails 實戰：用框架建立護欄
-    </a>
-  </h2>
-
-  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-    <time datetime="2026-09-02T00:00:00.000Z">2026年09月02日</time>
-    <span>15 分鐘閱讀</span>
-  </div>
-
-  
-  <p class="text-gray-700 mb-4">用 NeMo Guardrails 統一管理輸入、主題與輸出規則，並以固定實驗比較 LLM 語意判定、規則式控制、Prompt Guard 2 與既有應用程式邊界。</p>
-  
-
-  
-  <div class="flex flex-wrap gap-2">
-    
-      
-    
-      
-      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai-security
-      </a>
-      
-    
-      
-      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #ai
-      </a>
-      
-    
-      
-      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-        #security
-      </a>
-      
-    
-  </div>
-  
-</article>
-
-  
   </div>
 </section>
 
@@ -574,7 +574,7 @@
 
 
 
-<script type="module" src="/assets/js/article-lottie.js?v=b29e3d4"></script>
+<script type="module" src="/assets/js/article-lottie.js?v=eb139de"></script>
 
   </main>
 
