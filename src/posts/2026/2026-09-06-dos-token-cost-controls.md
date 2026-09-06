@@ -219,6 +219,6 @@ Day 28 的無限制路徑接受 19／19 筆 request；完整控制路徑接受 1
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 28／31 篇**
 
-[上一篇：觀測性與稽核：看得見才守得住](https://imfw.io/posts/2026/2026-09-05-observability-audit/) · 下一篇：AI Red Teaming 實戰：自動化攻擊測試
+[上一篇：觀測性與稽核：看得見才守得住](https://imfw.io/posts/2026/2026-09-05-observability-audit/) · [下一篇：AI Red Teaming 實戰：自動化攻擊測試](https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/)
 
 <!-- series-nav:end -->
