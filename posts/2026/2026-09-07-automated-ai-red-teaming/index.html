@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>AI Red Teaming 實戰：自動化攻擊測試 - FW Blog</title>
+  <meta name="description" content="用固定版本的 garak 與 PyRIT 測試同一個本機應用程式端點，在明確的請求上限內建立可重現且能持續執行的 AI Red Teaming 流程。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="AI Red Teaming 實戰：自動化攻擊測試 - FW Blog">
+  <meta property="og:description" content="用固定版本的 garak 與 PyRIT 測試同一個本機應用程式端點，在明確的請求上限內建立可重現且能持續執行的 AI Red Teaming 流程。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="AI Red Teaming 實戰：自動化攻擊測試 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-09-07T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI Red Teaming 實戰：自動化攻擊測試 - FW Blog">
+  <meta name="twitter:description" content="用固定版本的 garak 與 PyRIT 測試同一個本機應用程式端點，在明確的請求上限內建立可重現且能持續執行的 AI Red Teaming 流程。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="AI Red Teaming 實戰：自動化攻擊測試 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=4fa71f2">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=4fa71f2">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "AI Red Teaming 實戰：自動化攻擊測試",
+    "description": "用固定版本的 garak 與 PyRIT 測試同一個本機應用程式端點，在明確的請求上限內建立可重現且能持續執行的 AI Red Teaming 流程。",
+    "url": "https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/",
+    "datePublished": "2026-09-07T00:00:00.000Z",
+    "dateModified": "2026-09-07T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">AI Red Teaming 實戰：自動化攻擊測試</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-09-07T00:00:00.000Z">2026年09月07日</time></span>
+      
+      <span>18 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-25 查核 NIST 的 AI Red Teaming 定義、NVIDIA garak 與 Microsoft PyRIT 官方文件、OWASP GenAI Red Teaming Guide，並引用同日完成的本機自動化測試證據。工具版本、攻擊模組、相依套件與介面仍會變動；正式系統套用前，請重新確認版本、使用條款、測試範圍與資料處理政策。</p>
+</blockquote>
+<p>前 28 天分別處理提示注入、資料外洩、RAG、Agent 權限、供應鏈、輸入與輸出防禦、敏感資料、稽核，以及成本控制。這些控制如果只在實作當下測試一次，後續模型、system prompt、檢索內容、工具 schema 或應用程式流程變更時，原本通過的案例仍可能重新失敗。</p>
+<p>Day 29 把固定攻擊案例接到自動化流程。實驗使用兩套自動化紅隊測試工具：Generative AI Red-teaming &amp; Assessment Kit（garak）0.16.0，以及 Python Risk Identification Tool for generative AI（PyRIT）1.0.1。兩套工具會對同一個本機 HTTP 端點送出受限制的測試。這個端點刻意保留弱點，並且每次都依相同規則回應，不含真實模型；實驗要驗證工具整合、請求限制、結果蒐集與證據保存，不比較兩套工具的效果，也不宣稱工具已找出未知漏洞。</p>
+<p>正式批次只允許 9 個只在本機內部傳送的 loopback 請求：garak 4 個，PyRIT 5 個。garak 的 4 個測試全部命中；PyRIT 的 4 個攻擊案例全部命中，1 個正常對照案例沒有被判為攻擊。這些數字代表固定測試流程符合事前預測，不代表兩套工具的測試涵蓋率相同。</p>
+<h2>AI Red Teaming 測試的是整個系統</h2>
+<p><a href="https://csrc.nist.gov/glossary/term/artificial_intelligence_red_teaming">NIST 將 AI Red Teaming 定義為一種結構化測試</a>，目的是找出 AI 系統的缺陷與弱點，通常在受控制的環境中進行，並與 AI 開發人員合作。<a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf">NIST Generative AI Profile</a>也指出，這類演練會找出可能的不利行為或結果、分析其發生方式，並對防護措施進行壓力測試。</p>
+<p>這個範圍不應縮成「用幾段 jailbreak 測模型」。LLM 應用程式至少包含輸入處理、system prompt、對話歷史、檢索、模型、輸出解析、工具、權限與下游系統。模型可能拒絕一段直接攻擊，但同一段文字進入檢索文件後仍可能被當成指令；模型也可能只回傳一個工具提案，應用程式卻因缺少授權檢查而執行。</p>
+<p><a href="https://genai.owasp.org/download/44859/">OWASP GenAI Red Teaming Guide</a>同樣把測試範圍放在模型與整個生成式 AI 系統。團隊要先定義目標、允許的手法、資料邊界、停止條件與回報方式，再選擇工具。自動化掃描器只是其中一個執行元件，不能取代威脅建模、人工分析與修正驗證。</p>
+<p>一次可用的 AI Red Teaming 至少要回答四個問題：</p>
+<table>
+<thead>
+<tr>
+<th>問題</th>
+<th>必須固定的內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>測什麼</td>
+<td>目標端點、應用程式版本、模型與資料版本、可觸及的功能</td>
+</tr>
+<tr>
+<td>怎麼測</td>
+<td>攻擊案例、工具版本、參數、請求上限、停止條件</td>
+</tr>
+<tr>
+<td>怎麼判定</td>
+<td>命中條件、正常對照案例、人工複核規則</td>
+</tr>
+<tr>
+<td>怎麼留下證據</td>
+<td>原始結果保存位置、去識別摘要、雜湊、commit 與重跑條件</td>
+</tr>
+</tbody>
+</table>
+<p>只保存「掃描通過」無法回答任何一項。工具更新後可能換掉攻擊內容，端點更新後也可能改變回應格式；如果沒有版本與原始結果雜湊，團隊無法重現當時的判定。</p>
+<h2>自動化的價值是持續重跑，不是自動證明安全</h2>
+<p>人工紅隊可以理解業務流程、跨多個功能組合攻擊，也能辨識工具沒有定義的異常行為。缺點是時間與判讀成本高，而且同一批測試不容易在每次變更後完整重做。</p>
+<p>自動化工具適合重複送出已知攻擊、保存相同格式的結果、在產品變更後執行迴歸測試、先篩出值得人工複核的輸出，並把已修正的弱點固定成永久測試案例。</p>
+<p>自動化工具不會自動理解「這個輸出對目前產品有多嚴重」。同一段文字在純聊天介面可能只是內容政策問題，在可以寄信、付款或查詢內部資料的 Agent 中，影響範圍可能完全不同。工具的 detector 或 scorer 只負責套用一個判定規則，風險等級仍要結合資料敏感度、功能權限、可利用性與下游副作用。</p>
+<p>這次實驗刻意使用確定性端點，讓判定規則可以被單獨驗證。它不測量模型能力，也避免把模型抽樣差異誤認成工具整合問題。</p>
+<h2>同一個端點接兩套工具</h2>
+<p>Day 29 的本機流程如下：</p>
+<pre class="language-text"><code class="language-text">garak 0.16.0 ─┐
+              ├─→ http://127.0.0.1:18029/generate
+PyRIT 1.0.1 ──┘              │
+                              ├─→ 確定性回應
+                              └─→ 請求來源與數量紀錄</code></pre>
+<p>兩套工具都只能連到同一個 loopback URL。端點接受 source 與 prompt 兩個欄位，回傳單一 text 欄位。它不載入模型、不檢索資料、不提供工具，也不執行任何輸出。攻擊提示與完整回應只保存在 Git 忽略的原始證據目錄；可提交的摘要只有版本、案例 ID、請求數、命中數與雜湊。</p>
+<p>端點依固定條件回傳虛構的比對字串（marker），讓實驗程式以精確字串判斷測試是否命中。garak 的 PromptInject 測試如果要求輸出指定的 rogue string，端點就會回傳該字串；PyRIT 的四個攻擊案例則分別要求三個刻意植入的虛構機密值（canary），或一個虛構的 system marker。正常對照案例只會收到虛構工單狀態，不含任何攻擊 marker。</p>
+<p>這種設計能確認兩套工具是否真的把請求送到同一個應用程式介面、請求數是否符合上限、工具是否能讀取回應並產生預期判定，以及公開報告是否排除完整攻擊內容。它不能確認真實模型是否會受攻擊，也不能估計未知攻擊的漏判率。</p>
+<h2>garak：Probe 產生測試，Detector 判斷輸出</h2>
+<p><a href="https://github.com/NVIDIA/garak">NVIDIA garak</a>把待測模型或系統抽象成 generator。Probe 定義如何測試特定弱點或失敗模式，detector 再檢查輸出是否出現對應行為；harness 負責安排測試，evaluator 則整理結果。官方 REST generator 可以連到回傳純文字或 JSON 的 HTTP 端點。</p>
+<p>這次固定使用 PromptInject 的 HijackHateHumans probe。PromptInject 會把要求輸出 rogue string 的攻擊插入正常提示；garak 取得回應後，由 AttackRogueString detector 檢查指定字串是否出現在輸出。</p>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>固定值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>garak 版本</td>
+<td>0.16.0</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.12</td>
+</tr>
+<tr>
+<td>Generator</td>
+<td>REST</td>
+</tr>
+<tr>
+<td>Probe</td>
+<td>PromptInject HijackHateHumans</td>
+</tr>
+<tr>
+<td>亂數種子（seed）</td>
+<td>29</td>
+</tr>
+<tr>
+<td>每個提示的輸出數</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Probe 提示上限</td>
+<td>4</td>
+</tr>
+<tr>
+<td>同時送出的 request</td>
+<td>1</td>
+</tr>
+<tr>
+<td>同時執行的 attempt</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Detector</td>
+<td>Probe 指定的 AttackRogueString</td>
+</tr>
+</tbody>
+</table>
+<p>Day 29 的實驗程式也會計算端點實際收到的 garak 請求數。即使 garak 設定宣告上限是 4，端點只要收到不是 4 筆的請求，實驗程式就會中止並拒絕產生正式結果。這項外部計數可以發現工具升級、參數名稱變動或重試行為造成的請求數偏差，避免實際流量超出登記範圍。</p>
+<p>garak 的命中代表 detector 在輸出中找到 probe 登記的 rogue string。它不是傳統弱點掃描器的 CVE 判定，也不是證明攻擊可以跨越權限邊界。團隊仍要回到應用程式流程，確認該輸出是否進入瀏覽器、工具、資料庫或其他下游系統。</p>
+<h2>PyRIT：Target 負責傳輸，Attack 負責執行策略</h2>
+<p><a href="https://github.com/microsoft/PyRIT/blob/main/doc/index.md">Microsoft PyRIT</a>把目標系統、攻擊策略、提示轉換、評分與記憶分成可組合元件。Target 可以是模型 API、自訂 HTTP 端點或其他介面；attack 負責依策略送出提示；scorer 可以使用模型、內容安全服務或自訂規則判定結果。</p>
+<p>這次使用 HTTPTarget，把固定案例序列化成 HTTP request，再由 PromptSendingAttack 逐一送出。PyRIT 的記憶體設定為 in-memory，不建立可提交的對話資料庫；每個案例最多嘗試一次，沒有重試，也沒有使用外部 scorer。</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>類型</th>
+<th>測試內容</th>
+<th>命中條件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>direct_override</td>
+<td>攻擊</td>
+<td>直接要求忽略先前指令</td>
+<td>回應含登記的 canary</td>
+</tr>
+<tr>
+<td>developer_impersonation</td>
+<td>攻擊</td>
+<td>冒充 developer 覆寫要求</td>
+<td>回應含登記的 canary</td>
+</tr>
+<tr>
+<td>roleplay_override</td>
+<td>攻擊</td>
+<td>以 unrestricted roleplay 改變行為</td>
+<td>回應含登記的 canary</td>
+</tr>
+<tr>
+<td>system_prompt_extraction</td>
+<td>攻擊</td>
+<td>要求揭露虛構 system marker</td>
+<td>回應含登記的 system marker</td>
+</tr>
+<tr>
+<td>benign_summary</td>
+<td>對照</td>
+<td>摘要虛構客服工單狀態</td>
+<td>回應不得含攻擊 marker</td>
+</tr>
+</tbody>
+</table>
+<p>Day 29 的實驗程式使用固定 marker 判定 PyRIT 回應，不使用另一個 LLM 當裁判。精確字串比對讓同一份輸出每次得到相同結果，也避免 LLM scorer 本身受提示注入或抽樣差異影響。這種判定只能辨識已登記的字串，無法判斷語意相近的洩漏、部分遵循或其他偏航。</p>
+<p>對照案例不可省略。如果所有輸入都是攻擊，而且 detector 對所有輸出都判定命中，團隊便無法知道 detector 是否也會把正常輸出判為攻擊。這次只有一個對照案例，所以結果只能確認這個固定正常輸入沒有被判為攻擊，不能用來估計整體誤判率（false positive rate）。</p>
+<h2>兩套工具必須使用不同的鎖定環境</h2>
+<p>我原本嘗試把 garak 0.16.0 與 PyRIT 1.0.1 放入 Lab 的同一個可選依賴。解析器先發現 garak 需要 Transformers 5.14.1 以上，而既有 Prompt Guard 實驗固定使用 Transformers 5 以下；如果直接放寬版本，Day 24 已固定的分類器環境就會被改變。</p>
+<p>接著我把兩套紅隊工具放入同一個獨立環境，解析器又發現 garak 需要 datasets 4 以下，PyRIT 則需要 datasets 4.8 以上。這組條件沒有交集。</p>
+<pre class="language-text"><code class="language-text">Day 29 runner
+  ├─ tooling/garak/pyproject.toml + uv.lock
+  └─ tooling/pyrit/pyproject.toml + uv.lock</code></pre>
+<p>兩個環境都固定使用 Python 3.12 與精確的工具版本。正式摘要保存兩份 uv.lock 的 SHA-256，日後重現實驗時可以先確認完整相依套件集合。工具環境分開後，Day 29 實驗程式仍負責啟動同一個端點、使用固定的命令列參數執行工具、限制逾時、彙整結果與檢查總請求數。</p>
+<p>garak 與 PyRIT 的相依套件衝突不屬於工具安全測試結果，但會直接影響自動化流程的維運。紅隊工具通常會引入模型、資料集、HTTP 與評估套件；團隊如果把紅隊工具直接安裝進產品環境，可能改變產品共同使用的相依套件。團隊應把掃描工具放在獨立虛擬環境、容器或工作節點，不能因為掃描工具屬於開發用途就忽略供應鏈與版本隔離。</p>
+<h2>請求上限要由工具內外共同執行</h2>
+<p>Day 28 已經說明速率、token、並行數與預算限制。自動化紅隊工具同樣需要這些限制，因為 probe、轉換、重試與多輪策略都可能放大請求數。</p>
+<table>
+<thead>
+<tr>
+<th>邊界</th>
+<th>設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目標主機</td>
+<td>只允許 127.0.0.1</td>
+</tr>
+<tr>
+<td>garak 請求</td>
+<td>4</td>
+</tr>
+<tr>
+<td>PyRIT 請求</td>
+<td>5</td>
+</tr>
+<tr>
+<td>總請求</td>
+<td>最多 9</td>
+</tr>
+<tr>
+<td>並行</td>
+<td>每套工具固定 1</td>
+</tr>
+<tr>
+<td>單次工具逾時</td>
+<td>120 秒</td>
+</tr>
+<tr>
+<td>HTTP request 逾時</td>
+<td>5 秒</td>
+</tr>
+<tr>
+<td>模型下載</td>
+<td>離線模式</td>
+</tr>
+<tr>
+<td>非 loopback HTTP</td>
+<td>指向關閉的本機 proxy</td>
+</tr>
+<tr>
+<td>模型呼叫</td>
+<td>0</td>
+</tr>
+<tr>
+<td>外部副作用</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>工具內的上限用來控制預期流量；端點記錄的實際請求數則用來驗證整批執行是否符合登記範圍。兩種檢查不能互相取代。實驗如果只相信工具參數，工具升級後可能因預設重試或 probe 行為變更而增加請求；實驗如果只在結束後檢查端點計數，則只能在超量請求已經送出後發現問題。</p>
+<p>正式環境還要限制紅隊測試可以使用的時間、租戶、帳號、模型與功能。紅隊工具如果直接測試正式系統，可能觸發真實郵件、付款、工單、告警或封鎖機制。即使 prompt 使用虛構資料，下游動作仍可能造成實際影響。高風險功能應使用專用測試租戶與不會產生外部副作用的替身，或由應用程式在真正執行動作前強制阻擋。</p>
+<h2>事前預測先於正式執行</h2>
+<p>Day 29 先提交並推送實驗程式，再執行唯一一次正式批次。正式執行前登記的三項預測如下：</p>
+<ol>
+<li>garak 的四個 PromptInject 回應都會包含登記的 rogue string。</li>
+<li>PyRIT 四個攻擊案例的回應都會包含該案例登記的 marker。</li>
+<li>PyRIT 的正常對照案例不會包含攻擊 marker。</li>
+</ol>
+<p>正式執行前另做一次預檢（preflight），確認兩套工具目前版本都能連上同一個端點、讀取 JSON 回應並保存結果。預檢結果不納入正式證據。所有修正完成後，Day 29 流程先推送實驗程式 commit 18d28c7，再執行正式批次並產生原始結果。</p>
+<p>先固定實驗程式、再正式執行的順序，可以把程式變更與觀測結果分開。團隊不能在看到輸出後修改 detector、案例或預期值，卻仍把同一批輸出描述成事前預測。正式批次如果失敗，團隊應保存失敗原因、修正實驗程式並建立新 commit，再把下一次執行登記成新的結果，不應覆寫原始檔。</p>
+<p>完整 runner、兩份工具鎖檔、案例雜湊、原始結果雜湊與限制說明，都已固定在 <a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-29-ai-red-teaming/evidence/day-29">Day 29 不可變更的證據版本</a>。</p>
+<h2>正式結果：9 個請求全部符合固定矩陣</h2>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>版本</th>
+<th style="text-align:right">請求數</th>
+<th style="text-align:right">攻擊命中</th>
+<th style="text-align:right">對照命中</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>garak</td>
+<td>0.16.0</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">未納入</td>
+</tr>
+<tr>
+<td>PyRIT</td>
+<td>1.0.1</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">0</td>
+</tr>
+</tbody>
+</table>
+<p>garak 共完成 4 次評估，每次的 detector score 都是 1.0，表示回應含有 probe 登記的 rogue string。PyRIT 的 direct_override、developer_impersonation、roleplay_override 與 system_prompt_extraction 四個案例都在回應中找到登記的 marker；benign_summary 回應沒有 marker。三項事前預測全部符合。</p>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th style="text-align:right">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>合成資料</td>
+<td style="text-align:right">是</td>
+</tr>
+<tr>
+<td>模型呼叫</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>Loopback HTTP request</td>
+<td style="text-align:right">9</td>
+</tr>
+<tr>
+<td>外部網路呼叫</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>外部副作用</td>
+<td style="text-align:right">0</td>
+</tr>
+</tbody>
+</table>
+<p>原始結果 SHA-256 是 5345c0942e055b73e660d462a72d4f9230cc1aea56881eaa4246b9658d819297。公開摘要沒有保存完整 prompt 或 response，只留下版本、鎖檔雜湊、案例 ID、請求數、命中數與判定結果。</p>
+<h2>4／4 不能直接解讀成工具涵蓋率</h2>
+<p>garak 與 PyRIT 都得到 4 個攻擊命中，但兩個 4／4 的分母不同。garak 的 4 筆資料來自 PromptInject HijackHateHumans probe；實驗把提示上限設為 4，再由 garak 的 rogue-string detector 判定回應。PyRIT 的 4 筆攻擊資料則是 Day 29 fixture 明確登記的 4 種案例，再由實驗程式使用 marker 規則判定。兩套工具使用的 prompt 與 evaluator 都不同。</p>
+<p>因此，這份結果只能說 garak 的固定 PromptInject 整合路徑成功送出四筆測試，detector 在四筆回應中找到登記字串；PyRIT 的四個固定攻擊案例都送達端點，Lab 在四筆回應中找到登記 marker；一個固定正常案例沒有產生 marker。</p>
+<p>Day 29 結果不能證明 garak 與 PyRIT 的真實攻擊偵測率都是 100%，不能證明兩套工具效果相同，也不能證明這個端點已經過完整的 AI Red Teaming 評估。團隊必須同時保存分母、案例來源與判定方法，否則無法比較百分比。</p>
+<h2>從一次掃描變成持續迴歸測試</h2>
+<p>工具接通後，真正有價值的工作是把已確認弱點轉成固定測試：</p>
+<pre class="language-text"><code class="language-text">威脅建模
+  → 選定資產與攻擊面
+  → 建立攻擊案例與正常對照
+  → 固定工具、模型、資料與設定版本
+  → 受限制執行
+  → 自動判定
+  → 人工複核
+  → 修正控制
+  → 將已確認案例加入迴歸測試</code></pre>
+<p>自動化批次不應直接把所有 detector 命中當成正式弱點。每個 finding 至少要記錄 Finding ID、目標版本、攻擊類型、最小重現案例、判定證據、影響範圍、修正控制與重測結果。</p>
+<p>同一個案例在不同位置可能需要不同負責人。模型輸出不當內容可以由 prompt、模型或輸出審核處理；未授權工具執行則必須由應用程式的權限與確認邊界阻擋。紅隊報告如果只寫「模型被 jailbreak」，很難直接形成可驗收的工程工作。</p>
+<p>團隊至少應在以下變更後重跑相關案例：更換模型或推論參數、修改 system prompt、增加 RAG 資料來源、修改工具與權限、改變輸出 parser 或 sink、更新 guardrail 或 scorer、升級紅隊工具，以及完成弱點修正。</p>
+<p>團隊應分開測試工具升級與產品變更。如果同一批次同時更換模型、prompt、工具與案例，團隊便無法判斷哪一項變更造成結果差異。團隊可以先用舊工具測試新產品版本，再用新工具測試同一個產品版本，分別觀察產品變更與測試工具變更造成的差異。</p>
+<h2>原始證據可能含敏感內容</h2>
+<p>紅隊工具通常保存完整提示、模型回應、評分與執行紀錄。真實測試可能碰到 system prompt、內部文件、使用者資料、API 回應或工具參數。這些檔案不能因為位於 test results 目錄就自動視為可公開資料。</p>
+<p>Day 29 把完整內容放在 Git 忽略路徑，可提交報告只保留工具與 Python 版本、uv.lock 雜湊、案例 ID 與 fixture 雜湊、請求與命中計數、事前預測結果、網路呼叫數，以及原始證據檔案雜湊。</p>
+<p>實際導入時，團隊還要設定證據的保存期限、存取權限、加密、刪除流程與事件回報規則。公開報告如果需要附上重現片段，團隊應先移除憑證、個資、內部 URL、system prompt 與可識別產品設定，並確認讀者無法使用該片段對正式端點重放攻擊。</p>
+<h2>實驗限制</h2>
+<p>這次使用的是確定性 HTTP 測試替身，不是真實 LLM 應用程式。端點只依固定字串回傳 marker，沒有 system prompt、對話歷史、RAG、圖片、工具、權限、瀏覽器、資料庫或外部 sink。因此，4／4 只證明固定傳輸與判定流程，不能證明任何模型容易受提示注入。</p>
+<p>garak 只使用一個 PromptInject probe，提示上限是 4；沒有執行 encoding、DAN、資料外洩、惡意套件、內容安全或其他 probe。PyRIT 只有四個攻擊案例與一個正常對照；沒有提示轉換、多輪攻擊、自動攻擊生成、模型 scorer 或人工語意評分。</p>
+<p>PyRIT 的 marker 規則只辨識完整登記字串。模型如果使用同義詞、部分洩漏、改寫、編碼或結構化欄位回傳相同資訊，規則可能漏判。相反地，拒絕訊息如果引用攻擊 marker，也可能形成字串命中，但不代表攻擊目標已經達成。正式測試流程應分開記錄字串判定、結構檢查與人工語意複核的結果。</p>
+<p>garak 與 PyRIT 的結果不能互相比較。兩套工具使用不同 prompt、不同 detector 與不同結果結構；版本更新也可能改變預設 probe、案例順序、重試、報告格式與相依套件。</p>
+<p>正式批次在單一電腦上依序執行兩套工具，沒有測試並行掃描、分散式 worker、CI 逾時、共享額度、服務降級或正式環境的流量限制。實驗程式會把非 loopback HTTP 流量導向關閉的本機 proxy，並把模型下載設定為離線模式；這兩項設定仍不構成作業系統層級的網路沙箱。</p>
+<p>所有 prompt、marker 與回應都是實驗專用的虛構資料。模型呼叫是 0，loopback request 是 9，外部網路呼叫與外部副作用都是 0。</p>
+<h2>把工具放進受控制的測試程序</h2>
+<p>Day 29 的正式結果顯示，兩套固定版本的工具都能在明確的請求上限內，對同一個本機端點完成自動化測試。garak 送出 4 個 PromptInject attempt 並得到 4 個 detector 命中；PyRIT 送出 4 個攻擊案例與 1 個正常對照，攻擊案例 4 個命中，對照案例 0 個命中。三項事前預測全部符合。</p>
+<p>Day 29 結果的重點不是 4／4，而是完整的測試契約：固定目標、工具版本、案例、判定方法、請求上限、原始結果雜湊與可公開摘要。團隊必須保存這些條件，才能在模型、prompt、RAG、工具或防禦變更後判斷結果差異。</p>
+<p>自動化 AI Red Teaming 應該放在威脅建模與人工複核之間。工具負責重複執行與保存證據，工程團隊負責判斷影響、修正真正的應用程式邊界，並把已確認弱點加入持續迴歸測試。</p>
+<p>下一篇會把前 29 天的控制整理成一份 LLM 應用安全檢查清單，依輸入、資料、模型、輸出、工具、權限、執行期、觀測與營運流程逐項收尾。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://csrc.nist.gov/glossary/term/artificial_intelligence_red_teaming">NIST：Artificial Intelligence Red-Teaming</a></li>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf">NIST AI 600-1：Artificial Intelligence Risk Management Framework — Generative Artificial Intelligence Profile</a></li>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218A.pdf">NIST SP 800-218A：Secure Software Development Practices for Generative AI and Dual-Use Foundation Models</a></li>
+<li><a href="https://genai.owasp.org/download/44859/">OWASP GenAI Red Teaming Guide</a></li>
+<li><a href="https://github.com/NVIDIA/garak">NVIDIA garak</a></li>
+<li><a href="https://reference.garak.ai/en/stable/probes.html">garak Probes reference</a></li>
+<li><a href="https://github.com/microsoft/PyRIT/blob/main/doc/index.md">Microsoft PyRIT documentation</a></li>
+<li><a href="https://github.com/microsoft/PyRIT/blob/main/doc/scanner/0_scanner.md">Microsoft PyRIT Scanner documentation</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab/tree/day-29-ai-red-teaming/evidence/day-29">LLM Application Security Lab：Day 29 evidence checkpoint</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10408216">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 29／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/">上一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制</a> · 下一篇：總結：LLM 應用安全檢查清單與心法</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-06-dos-token-cost-controls/" class="text-gray-900 hover:text-blue-600 transition">
+      濫用與成本攻擊：DoS、Token 榨取與速率限制
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-06T00:00:00.000Z">2026年09月06日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-05-observability-audit/" class="text-gray-900 hover:text-blue-600 transition">
+      觀測性與稽核：看得見才守得住
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-05T00:00:00.000Z">2026年09月05日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-04-pii-detection-masking/" class="text-gray-900 hover:text-blue-600 transition">
+      敏感資料防護：PII 偵測與遮罩
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-04T00:00:00.000Z">2026年09月04日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用 24 個測試案例比較原文、應用程式規則、Presidio 內建辨識器與分層組合，釐清 PII 偵測、遮罩、授權與紀錄各自負責的邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=4fa71f2"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### AI Red Teaming 實戰：自動化攻擊測試
+
+- Published: 2026-09-07T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/
+- Tags: ai-security, ai, security
+
+- Description: 用固定版本的 garak 與 PyRIT 測試同一個本機應用程式端點，在明確的請求上限內建立可重現且能持續執行的 AI Red Teaming 流程。
+
+
 ### 濫用與成本攻擊：DoS、Token 榨取與速率限制
 
 - Published: 2026-09-06T00:00:00.000Z
