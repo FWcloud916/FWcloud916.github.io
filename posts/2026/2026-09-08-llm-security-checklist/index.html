@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>總結：LLM 應用安全檢查清單與心法 - FW Blog</title>
+  <meta name="description" content="把 LLM 應用的輸入、資料、模型、輸出、工具、權限、執行期與營運控制，整理成可以指派負責人、保存證據並持續重驗的上線檢查清單。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-09-08-llm-security-checklist/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="總結：LLM 應用安全檢查清單與心法 - FW Blog">
+  <meta property="og:description" content="把 LLM 應用的輸入、資料、模型、輸出、工具、權限、執行期與營運控制，整理成可以指派負責人、保存證據並持續重驗的上線檢查清單。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-09-08-llm-security-checklist/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="總結：LLM 應用安全檢查清單與心法 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-09-08T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="總結：LLM 應用安全檢查清單與心法 - FW Blog">
+  <meta name="twitter:description" content="把 LLM 應用的輸入、資料、模型、輸出、工具、權限、執行期與營運控制，整理成可以指派負責人、保存證據並持續重驗的上線檢查清單。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="總結：LLM 應用安全檢查清單與心法 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=2b2f177">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=2b2f177">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "總結：LLM 應用安全檢查清單與心法",
+    "description": "把 LLM 應用的輸入、資料、模型、輸出、工具、權限、執行期與營運控制，整理成可以指派負責人、保存證據並持續重驗的上線檢查清單。",
+    "url": "https://imfw.io/posts/2026/2026-09-08-llm-security-checklist/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-09-08-llm-security-checklist/",
+    "datePublished": "2026-09-08T00:00:00.000Z",
+    "dateModified": "2026-09-08T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">總結：LLM 應用安全檢查清單與心法</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-09-08T00:00:00.000Z">2026年09月08日</time></span>
+      
+      <span>17 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-25 查核 NIST AI Risk Management Framework、NIST AI 600-1、NIST SP 800-218A、OWASP GenAI LLM Top 10 2026 與 OWASP Artificial Intelligence Security Verification Standard 1.0。NIST AI RMF 1.0 正在修訂；標準、威脅分類與建議控制仍會變動，正式採用前請重新確認最新版本與適用要求。</p>
+</blockquote>
+<p>LLM 應用安全檢查清單如果只列「有使用 guardrail（護欄）」、「有做權限控管」與「有保存紀錄」，每一項都可能勾選完成，但團隊仍然無法回答三個問題：guardrail 漏判後由哪個元件阻擋、權限判定依據是什麼，以及紀錄是否足以追查一次未授權動作。</p>
+<p>前 29 篇從模型行為的不確定性出發，依序測試提示注入、RAG、Agent、工具、供應鏈、輸入與輸出防禦、敏感資料、稽核、成本控制與自動化紅隊。這些測試最後形成一個明確判斷：模型可以參與判斷與提案，但資料存取、授權、執行與外部副作用必須由可驗證的系統控制決定。</p>
+<p>因此，這份清單不只問「控制是否存在」。每個完成項目都要回答五件事：</p>
+<table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>必須回答的問題</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>資產與風險</td>
+<td>要保護什麼？控制失敗會造成什麼影響？</td>
+</tr>
+<tr>
+<td>負責人</td>
+<td>哪個團隊或元件負責執行與維護？</td>
+</tr>
+<tr>
+<td>強制位置</td>
+<td>控制在哪個信任邊界阻擋請求或動作？</td>
+</tr>
+<tr>
+<td>驗證證據</td>
+<td>哪份測試、設定、稽核事件或版本紀錄能證明控制有效？</td>
+</tr>
+<tr>
+<td>重驗時機</td>
+<td>哪些模型、資料、prompt、工具或程式變更後必須重跑？</td>
+</tr>
+</tbody>
+</table>
+<p>缺少其中一欄時，項目只能標成「待確認」，不能標成完成。</p>
+<h2>先決定驗證深度</h2>
+<p><a href="https://owasp.org/www-project-artificial-intelligence-security-verification-standard-aisvs-docs/">OWASP Artificial Intelligence Security Verification Standard（AISVS）1.0</a>把可測試的 AI 安全要求分成三種驗證層級。Level 1 是所有 AI 應用的基本控制；Level 2 適合正式環境、面向客戶、處理個資或做出重要決定的系統；Level 3 用於關鍵基礎設施、安全關鍵與高保證環境。OWASP 建議多數正式系統至少以 Level 2 為目標。</p>
+<p>本篇清單不是 AISVS 的翻譯，也不是通過 AISVS 的證明。團隊應先依使用情境決定驗證深度，再把本篇當成架構與工程交接用的起點。正式稽核仍要回到 AISVS 的完整要求、組織政策、契約與所在地法規。</p>
+<p>先回答下列四個問題：</p>
+<ol>
+<li>系統會接觸哪些個資、機密、租戶資料或受管制內容？</li>
+<li>模型輸出可以到達哪些功能、資源與外部系統？</li>
+<li>錯誤動作能否撤銷？最大影響範圍是多少？</li>
+<li>系統是內部輔助工具、對外服務，還是能自主執行高風險動作的 Agent？</li>
+</ol>
+<p>這四個答案會決定後續控制的嚴格程度。唯讀公開資料的摘要器與能寄信、付款或修改正式資料的 Agent，不應使用同一份最低要求。</p>
+<h2>一、範圍、資產與信任邊界</h2>
+<ul>
+<li>[ ] 已列出使用者、管理者、模型供應商、資料來源、RAG、工具、記憶、輸出目的地與外部服務。</li>
+<li>[ ] 已標出每個不可信輸入入口，包括使用者 prompt、網頁、文件、圖片、語音、檢索內容、工具回傳與上游模型輸出。</li>
+<li>[ ] 已畫出資料流與信任邊界，並把 request、模型 response、log、trace、debug evidence 與公開報告視為不同資料路徑。</li>
+<li>[ ] 已為每項資產指定機密性、完整性與可用性需求，以及事故負責人。</li>
+<li>[ ] 已定義模型允許影響的欄位；應用程式一律忽略模型輸出的身分、權限、政策與核准結果。</li>
+<li>[ ] 已記錄部署環境、租戶邊界、外部依賴、合法測試範圍與停止條件。</li>
+</ul>
+<p><a href="https://www.nist.gov/itl/ai-risk-management-framework">NIST AI RMF</a>要求組織把風險管理放進 AI 系統的設計、開發、使用與評估，而不是只在上線前做一次掃描。威脅建模的作用是把抽象風險放回實際系統：同一段模型輸出在終端機只是文字；HTML 渲染器、shell、SQL、郵件或付款工具會把文字轉成顯示內容、命令、查詢或外部動作，所以每個目的地（sink）都需要不同的安全控制。</p>
+<h2>二、輸入與模型可見內容</h2>
+<ul>
+<li>[ ] 已限制輸入類型、長度、來源數、總內容量與可接受的檔案格式。</li>
+<li>[ ] 解析器（parser）與擷取器（extractor）採允許清單，只把必要欄位送進後續流程；HTML 註解、文件中繼資料（metadata）、檔名與隱藏內容都有明確處理政策。</li>
+<li>[ ] 每份外部內容都保留來源紀錄（provenance），包含控制者、租戶、擷取時間、內容雜湊與可信用途；格式轉換後仍保留這些資料。</li>
+<li>[ ] System prompt、developer 訊息、RAG 區塊與 tool schema 不被當成保密或授權邊界。</li>
+<li>[ ] 模型可見內容只包含完成當前任務所需的資料，不把憑證、完整資料集或不相關機密交給模型。</li>
+<li>[ ] 輸入分類器與 guardrail 的誤判、漏判、支援語言、版本與判定門檻都有測試；分類器失敗時仍有後續確定性控制。</li>
+</ul>
+<p>隔離、標記與 prompt 強化可以降低模型失守機率，但自然語言標籤不會因此成為解析器強制執行的安全邊界。應用程式仍要決定哪些資料能進入模型請求（request），以及模型輸出能影響哪些欄位。</p>
+<h2>三、RAG、資料與記憶</h2>
+<ul>
+<li>[ ] 資料進入知識庫前會驗證來源、擁有者、授權、內容類型、審核狀態與完整性。</li>
+<li>[ ] 檢索前先依可信身分與租戶縮小允許檢索的資料集合（eligible corpus），再做相似度排名；向量相似度不參與授權。</li>
+<li>[ ] 切塊（chunk）、embedding、索引與原始文件都能追溯版本，並能找出哪個片段進入哪次 request。</li>
+<li>[ ] 文件撤銷、權限變更或內容刪除後，索引重建與快取失效有明確時限及驗證方式。</li>
+<li>[ ] 使用者與 Agent 的記憶有寫入條件、來源標記、租戶隔離、保存期限、刪除與重建流程。</li>
+<li>[ ] 已用惡意文件、跨租戶資料、同租戶污染、過期索引與正常對照案例測試檢索路徑。</li>
+</ul>
+<p>先做權限過濾，再做相似度排名。Day 17 的固定實驗沒有啟用租戶過濾時，其他租戶的文件會進入 Top-1；加入只允許測試租戶 Alpha 的條件後，該文件連候選集合都進不去。同屬 Alpha 的污染文件仍能通過租戶過濾並壓過乾淨政策，所以來源治理與檢索授權不能互相取代。</p>
+<h2>四、模型與供應鏈</h2>
+<ul>
+<li>[ ] 模型使用不可變更的版本或完整 digest（內容雜湊識別值），不只寫 latest 或模型家族名稱。</li>
+<li>[ ] 推論服務、system prompt、工具 schema、推論參數與重要範本都有版本，能對應到每次測試與正式部署。</li>
+<li>[ ] 套件鎖檔記錄套件檔案的雜湊值；模型、資料、容器、MCP Server 與外掛都有來源、授權、完整性與更新政策。</li>
+<li>[ ] 外部元件接入前會檢查可執行格式、安裝行為、所需權限、網路目的地、資料處理方式與停止方法。</li>
+<li>[ ] 更新會先在隔離環境比較舊版與新版；模型變更與測試工具變更分開驗證。</li>
+<li>[ ] 已準備回復上一個模型、prompt、索引、工具與應用程式版本的程序。</li>
+</ul>
+<p><a href="https://www.nist.gov/news-events/news/2024/07/secure-software-development-practices-generative-ai-and-dual-use-foundation">NIST SP 800-218A</a>補充既有 Secure Software Development Framework，涵蓋 AI 模型生產者、使用模型的 AI 系統生產者與採購者，並要求與 SP 800-218 一起使用。模型不是唯一供應鏈元件；載入模型的程式、資料集、套件、容器、外掛與自動化測試工具都可能改變執行邊界。</p>
+<h2>五、模型輸出與下游處理</h2>
+<ul>
+<li>[ ] 模型輸出先通過封閉 schema（結構規格）、型別、長度、列舉值與額外欄位檢查，解析失敗時停止。</li>
+<li>[ ] 內容政策、事實檢查與業務規則各自留下判定，不用單一安全分數代替所有問題。</li>
+<li>[ ] 應用程式會依每個輸出目的地套用轉義、編碼、允許清單或安全 API；HTML、SQL、shell、URL 與 Markdown 不共用一套處理。</li>
+<li>[ ] 模型產生的命令、程式碼、路徑、URL 與查詢不會直接執行；應用程式若要執行必要操作，會把具名動作對應到已納入版本控制的安全實作。</li>
+<li>[ ] 模型拒絕、分類器命中或比對字串（marker）出現不會直接等同攻擊成功；判定會檢查資料是否跨界、動作是否執行與 sink 是否產生影響。</li>
+<li>[ ] 正常輸出、邊界輸出、惡意輸出、解析錯誤與下游失敗都有測試。</li>
+</ul>
+<p>Day 23 的配對實驗把模型產生的同一份待處理輸出，分別送進未轉義與防禦路徑。攻擊組共產生 5 份輸出，其中 4 份符合 JSON 格式，並在未轉義路徑被解析成 HTML 元素（active HTML）；防禦路徑處理 5 份輸出後，都沒有形成 active HTML。這個結果只證明固定輸出在兩條渲染路徑的差異，但已足以說明輸出目的地的安全控制不能交給模型自行保證。</p>
+<h2>六、Agent、工具、權限與確認</h2>
+<ul>
+<li>[ ] 模型只能提出動作（action）與必要參數；應用程式不會把模型輸出的 user ID、tenant、role、policy、approved 或 allow 欄位當成授權依據。</li>
+<li>[ ] 後端從已驗證的 session、token 或服務身分取得可信主體（subject），並針對系統認定的正式資源（canonical resource）逐次重新授權。</li>
+<li>[ ] 工具使用封閉 schema，拒絕額外欄位；參數通過型別檢查後仍要接受目的地、資源與業務政策驗證。</li>
+<li>[ ] Agent 只取得任務需要的工具、資料與時間範圍，讀寫權限分開，權限可以到期與撤銷。</li>
+<li>[ ] 高風險動作需要特定動作確認；確認綁定完整動作內容（action envelope），內容變更、逾時或撤銷後不得沿用。</li>
+<li>[ ] 批次動作會逐項顯示差異與影響；不可逆或高價值動作不使用一次籠統確認全部放行。</li>
+<li>[ ] 應用程式會在受限制的環境中執行工作，並限制執行身分、Linux capabilities（權限能力）、檔案系統、網路、程序、CPU、記憶體與逾時。</li>
+<li>[ ] 工具回傳保留為不可信資料，不能改寫 system policy、授權結果或下一個工具動作。</li>
+</ul>
+<p>Day 25 的固定矩陣顯示，功能範圍、資源權限、特定動作確認與執行期沙箱各自處理不同失敗點。Day 25 另用模型產生 20 份提案，全部都符合 JSON 格式；其中 9 項提案涉及私密讀取或報告寫入，並在容器建立前被資源與確認政策擋下。有效格式只代表資料能解析，不代表動作已獲授權。</p>
+<h2>七、敏感資料與隱私</h2>
+<ul>
+<li>[ ] 每條資料流都套用資料最小化，只收集、傳送與保存完成任務所需的欄位。</li>
+<li>[ ] Prompt、response、embedding、快取、記憶、log、trace、除錯檔與紅隊證據分別定義敏感資料政策。</li>
+<li>[ ] 個人可識別資訊（PII）與機密偵測使用符合資料類型、語言與產品格式的規則；通用工具之外另有產品專用辨識規則。</li>
+<li>[ ] 遮罩後會驗證必要資訊仍可使用，也會測試誤判、漏判、同義改寫、分段與結構化欄位。</li>
+<li>[ ] 租戶隔離在資料庫、檢索、快取、物件儲存、記憶與備份層都能獨立驗證。</li>
+<li>[ ] 保存期限、存取權限、加密、刪除、匯出與事件通知符合組織政策與適用法規。</li>
+</ul>
+<p>Day 26 使用 24 個英文虛構案例。固定規則與分層路徑都在 16 個已標記的敏感資料片段中辨識出 12 個，召回率（recall）是 0.75；四個漏判都是虛構人名。四條測試路徑都沒有改動 12 個正常對照案例，但這份小型資料集不能證明正式流量也不會被誤判。團隊必須用自己的語言、資料格式與誤判成本重新評估 PII 控制。</p>
+<h2>八、可用性、成本與濫用</h2>
+<ul>
+<li>[ ] 已限制每個可信主體、租戶、來源與整體服務的請求速率，並定義可接受的短時間突增量。</li>
+<li>[ ] 已限制單次輸入 token、單次輸出 token、期間總 token、對話輪數與 Agent 最大步數。</li>
+<li>[ ] 已限制並行工作、佇列深度、工具重試、遞迴與總逾時。</li>
+<li>[ ] 已設定每日或每期預算、告警門檻、硬上限與降級模式。</li>
+<li>[ ] 模型、檢索、工具與外部服務失敗時有預設阻擋（fail-closed）、備援、斷路器（circuit breaker）或人工接手策略。</li>
+<li>[ ] 壓力測試會驗證限制實際生效，不只檢查設定檔存在。</li>
+</ul>
+<p>請求速率、token、並行數與預算是四種不同限制。Day 28 的固定事件中，完整控制路徑拒絕 7 筆請求；拒絕原因分布在請求速率、輸入 token、輸出 token、總 token、並行數與預算。只加一個 API 速率限制無法處理其他資源耗用。</p>
+<h2>九、觀測、稽核與事件處理</h2>
+<ul>
+<li>[ ] 每次互動都有可追蹤的 ID，能串起輸入、檢索、模型、政策、工具、確認與最終 sink。</li>
+<li>[ ] 稽核事件記錄可信主體參照、動作、正式資源、政策版本、判定與原因代碼，不保存不必要的原文與憑證。</li>
+<li>[ ] 紀錄（log）與追蹤資料（trace）使用欄位允許清單；完整 prompt、response、PII、secret 與 session token 預設不進入遙測。</li>
+<li>[ ] 稽核紀錄有完整性、順序與外部檢查點；保存系統本身有最小權限、加密、留存與刪除政策。</li>
+<li>[ ] 告警對應可執行的處理程序，包含停用工具、撤銷權限、切換模型、隔離租戶與保存證據。</li>
+<li>[ ] 事件結束後會建立最小重現案例、修正控制、回歸測試與追蹤期限。</li>
+</ul>
+<p>Day 27 的固定測試登記了 5 種稽核事件竄改；加入終點檢查點後，5 種竄改全部被偵測。測試如果不提供檢查點，刪除尾端事件後，剩餘紀錄仍能形成內部一致且驗證有效的事件鏈。雜湊串接只能證明已保存資料的內部關係，外部檢查點才能協助發現尾端截斷。</p>
+<h2>十、測試、發布與持續重驗</h2>
+<ul>
+<li>[ ] 上線前測試包含正常對照、已知攻擊、邊界輸入、失敗路徑與人工語意複核。</li>
+<li>[ ] 測試固定應用程式、模型、資料、prompt、工具、參數、案例、判定方法與請求上限。</li>
+<li>[ ] 原始證據與可公開摘要分開保存；摘要包含版本、案例 ID、分母、結果、雜湊與限制。</li>
+<li>[ ] 自動判定器（detector 或 scorer）的命中會由人員判斷實際影響，不直接建立「已被入侵」結論。</li>
+<li>[ ] 模型、資料、索引、system prompt、parser、renderer、工具、權限、guardrail 或測試工具變更後會重跑相關案例。</li>
+<li>[ ] 已修正的弱點會加入持續迴歸測試，並保留修正前後的結果。</li>
+<li>[ ] 正式紅隊測試使用專用租戶、虛構資料、受限帳號與停止條件，高風險工具不會觸發真實副作用。</li>
+<li>[ ] 發布決策有具名核准者、未解風險、到期日、回復計畫與上線後觀測項目。</li>
+</ul>
+<p>Day 29 的 garak 與 PyRIT 實驗顯示，兩套固定工具能在 9 個只於本機內部傳送的 loopback 請求上限內完成既定流程。這次實驗沒有測試真實模型，也沒有證明工具具備完整涵蓋率。自動化紅隊的主要價值是持續重跑已知案例與保存一致證據，不是替產品簽發安全證明。</p>
+<h2>把勾選結果變成證據紀錄</h2>
+<p>團隊可以為每項控制建立一筆最小紀錄：</p>
+<table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>範例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>控制編號</td>
+<td>OUT-03</td>
+</tr>
+<tr>
+<td>資產／風險</td>
+<td>模型輸出進入客服後台 HTML，可能被瀏覽器當成 HTML 元素處理，而不是單純顯示文字</td>
+</tr>
+<tr>
+<td>負責人</td>
+<td>Web 應用程式團隊</td>
+</tr>
+<tr>
+<td>強制位置</td>
+<td>渲染器呼叫前</td>
+</tr>
+<tr>
+<td>實作</td>
+<td>封閉 JSON schema、純文字 sink、依輸出情境轉義</td>
+</tr>
+<tr>
+<td>測試</td>
+<td>正常文字、HTML tag、URL、Markdown、解析失敗與 Unicode 字元邊界案例</td>
+</tr>
+<tr>
+<td>證據</td>
+<td>測試報告雜湊、應用程式 commit、renderer 版本</td>
+</tr>
+<tr>
+<td>未涵蓋</td>
+<td>真實瀏覽器、內容安全政策（CSP）與第三方介面元件（widget）</td>
+</tr>
+<tr>
+<td>重驗條件</td>
+<td>渲染器、schema、Markdown 套件或輸出格式變更</td>
+</tr>
+<tr>
+<td>狀態</td>
+<td>通過／失敗／待確認／接受風險</td>
+</tr>
+</tbody>
+</table>
+<p>狀態欄不能只寫「通過」。團隊還要保存測試分母、判定方式與未涵蓋範圍，否則下一次模型或程式變更後無法比較。</p>
+<h2>六項上線阻擋條件</h2>
+<p>下列任一條成立時，系統不應直接進入正式環境：</p>
+<ol>
+<li>團隊無法畫出資料流，或無法說明模型輸出最後會到達哪些功能與系統。</li>
+<li>模型輸出可以決定身分、權限、核准或直接執行高風險動作。</li>
+<li>System prompt 或隱藏內容（hidden context）保存憑證，或被當成唯一授權邊界。</li>
+<li>RAG 只依相似度取資料，沒有先做可信身分、租戶與資源授權。</li>
+<li>模型輸出直接進入 HTML、shell、SQL、URL 或工具 sink，沒有目的地專用驗證。</li>
+<li>團隊無法辨認正式環境使用的模型、資料、prompt、工具與政策版本，也沒有回復與事件處理程序。</li>
+</ol>
+<p>風險接受不是把勾選框改成完成。風險接受要寫明負責人、理由、補償控制、有效期限與重新評估條件。</p>
+<h2>最後留下三個工程原則</h2>
+<p>第一，模型不擁有授權。模型可以提出讀取、寫入或工具動作，應用程式必須使用可信身分、canonical resource 與後端政策重新決定。</p>
+<p>第二，每個邊界只回答一個問題。Schema 驗證格式，PII 偵測器尋找敏感資料，guardrail 判斷內容，後端授權元件決定權限，渲染器保護輸出目的地。任何一項通過都不會讓資料變成全面可信。</p>
+<p>第三，安全是持續保存證據的流程。模型、資料、prompt、工具與攻擊手法都會改變；團隊必須知道哪個控制在何處生效、哪份測試證明有效，以及什麼變更會使證據失效。</p>
+<p><a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/">OWASP GenAI LLM Top 10 2026</a>提供威脅地圖，AISVS 提供可驗證要求，<a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf">NIST AI 600-1</a>則透過治理、盤點、衡量與處置（Govern、Map、Measure、Manage）四項功能，把生成式 AI 風險管理放進整個生命週期。團隊可以從威脅建模開始，選定適用要求，實作確定性控制，再用正常對照、攻擊案例、人工複核與持續觀測驗證。</p>
+<p>檢查清單真正要留下的不是一排勾選，而是一組能重現、能交接、能在變更後重新判定的安全證據。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://www.nist.gov/itl/ai-risk-management-framework">NIST AI Risk Management Framework</a></li>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf">NIST AI 600-1：Artificial Intelligence Risk Management Framework — Generative Artificial Intelligence Profile</a></li>
+<li><a href="https://www.nist.gov/news-events/news/2024/07/secure-software-development-practices-generative-ai-and-dual-use-foundation">NIST SP 800-218A：Secure Software Development Practices for Generative AI and Dual-Use Foundation Models</a></li>
+<li><a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/">OWASP GenAI LLM Top 10 2026</a></li>
+<li><a href="https://owasp.org/www-project-artificial-intelligence-security-verification-standard-aisvs-docs/">OWASP Artificial Intelligence Security Verification Standard 1.0</a></li>
+<li><a href="https://github.com/FWcloud916/llm-app-security-lab">LLM Application Security Lab</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10408552">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 30／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/">上一篇：AI Red Teaming 實戰：自動化攻擊測試</a> · 下一篇：LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-07-automated-ai-red-teaming/" class="text-gray-900 hover:text-blue-600 transition">
+      AI Red Teaming 實戰：自動化攻擊測試
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-07T00:00:00.000Z">2026年09月07日</time>
+    <span>18 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用固定版本的 garak 與 PyRIT 測試同一個本機應用程式端點，在明確的請求上限內建立可重現且能持續執行的 AI Red Teaming 流程。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-06-dos-token-cost-controls/" class="text-gray-900 hover:text-blue-600 transition">
+      濫用與成本攻擊：DoS、Token 榨取與速率限制
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-06T00:00:00.000Z">2026年09月06日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-05-observability-audit/" class="text-gray-900 hover:text-blue-600 transition">
+      觀測性與稽核：看得見才守得住
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-05T00:00:00.000Z">2026年09月05日</time>
+    <span>15 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用 OpenTelemetry 比較保存原文與只保留允許欄位的 trace，再以六筆 HMAC 串接事件測試修改、刪除、交換、插入與尾端截斷，釐清觀測資料與稽核證據的責任邊界。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=2b2f177"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>
