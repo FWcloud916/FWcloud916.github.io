@@ -261,6 +261,6 @@ Day 29 結果的重點不是 4／4，而是完整的測試契約：固定目標�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 29／31 篇**
 
-[上一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制](https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/) · 下一篇：總結：LLM 應用安全檢查清單與心法
+[上一篇：濫用與成本攻擊：DoS、Token 榨取與速率限制](https://imfw.io/posts/2026/2026-09-06-dos-token-cost-controls/) · [下一篇：總結：LLM 應用安全檢查清單與心法](https://imfw.io/posts/2026/2026-09-08-llm-security-checklist/)
 
 <!-- series-nav:end -->
