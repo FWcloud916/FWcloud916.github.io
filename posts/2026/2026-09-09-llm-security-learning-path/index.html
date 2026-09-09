@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#155dfc">
+  <title>LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具 - FW Blog</title>
+  <meta name="description" content="從 OWASP 威脅地圖、攻擊靶場與 RAG／Agent 資料流開始，再用護欄和紅隊工具驗證防禦；每一階段都留下可重複檢查的成果。">
+  <meta name="robots" content="index, follow">
+  
+  
+  <meta name="msvalidate.01" content="543C842E7A8211188B337FE85195010F">
+  
+  <link rel="canonical" href="https://imfw.io/posts/2026/2026-09-09-llm-security-learning-path/">
+
+  <!-- Brand icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Social sharing -->
+  <meta property="og:site_name" content="FW Blog">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具 - FW Blog">
+  <meta property="og:description" content="從 OWASP 威脅地圖、攻擊靶場與 RAG／Agent 資料流開始，再用護欄和紅隊工具驗證防禦；每一階段都留下可重複檢查的成果。">
+  <meta property="og:url" content="https://imfw.io/posts/2026/2026-09-09-llm-security-learning-path/">
+  <meta property="og:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta property="og:image:alt" content="LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具 - FW Blog">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-09-09T00:00:00.000Z">
+  
+  
+  <meta property="article:tag" content="ai-security">
+  
+  <meta property="article:tag" content="ai">
+  
+  <meta property="article:tag" content="security">
+  
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具 - FW Blog">
+  <meta name="twitter:description" content="從 OWASP 威脅地圖、攻擊靶場與 RAG／Agent 資料流開始，再用護欄和紅隊工具驗證防禦；每一階段都留下可重複檢查的成果。">
+  <meta name="twitter:image" content="https://imfw.io/assets/images/og-default.png">
+  <meta name="twitter:image:alt" content="LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具 - FW Blog">
+
+  <!-- Fonts:Huninn(粉圓體),display=swap 讓 CJK 字型載入期間先以系統字型顯示 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+
+  <!-- Styles:?v= 版本參數繞過 CDN 4 小時快取（值來自 src/_data/build.mjs） -->
+  <link rel="stylesheet" href="/assets/css/prism-one-dark.css?v=7e33859">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=7e33859">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/atom+xml" title="FW Blog" href="https://imfw.io/feed.xml">
+
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具",
+    "description": "從 OWASP 威脅地圖、攻擊靶場與 RAG／Agent 資料流開始，再用護欄和紅隊工具驗證防禦；每一階段都留下可重複檢查的成果。",
+    "url": "https://imfw.io/posts/2026/2026-09-09-llm-security-learning-path/",
+    "mainEntityOfPage": "https://imfw.io/posts/2026/2026-09-09-llm-security-learning-path/",
+    "datePublished": "2026-09-09T00:00:00.000Z",
+    "dateModified": "2026-09-09T00:00:00.000Z",
+    "image": "https://imfw.io/assets/images/og-default.png",
+    "keywords": ["ai-security","ai","security"],
+    "inLanguage": "zh-TW",
+    "author": {
+      "@type": "Person",
+      "@id": "https://imfw.io/about/#person",
+      "name": "FW",
+      "url": "https://imfw.io/about/",
+      "sameAs": ["https://github.com/FWcloud916","https://www.linkedin.com/in/imfw0916","https://www.facebook.com/imfw.io","https://www.instagram.com/imfw.io/","https://www.threads.com/@imfw.io"]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "FW"
+    }
+  }
+  </script>
+  
+  
+  
+
+  <!-- Google Analytics -->
+  
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS6V0SVT1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QBS6V0SVT1');
+  </script>
+  
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <nav class="bg-white shadow-sm mb-8">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
+        FW Blog
+      </a>
+      <ul class="flex gap-4 sm:gap-6 text-sm sm:text-base">
+        <li>
+          <a href="/" class="text-gray-600 hover:text-gray-900 transition">首頁</a>
+        </li>
+        <li>
+          <a href="/topics/" class="text-gray-600 hover:text-gray-900 transition">花園</a>
+        </li>
+        <li>
+          <a href="/archive/" class="text-gray-600 hover:text-gray-900 transition">文章</a>
+        </li>
+        <li>
+          <a href="/works/" class="text-gray-600 hover:text-gray-900 transition">作品</a>
+        </li>
+        <li>
+          <a href="/about/" class="text-gray-600 hover:text-gray-900 transition">關於</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+<article>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold mb-4">LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具</h1>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+      <span>作者：<a href="https://imfw.io/about/" rel="author" class="hover:text-blue-600 transition">FW</a></span>
+      <span>發布：<time datetime="2026-09-09T00:00:00.000Z">2026年09月09日</time></span>
+      
+      <span>12 分鐘閱讀</span>
+    </div>
+    
+    <div class="mt-4 flex flex-wrap gap-2">
+      
+        
+      
+        
+        <a href="/tags/ai-security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai-security
+        </a>
+        
+      
+        
+        <a href="/tags/ai/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #ai
+        </a>
+        
+      
+        
+        <a href="/tags/security/" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition">
+          #security
+        </a>
+        
+      
+    </div>
+    
+    
+    
+    <div class="mt-4 text-sm text-gray-600">
+      <span>所屬主題：</span>
+      
+      <a href="/topics/llm-app-security/" class="text-blue-600 hover:text-blue-800 transition">LLM 應用資安</a>
+      
+    </div>
+    
+  </header>
+
+  <div class="prose prose-lg max-w-none">
+    <blockquote>
+<p><strong>查核資訊：</strong> 本文於 2026-08-25 重新確認各項資源的官方頁面。OWASP 清單、靶場內容、模型版本與工具介面都可能變動；開始練習前，仍應回到官方文件確認目前狀態。</p>
+</blockquote>
+<p>LLM 應用資安的資源不少，難點是安排學習順序：該先讀威脅分類、練習提示注入，還是直接安裝紅隊工具？</p>
+<p>如果一開始就跑掃描器，報告裡會出現一串檢測程式（probe）、判定器（detector）、攻擊策略（attack strategy）與分數，但這些結果本身無法說明問題出現在輸入、模型處理、工具授權或輸出處理的哪個環節。如果只讀風險清單，也很容易記住十個名稱，卻無法判斷外部文件中的指示為什麼能改變 Agent 的工具操作。</p>
+<p>先建立威脅地圖，再到安全靶場動手攻擊；接著把問題放回檢索增強生成（RAG）與 AI Agent 的資料流，最後才接上護欄與自動化紅隊工具。每一階段都要留下可檢查的成果，不能只把資源加入書籤。</p>
+<p><picture><source type="image/webp" srcset="/assets/img/KPYGZ7aJmb-300.webp 300w, /assets/img/KPYGZ7aJmb-600.webp 600w, /assets/img/KPYGZ7aJmb-1200.webp 1200w" sizes="(min-width: 30em) 50vw, 100vw"><img loading="lazy" decoding="async" src="/assets/img/KPYGZ7aJmb-300.jpeg" alt="LLM 應用資安完整學習路線圖：四個階段由建立威脅地圖、練習攻擊、串接 RAG 與 Agent 到驗證防禦，並標示八個實作步驟、主要資源與每階段成果。" width="1200" height="800" srcset="/assets/img/KPYGZ7aJmb-300.jpeg 300w, /assets/img/KPYGZ7aJmb-600.jpeg 600w, /assets/img/KPYGZ7aJmb-1200.jpeg 1200w" sizes="(min-width: 30em) 50vw, 100vw"></picture></p>
+<h2>先確定學習方法：回答、查證、實驗、修正</h2>
+<p>這套方法不先寫完整答案，再替文章補上參考資料，而是依序進行以下五個步驟：</p>
+<ol>
+<li>先用自己的話回答問題，留下當下的理解與不確定處。</li>
+<li>閱讀官方資料，拆開可查證的事實、自己的判斷與尚未處理的邊界。</li>
+<li>能操作的題目先寫下預測，再用最小案例驗證。</li>
+<li>記錄實際結果、失敗模式與限制，重新回答原本的問題。</li>
+<li>最後才把觀點變化與證據整理成文章。</li>
+</ol>
+<p>模型輸出具有變動性，單次成功不代表控制穩定；工具顯示 <code>PASS</code>，也不代表整個應用程式安全。先寫下預測與測試條件，才能判斷實際結果支持原本的預測，還是只是剛好符合預期。</p>
+<h2>四個階段各自要回答什麼</h2>
+<table>
+<thead>
+<tr>
+<th>階段</th>
+<th>核心問題</th>
+<th>主要資源</th>
+<th>完成後應留下的成果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>建立威脅地圖</td>
+<td>LLM 應用有哪些資產、信任邊界與常見失敗方式？</td>
+<td>OWASP GenAI LLM Top 10、OWASP AISVS</td>
+<td>一張自己的系統圖與初版風險清單</td>
+</tr>
+<tr>
+<td>練習攻擊</td>
+<td>直接提示注入、間接提示注入與工具濫用如何發生？</td>
+<td>Gandalf、HackAPrompt、PortSwigger、Simon Willison 的案例</td>
+<td>攻擊紀錄、成功條件與未達成攻擊目標的案例</td>
+</tr>
+<tr>
+<td>串接 RAG 與 Agent</td>
+<td>不可信資料如何進入模型的處理範圍，模型輸出又能觸發哪些功能？</td>
+<td>PortSwigger、供應商的 Agent 安全文件、自己的最小應用程式</td>
+<td>資料來源、檢索、模型、工具與輸出處理的信任邊界圖</td>
+</tr>
+<tr>
+<td>驗證防禦</td>
+<td>哪一道控制負責阻擋、限制或偵測？工具結果能證明到哪裡？</td>
+<td>NeMo Guardrails、Prompt Guard、Llama Guard、garak、PyRIT</td>
+<td>有對照組的測試結果、判定方式與限制</td>
+</tr>
+</tbody>
+</table>
+<p>這四個階段不是依工具難度排列，而是依理解所需的前後關係排列。先知道要保護什麼，才知道靶場裡的成功代表什麼；先看懂攻擊路徑，才知道護欄應放在哪裡；先定義判定方式，紅隊工具的結果才有解讀基礎。</p>
+<h2>第一階段：用 OWASP 建立地圖，不把 Top 10 當檢查表</h2>
+<p>先用 <a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/">OWASP GenAI LLM Top 10 2026</a> 建立共同語言，辨認提示注入、敏感資訊揭露、供應鏈、資料與模型投毒、不當輸出處理、過度代理能力等風險。Top 10 用來辨認風險，不能直接證明系統已完成安全驗證。</p>
+<p>讀 Top 10 時，不要只抄分類名稱。應把每一項風險放回自己的系統，至少回答四個問題：</p>
+<ul>
+<li>哪些資料或功能可能受影響？</li>
+<li>攻擊者能控制哪些輸入或外部內容？</li>
+<li>模型輸出會送到畫面、檢索器、程式解析器，還是能改變外部狀態的工具？</li>
+<li>哪個應用程式元件負責授權、驗證、編碼、限制資源或留下稽核紀錄？</li>
+</ul>
+<p>建立威脅地圖時，可以搭配 <a href="https://owasp.org/www-project-artificial-intelligence-security-verification-standard-aisvs-docs/">OWASP Artificial Intelligence Security Verification Standard（AISVS）1.0</a>。AISVS 是公開的安全要求目錄，每項要求都設計成可測試、可實作與可驗證。Top 10 負責辨認風險，AISVS 提供可驗證的控制要求；依兩份文件整理清單，仍不代表通過 AISVS 或完成合規稽核。</p>
+<p>最後，把使用者輸入、系統指示、檢索內容、工具回傳與模型輸出的來源、途中經過的解析與控制，以及能到達的功能或外部系統，畫成自己的資料流圖。</p>
+<h2>第二階段：用靶場建立攻擊手感</h2>
+<p>威脅分類提供名稱，靶場讓抽象名詞變成可觀察的行為。練習時不要只收集越獄提示，應該記下攻擊成立的條件。</p>
+<h3>Gandalf：理解提示與防線如何互相拉扯</h3>
+<p><a href="https://gandalf.lakera.ai/">Gandalf</a> 會隨關卡逐步增加限制，適合用來初步觀察提示注入與防護規則的互動。每完成一關，除了保留成功提示，也要記錄提示利用的機制：角色扮演、格式轉換、資訊拆分、上下文混淆，或判定條件本身的漏洞。</p>
+<p>不要把通關解讀為某一種提示可以穩定擊敗所有模型。關卡、模型與防護可能更新，同一句輸入也可能得到不同結果。真正值得留下的是攻擊假設與成功條件。</p>
+<h3>HackAPrompt：觀察攻擊策略如何組合</h3>
+<p><a href="https://www.hackaprompt.com/">HackAPrompt</a> 提供提示攻擊題目與競賽形式，適合比較不同策略如何組合。閱讀公開解法時，重點不是複製一句成功提示，而是把它拆成可重複檢查的機制，例如要求模型改寫受限制內容、把目標藏在編碼中，或利用評分規則與輸出格式之間的落差。</p>
+<p>競賽題目的成功條件由題目與評分器定義。它能訓練攻擊思路，但不能直接代表真實應用程式的資料授權、工具權限與輸出處理都會以相同方式失守。</p>
+<h3>PortSwigger：把 LLM 攻擊接回 Web 應用程式</h3>
+<p><a href="https://portswigger.net/web-security/llm-attacks">PortSwigger Web Security Academy 的 Web LLM attacks</a> 將 LLM 放回 API、外掛與 Web 應用程式的情境，涵蓋 API 攻擊面、過度代理能力、間接提示注入、不安全輸出處理與連鎖利用。這份材料會把提示注入與伺服器端請求偽造（SSRF）、跨網站指令碼（XSS）、存取控制等既有問題連在一起；具備相應的 Web 安全基礎，較容易理解這些攻擊路徑。</p>
+<p>練習時要區分兩層結果：模型是否產生了攻擊者想要的內容，以及應用程式是否真的執行了未授權操作。模型偏離指示是重要訊號，真正的影響仍取決於後端是否把模型輸出當成授權、是否限制工具與資源，以及高風險動作是否需要額外確認。</p>
+<h3>Simon Willison：持續追蹤案例與設計邊界</h3>
+<p><a href="https://simonwillison.net/tags/prompt-injection/">Simon Willison 的 prompt injection 主題頁</a> 長期整理提示注入案例、失敗模式與防禦討論。這個主題頁不是官方標準，也不是循序靶場，適合在實作前後挑選與目前架構相關的文章，檢查系統是否同時接觸外部內容、私密資料與對外通訊，以及三者組合後產生的風險。</p>
+<p><a href="https://llmsec.dev/">LLMSecTest</a> 目前仍處於早期開發階段（pre-alpha），是一套以 pytest 執行 LLM 應用安全測試的框架。部分互動實驗頁面仍可使用，但網站定位與內容正在變動，因此使用前要重新確認目前功能、可用頁面與工具成熟度。</p>
+<h2>第三階段：把攻擊放回 RAG 與 Agent 的資料流</h2>
+<p>使用者本身是攻擊者時，惡意指示會直接透過使用者輸入進入應用程式，形成直接提示注入。RAG 與 AI Agent 還會處理文件、網頁、電子郵件、資料庫欄位與工具回傳。即使攻擊者無法直接對模型輸入指示，也能把惡意指示藏在應用程式之後會取得的內容裡，形成間接提示注入。</p>
+<p><a href="https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/mitigate-jailbreaks">Anthropic 的提示注入防護文件</a> 也把直接與間接提示注入分開：前者通常來自對抗性使用者輸入，後者來自網頁、文件或工具結果等第三方內容。這個分類適合用來檢查自己的資料來源，但實際控制仍要依應用程式架構設計。</p>
+<p>接下來，建立一個最小 RAG 或工具呼叫應用程式，並標出以下路徑：</p>
+<pre class="language-text"><code class="language-text">使用者要求
+  → 應用程式建立模型請求（request）
+  → 檢索或工具取得外部內容
+  → 應用程式將外部內容轉成模型能處理的格式
+  → 模型產生回覆或工具提案
+  → 應用程式驗證身分、資源、參數與動作
+  → 顯示結果或執行外部操作</code></pre>
+<p>接著用一份正常文件與一份含惡意指示的文件測試同一個問題。記錄檢索器是否選取測試文件、應用程式是否把文件內容送進模型請求、模型輸出是否改變，以及後端是否允許模型提出的操作。四項結果要分開記錄，不能合併成單一的「攻擊成功」。</p>
+<p>最後，分開標出三個邊界：哪些資料會進入模型的處理範圍、模型輸出會送到哪些解析或執行元件，以及哪一層程式真正負責資料與動作授權。</p>
+<h2>第四階段：再接上護欄與紅隊工具</h2>
+<p>等攻擊面與判定方式清楚後，再選工具處理特定問題。這些工具的名稱常一起出現在資源清單裡，實際責任並不相同。</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>適合先驗證的問題</th>
+<th>結果不能單獨證明什麼</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.nvidia.com/nemo/guardrails/latest/home">NeMo Guardrails</a></td>
+<td>輸入、輸出、主題與其他安全檢查如何編排</td>
+<td>不能取代應用程式的身分與資源授權</td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/meta-llama/Prompt-Guard-86M">Prompt Guard</a></td>
+<td>輸入是否具有提示注入或越獄特徵</td>
+<td>分類結果不是穩定的安全邊界，也不是動作許可</td>
+</tr>
+<tr>
+<td><a href="https://ai.meta.com/llama/get-started/">Llama Guard</a></td>
+<td>輸入與輸出是否符合設定的安全分類</td>
+<td>不會替後端限制工具參數、資料範圍或副作用</td>
+</tr>
+<tr>
+<td><a href="https://github.com/NVIDIA/garak">garak</a></td>
+<td>以多種 probe 與 detector 快速探索模型或系統的失敗方式</td>
+<td>一輪沒有命中不代表沒有其他攻擊路徑</td>
+</tr>
+<tr>
+<td><a href="https://github.com/microsoft/PyRIT">PyRIT</a></td>
+<td>編排單輪、多輪、情境式與人工參與的紅隊測試</td>
+<td>自動評分仍需檢查評分條件、漏判與誤判</td>
+</tr>
+</tbody>
+</table>
+<p>NeMo Guardrails 適合學習如何在模型前後安排可設定的檢查；Prompt Guard 與 Llama Guard 適合觀察分類器如何產生風險訊號；garak 適合快速執行一批結構化探測；PyRIT 適合編排攻擊策略、測試目標與評分方式，並保存結果。沒有必要為了完成清單而一次接上所有工具。</p>
+<p>可以先選一項最小目標，例如「惡意文件被檢索後，應用程式仍不得執行未授權工具」。測試先建立一組正常內容與一組攻擊內容，再加入一項控制，並固定模型、設定、輸入、重複次數與判定方式。完成測試後，比較控制前後的結果，並記錄未涵蓋的限制。</p>
+<h2>底層基礎只在需要時補</h2>
+<p>先備知識分成三組：LLM／RAG／Agent 基本運作、Web 安全，以及 Python 搭配任一 LLM API 或本地模型。不必全部讀完才開始；遇到下列情況時再補：</p>
+<ul>
+<li>如果看不懂嵌入向量（embedding）、檢索結果或函式呼叫（function calling）如何進入模型請求（request），就先補 RAG 與工具呼叫的資料流。</li>
+<li>不熟 XSS、SSRF、注入與存取控制，就先完成 PortSwigger 對應的 Web 安全基礎。</li>
+<li>無法固定輸入、設定、紀錄與輸出，就先建立一個可重複執行的 Python 測試程式。</li>
+</ul>
+<p>解讀攻擊或防禦結果前，需要先說明資料來源、模型處理的內容、輸出流向，以及哪一層會實際改變外部狀態。</p>
+<h2>從零開始的八個步驟</h2>
+<ol>
+<li>畫出自己的 LLM 應用程式資料流與外部功能。</li>
+<li>閱讀 OWASP GenAI LLM Top 10，將相關風險標到圖上。</li>
+<li>從 AISVS 選出與目前架構相關、可以驗證的要求。</li>
+<li>完成 Gandalf 或 HackAPrompt 的一組題目，記錄攻擊機制，不只保留成功提示。</li>
+<li>完成 PortSwigger 至少一個工具濫用或間接提示注入實驗，分開記錄模型偏航與實際副作用。</li>
+<li>建立一個最小 RAG 或工具呼叫案例，加入正常內容與攻擊內容。</li>
+<li>選一個護欄或分類器加入控制前後比較，保留正常對照案例。</li>
+<li>最後再用 garak 或 PyRIT 擴大測試，記錄工具版本、目標、案例數、判定方式與未測範圍。</li>
+</ol>
+<p>每一步都要留下可檢查的成果，例如系統圖、威脅假設、攻擊紀錄、測試程式、原始結果或限制說明。系統圖、測試紀錄與限制說明能支撐後續文章和安全決策，也能在模型、提示、檢索器或工具權限變更後重新驗證。</p>
+<h2>資源只是入口，順序與證據才是路線</h2>
+<p>每一項資源都應回答明確問題：OWASP 用來建立威脅地圖，靶場用來理解攻擊條件，RAG 與 AI Agent 練習用來畫出信任邊界，護欄與紅隊工具則用來驗證特定控制與擴大測試。</p>
+<p>學習 LLM 應用資安可以從最小系統開始：先寫下預測，執行可重複的測試，再用官方資料修正判斷。文章、清單與工具報告只能保存結果與證據，不能代替實際驗證。</p>
+<h2>參考資料</h2>
+<ul>
+<li><a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/">OWASP GenAI LLM Top 10 2026</a></li>
+<li><a href="https://owasp.org/www-project-artificial-intelligence-security-verification-standard-aisvs-docs/">OWASP Artificial Intelligence Security Verification Standard 1.0</a></li>
+<li><a href="https://gandalf.lakera.ai/">Lakera Gandalf</a></li>
+<li><a href="https://www.hackaprompt.com/">HackAPrompt</a></li>
+<li><a href="https://portswigger.net/web-security/llm-attacks">PortSwigger Web Security Academy — Web LLM attacks</a></li>
+<li><a href="https://simonwillison.net/tags/prompt-injection/">Simon Willison — Prompt injection</a></li>
+<li><a href="https://llmsec.dev/">LLMSecTest</a></li>
+<li><a href="https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/mitigate-jailbreaks">Anthropic — Mitigate jailbreaks and prompt injections</a></li>
+<li><a href="https://docs.nvidia.com/nemo/guardrails/latest/home">NVIDIA NeMo Guardrails</a></li>
+<li><a href="https://huggingface.co/meta-llama/Prompt-Guard-86M">Meta Prompt Guard</a></li>
+<li><a href="https://ai.meta.com/llama/get-started/">Meta Llama Guard</a></li>
+<li><a href="https://github.com/NVIDIA/garak">NVIDIA garak</a></li>
+<li><a href="https://github.com/microsoft/PyRIT">Microsoft PyRIT</a></li>
+</ul>
+<!-- ironman-cross-publication:start -->
+<blockquote>
+<p>本文同步刊載於 <a href="https://ithelp.ithome.com.tw/articles/10408806">iThome 鐵人賽</a>。</p>
+</blockquote>
+<!-- ironman-cross-publication:end -->
+<!-- series-nav:start -->
+<hr>
+<p><strong>《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 31／31 篇</strong></p>
+<p><a href="https://imfw.io/posts/2026/2026-09-08-llm-security-checklist/">上一篇：總結：LLM 應用安全檢查清單與心法</a> · 系列完結</p>
+<!-- series-nav:end -->
+
+  </div>
+</article>
+
+
+
+<section class="mt-12" aria-labelledby="related-posts-title">
+  <h2 id="related-posts-title" class="text-2xl font-bold mb-6">延伸閱讀</h2>
+  <div class="space-y-6">
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-08-llm-security-checklist/" class="text-gray-900 hover:text-blue-600 transition">
+      總結：LLM 應用安全檢查清單與心法
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-08T00:00:00.000Z">2026年09月08日</time>
+    <span>17 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">把 LLM 應用的輸入、資料、模型、輸出、工具、權限、執行期與營運控制，整理成可以指派負責人、保存證據並持續重驗的上線檢查清單。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-07-automated-ai-red-teaming/" class="text-gray-900 hover:text-blue-600 transition">
+      AI Red Teaming 實戰：自動化攻擊測試
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-07T00:00:00.000Z">2026年09月07日</time>
+    <span>18 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用固定版本的 garak 與 PyRIT 測試同一個本機應用程式端點，在明確的請求上限內建立可重現且能持續執行的 AI Red Teaming 流程。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+    <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+  <h2 class="text-2xl font-bold mb-2">
+    <a href="/posts/2026/2026-09-06-dos-token-cost-controls/" class="text-gray-900 hover:text-blue-600 transition">
+      濫用與成本攻擊：DoS、Token 榨取與速率限制
+    </a>
+  </h2>
+
+  <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+    <time datetime="2026-09-06T00:00:00.000Z">2026年09月06日</time>
+    <span>16 分鐘閱讀</span>
+  </div>
+
+  
+  <p class="text-gray-700 mb-4">用七組固定事件比較無限制與完整控制路徑，分別驗證請求速率、輸入 token、輸出 token、總 token、並行數與預算限制。</p>
+  
+
+  
+  <div class="flex flex-wrap gap-2">
+    
+      
+    
+      
+      <a href="/tags/ai-security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai-security
+      </a>
+      
+    
+      
+      <a href="/tags/ai/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #ai
+      </a>
+      
+    
+      
+      <a href="/tags/security/" class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
+        #security
+      </a>
+      
+    
+  </div>
+  
+</article>
+
+  
+  </div>
+</section>
+
+
+
+
+
+<script type="module" src="/assets/js/article-lottie.js?v=7e33859"></script>
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-gray-200">
+    <div class="mb-4">
+      
+<ul class="flex flex-wrap items-center justify-center gap-3">
+
+
+  <li>
+    <a href="https://github.com/FWcloud916" rel="me noopener" target="_blank" aria-label="FW 的 GitHub" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.linkedin.com/in/imfw0916" rel="me noopener" target="_blank" aria-label="FW 的 LinkedIn" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.facebook.com/imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Facebook" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.instagram.com/imfw.io/" rel="me noopener" target="_blank" aria-label="FW 的 Instagram" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+
+  <li>
+    <a href="https://www.threads.com/@imfw.io" rel="me noopener" target="_blank" aria-label="FW 的 Threads" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 013.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 00-2.215-.221Z"></path>
+      </svg>
+    </a>
+  </li>
+
+
+</ul>
+
+    </div>
+    <p class="text-center text-gray-600 text-sm">
+      &copy; 2026 FW. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

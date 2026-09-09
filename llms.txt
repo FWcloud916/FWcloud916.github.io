@@ -20,6 +20,16 @@ Author: FW (https://imfw.io/about/)
 
 ## Posts
 
+### LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具
+
+- Published: 2026-09-09T00:00:00.000Z
+
+- URL: https://imfw.io/posts/2026/2026-09-09-llm-security-learning-path/
+- Tags: ai-security, ai, security
+
+- Description: 從 OWASP 威脅地圖、攻擊靶場與 RAG／Agent 資料流開始，再用護欄和紅隊工具驗證防禦；每一階段都留下可重複檢查的成果。
+
+
 ### 總結：LLM 應用安全檢查清單與心法
 
 - Published: 2026-09-08T00:00:00.000Z
