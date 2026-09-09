@@ -218,6 +218,6 @@ Day 29 的 garak 與 PyRIT 實驗顯示，兩套固定工具能在 9 個只於�
 
 **《LLM 應用資安：從 Prompt Injection 到 AI Red Teaming》第 30／31 篇**
 
-[上一篇：AI Red Teaming 實戰：自動化攻擊測試](https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/) · 下一篇：LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具
+[上一篇：AI Red Teaming 實戰：自動化攻擊測試](https://imfw.io/posts/2026/2026-09-07-automated-ai-red-teaming/) · [下一篇：LLM 應用資安怎麼學：從威脅地圖、攻擊靶場到紅隊工具](https://imfw.io/posts/2026/2026-09-09-llm-security-learning-path/)
 
 <!-- series-nav:end -->
