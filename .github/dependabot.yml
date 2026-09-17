@@ -6,8 +6,15 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
     groups:
+      # 只把例行的 minor/patch 收斂成一個 PR。major 會落在群組外、各自開 PR，
+      # 這樣升級壞掉時才好二分定位（PR #13 曾把 eleventy-img 7 與 vitest 4
+      # 兩個 major 綁在同一個 PR）。安全性更新同樣維持獨立 PR，方便即時處理。
       dev-dependencies:
+        applies-to: version-updates
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
